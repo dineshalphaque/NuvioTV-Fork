@@ -85,9 +85,6 @@ object CustomPosterUrlResolver {
         }
     }
 
-    fun supportsShape(pattern: String): Boolean =
-        "{shape}" in decodePatternPlaceholders(pattern)
-
     /**
      * Extract [ContentIds] from a Nuvio meta ID and optional explicit imdbId field.
      *

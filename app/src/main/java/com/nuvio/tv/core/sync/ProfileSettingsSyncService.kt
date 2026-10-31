@@ -97,6 +97,7 @@ private val localOnlyPlayerProfileSettingsKeys = setOf(
     "center_mix_level_db",
     "persist_audio_amplification",
     "night_mode",
+    "night_mode_last_on",
     "remember_audio_delay_per_device",
     "force_optical_passthrough",
     "allow_ac3_passthrough",

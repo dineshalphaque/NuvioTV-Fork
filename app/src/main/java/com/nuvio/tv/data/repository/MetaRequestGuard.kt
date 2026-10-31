@@ -10,6 +10,9 @@ class MetaCaller(val name: String) : AbstractCoroutineContextElement(MetaCaller)
     companion object Key : CoroutineContext.Key<MetaCaller>
 }
 
+/** Continue Watching lookups, which can wait while a film plays. */
+internal fun isBackgroundMetaCaller(caller: String): Boolean = caller == "cw" || caller.startsWith("cw-")
+
 internal fun addonHost(url: String): String =
     runCatching { URI(url).host }.getOrNull()?.lowercase()?.takeIf { it.isNotBlank() } ?: url
 

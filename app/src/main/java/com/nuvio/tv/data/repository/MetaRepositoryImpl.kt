@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.nuvio.tv.core.network.ADDON_REQUEST_TIMEOUT_MS
 import com.nuvio.tv.core.network.NetworkResult
+import com.nuvio.tv.core.player.PlayerSessionTracker
 import com.nuvio.tv.core.logging.redactLinksForLog
 import com.nuvio.tv.data.mapper.toDomain
 import com.nuvio.tv.data.mediaserver.ServerCatalog
@@ -28,11 +29,16 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.firstOrNull
@@ -198,6 +204,24 @@ class MetaRepositoryImpl @Inject constructor(
     private val requestStats = MetaRequestStats()
 
     private suspend fun currentCaller(): String = currentCoroutineContext()[MetaCaller]?.name ?: "other"
+
+    // Shared lookups that a caller other than Continue Watching has joined.
+    private val joinedLookups = MutableStateFlow<Set<Job>>(emptySet())
+
+    private fun noteJoined(lookup: Deferred<*>, caller: String) {
+        if (isBackgroundMetaCaller(caller) || !lookup.isActive) return
+        joinedLookups.update { it + lookup }
+        lookup.invokeOnCompletion { joinedLookups.update { set -> set - lookup } }
+    }
+
+    /** Before each attempt, a Continue Watching lookup waits while a film plays, unless someone else needs it. */
+    private suspend fun holdWhilePlayerOpen(caller: String) {
+        if (!isBackgroundMetaCaller(caller)) return
+        val lookup = currentCoroutineContext()[Job]
+        combine(PlayerSessionTracker.isSessionOpen, joinedLookups) { open, joined ->
+            !open || lookup in joined
+        }.first { it }
+    }
 
     private fun noteRequest(caller: String, addonName: String) {
         if (requestStats.request(caller, addonName)) scheduleRequestSummary()
@@ -377,6 +401,7 @@ class MetaRepositoryImpl @Inject constructor(
         // Running the loop again after a shared failure doubled the requests to an addon that
         // was already struggling.
         inFlightAddonMeta[cacheKey]?.let { existingDeferred ->
+            noteJoined(existingDeferred, currentCaller())
             emit(lookupOutcome(existingDeferred.await(), type.trim(), id))
             return@flow
         }
@@ -503,6 +528,7 @@ class MetaRepositoryImpl @Inject constructor(
             return@flow
         }
 
+        var created: Deferred<MetaLookupResult>? = null
         val deferred = inFlightAddonMeta.getOrPut(cacheKey) {
             repositoryScope.async {
                 try {
@@ -530,6 +556,7 @@ class MetaRepositoryImpl @Inject constructor(
                             }
                         }
 
+                        holdWhilePlayerOpen(caller)
                         val url = buildMetaUrl(addon.baseUrl, candidateType, id)
                         val host = addonHost(addon.baseUrl)
                         loopAddonNames += addon.displayName
@@ -600,8 +627,9 @@ class MetaRepositoryImpl @Inject constructor(
                 } finally {
                     inFlightAddonMeta.remove(cacheKey)
                 }
-            }
+            }.also { created = it }
         }
+        if (deferred !== created) noteJoined(deferred, caller)
 
         emit(lookupOutcome(deferred.await(), requestedType, id))
     }
@@ -667,9 +695,11 @@ class MetaRepositoryImpl @Inject constructor(
 
         val caller = currentCaller()
         val host = addonHost(addon.baseUrl)
+        var created: Deferred<Meta?>? = null
         val deferred = inFlightPrimaryMeta.getOrPut(cacheKey) {
             repositoryScope.async {
                 try {
+                    holdWhilePlayerOpen(caller)
                     if (rateLimits.isPaused(host)) {
                         noteSkipped(caller, addon.name)
                         return@async null
@@ -700,8 +730,9 @@ class MetaRepositoryImpl @Inject constructor(
                 } finally {
                     inFlightPrimaryMeta.remove(cacheKey)
                 }
-            }
+            }.also { created = it }
         }
+        if (deferred !== created) noteJoined(deferred, caller)
 
         val meta = deferred.await()
         if (meta != null) {

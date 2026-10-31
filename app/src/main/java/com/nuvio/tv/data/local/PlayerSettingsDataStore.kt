@@ -335,6 +335,7 @@ data class PlayerSettings(
     val centerMixLevelDb: Int = 0,
     val persistAudioAmplification: Boolean = false,
     val nightMode: NightModeLevel = NightModeLevel.OFF,
+    val nightModeLastOn: NightModeLevel = NightModeLevel.DEFAULT_ON,
     val rememberAudioDelayPerDevice: Boolean = true,
     val preferredAudioLanguage: String = AudioLanguageOption.DEVICE,
     val secondaryPreferredAudioLanguage: String? = null,
@@ -820,6 +821,7 @@ class PlayerSettingsDataStore @Inject constructor(
     private val centerMixLevelDbKey = intPreferencesKey("center_mix_level_db")
     private val persistAudioAmplificationKey = booleanPreferencesKey("persist_audio_amplification")
     private val nightModeKey = stringPreferencesKey("night_mode")
+    private val nightModeLastOnKey = stringPreferencesKey("night_mode_last_on")
     private val rememberAudioDelayPerDeviceKey = booleanPreferencesKey("remember_audio_delay_per_device")
     private val preferredAudioLanguageKey = stringPreferencesKey("preferred_audio_language")
     private val secondaryPreferredAudioLanguageKey = stringPreferencesKey("secondary_preferred_audio_language")
@@ -1324,6 +1326,7 @@ class PlayerSettingsDataStore @Inject constructor(
                 ),
                 persistAudioAmplification = prefs[persistAudioAmplificationKey] ?: false,
                 nightMode = NightModeLevel.fromKey(prefs[nightModeKey]),
+                nightModeLastOn = NightModeLevel.lastOnFromKey(prefs[nightModeLastOnKey]),
                 rememberAudioDelayPerDevice = prefs[rememberAudioDelayPerDeviceKey] ?: true,
                 preferredAudioLanguage = normalizeSelectableLanguageCode(
                     prefs[preferredAudioLanguageKey] ?: AudioLanguageOption.DEVICE
@@ -1811,7 +1814,10 @@ class PlayerSettingsDataStore @Inject constructor(
 
     suspend fun setNightMode(level: NightModeLevel) {
         store().edit { prefs ->
+            val current = NightModeLevel.fromKey(prefs[nightModeKey])
+            val lastOn = NightModeLevel.lastOnFromKey(prefs[nightModeLastOnKey])
             prefs[nightModeKey] = level.key
+            prefs[nightModeLastOnKey] = rememberedNightModeLevel(current, level, lastOn).key
         }
     }
 
