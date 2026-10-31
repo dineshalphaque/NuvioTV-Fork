@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Ne csináljon semmit</string>
     <string name="remote_buttons_job_stats">Lejátszási statisztika be/ki</string>
     <string name="remote_buttons_job_next_audio">Következő hangsáv</string>
+    <string name="remote_buttons_job_night_mode">Éjszakai mód be/ki</string>
+    <string name="remote_buttons_job_night_mode_desc">Kikapcsolja az éjszakai módot, vagy visszakapcsolja a legutóbb használt szinten (először Közepes)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Éjszakai mód: következő szint</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Minden gombnyomás lép egyet: Ki, Enyhe, Közepes, Erős, majd újra Ki</string>
     <string name="remote_buttons_job_subtitles_toggle">Feliratok be/ki</string>
     <string name="remote_buttons_job_subtitles_up">Feliratok feljebb</string>
     <string name="remote_buttons_job_subtitles_down">Feliratok lejjebb</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Ennek a videónak egy hangsávja van</string>
     <string name="remote_buttons_banner_subtitles_on">Feliratok: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Feliratok kikapcsolva</string>
+    <string name="remote_buttons_banner_night_mode">Éjszakai mód: %1$s</string>
     <string name="remote_buttons_banner_jump">Ugrás ide: %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Ugrás előre: %1$s</string>
     <string name="remote_buttons_banner_skip_back">Ugrás hátra: %1$s</string>

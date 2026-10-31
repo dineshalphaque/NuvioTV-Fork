@@ -3197,6 +3197,13 @@
     <string name="sub_hdr_brightness">سطوع ترجمة HDR</string>
     <string name="sub_libass_render_scale">دقة معالجة الترجمة</string>
     <string name="sub_libass_render_scale_sub">الدقة الأقل تحسّن الأداء مع التنسيق الثقيل على حساب الوضوح</string>
+    <string name="sub_libass_render_mode">وضع معالجة ASS</string>
+    <string name="sub_libass_render_mode_sub">طريقة رسم ترجمات ASS/SSA على الفيديو</string>
+    <string name="sub_libass_render_mode_tunneled_sub">التشغيل النفقي يتجاوز مسار تأثيرات الفيديو. يُستخدم التراكب تلقائيًا.</string>
+    <string name="sub_libass_render_mode_video_effect">تأثير الفيديو</string>
+    <string name="sub_libass_render_mode_video_effect_sub">يرسم الترجمة مباشرة على كل إطار فيديو. توقيت دقيق على مستوى الإطار على كل الأجهزة. يُحوَّل محتوى HDR إلى SDR.</string>
+    <string name="sub_libass_render_mode_overlay">تراكب</string>
+    <string name="sub_libass_render_mode_overlay_sub">يعرض الترجمة على طبقة سطح منفصلة. يحافظ على إخراج HDR. قد لا يكون توقيت الترجمة دقيقًا تمامًا على بعض الأجهزة.</string>
     <string name="autoplay_quality_rules_title">قواعد الجودة</string>
     <string name="autoplay_quality_rules_subtitle">التصفية والترتيب ومستويات مجموعات الإصدار في الحسابات المرتبطة.</string>
     <string name="stream_sort_sources">ترتيب المصادر</string>
@@ -3275,7 +3282,7 @@
     <string name="audio_dialogue_boost_stereo">هذا المسار ستيريو، لذا لا توجد قناة كلام منفصلة لرفعها.</string>
     <string name="audio_dialogue_boost_mixed">يصل الصوت إلى التطبيق مدمجاً بالفعل إلى ستيريو. لاستخدام هذه الميزة، فعّل دمج القنوات (Downmix) في إعدادات الصوت.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">مع MPV يعمل هذا عندما يُدمج الصوت إلى ستيريو، مثلاً على مكبرات صوت التلفزيون.</string>
-    <string name="audio_night_mode_strong_desc">للسهر والغرف الصغيرة. أكثر صوت توازنًا. يرتفع كل شيء، لذا اخفض صوت التلفزيون قليلًا.</string>
+    <string name="audio_night_mode_strong_desc">للسهر والغرف الصغيرة. أكثر صوت توازنًا. ترتفع اللحظات الهادئة كثيرًا، وتنخفض الأعلى صوتًا قليلًا.</string>
     <string name="subtitle_panel_languages">اللغات</string>
     <string name="subtitle_style_text_color_hdr">لون النص (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">شفافية النص (HDR)</string>
@@ -3305,6 +3312,12 @@
     <string name="update_installed_automatically">تم التحديث تلقائيًا أثناء عدم استخدام الجهاز</string>
     <string name="cd_playback_stats">إحصائيات التشغيل</string>
     <string name="player_stats_unavailable_mpv">الإحصائيات غير متاحة مع محرك libmpv</string>
+    <string name="cd_enable_scraper">تفعيل %1$s</string>
+    <string name="cd_enable_addon">تفعيل %1$s</string>
+    <string name="cd_color_swatch">اللون %1$s</string>
+    <string name="cd_emoji_option">رمز تعبيري %1$s</string>
+    <string name="cd_trailer_controls">عناصر التحكم في الإعلان</string>
+    <string name="cd_seek_bar">شريط التقدم</string>
     <string name="player_dead_source_failover">المصدر غير متاح - جاري تجربة المصدر التالي (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">المصدر غير متاح، جاري تجربة %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">لم يبدأ التشغيل - قد يكون مفكّك ترميز الفيديو لا يستجيب. إعادة تشغيل الجهاز تحل ذلك غالباً. اضغط رجوع للعودة والمحاولة مجدداً، أو اختر بثاً آخر.</string>

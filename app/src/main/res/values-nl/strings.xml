@@ -3302,6 +3302,13 @@
     <string name="sub_hdr_brightness">Helderheid HDR-ondertitels</string>
     <string name="sub_libass_render_scale">Renderresolutie ondertitels</string>
     <string name="sub_libass_render_scale_sub">Een lagere resolutie verbetert de prestaties bij zware typesetting, ten koste van scherpte</string>
+    <string name="sub_libass_render_mode">ASS-weergavemodus</string>
+    <string name="sub_libass_render_mode_sub">Hoe ASS/SSA-ondertitels op de video worden getekend</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Getunneld afspelen slaat de video-effectketen over. Overlay wordt automatisch gebruikt.</string>
+    <string name="sub_libass_render_mode_video_effect">Video-effect</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Tekent ondertitels direct op elk videoframe. Framenauwkeurige timing op alle hardware. HDR-inhoud wordt via tone mapping naar SDR omgezet.</string>
+    <string name="sub_libass_render_mode_overlay">Overlay</string>
+    <string name="sub_libass_render_mode_overlay_sub">Rendert ondertitels op een aparte oppervlaktelaag. Behoudt HDR-uitvoer. De timing van ondertitels is op sommige apparaten mogelijk niet helemaal nauwkeurig.</string>
     <string name="autoplay_quality_rules_title">Kwaliteitsregels</string>
     <string name="autoplay_quality_rules_subtitle">Filters, sortering en rangen voor releasegroepen in Verbonden services.</string>
     <string name="stream_sort_sources">Bronnen sorteren</string>
@@ -3380,7 +3387,7 @@
     <string name="audio_dialogue_boost_stereo">Dit spoor is stereo, dus er is geen apart spraakkanaal om te verhogen.</string>
     <string name="audio_dialogue_boost_mixed">Het geluid komt al op stereo gemixt bij de app aan. Zet downmix aan in de audio-instellingen om dit te gebruiken.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Met MPV werkt dit als het geluid naar stereo wordt gemixt, bijvoorbeeld via tv-speakers.</string>
-    <string name="audio_night_mode_strong_desc">Voor late avonden en kleine kamers. Het meest gelijkmatige geluid. Alles wordt luider, dus zet de tv wat zachter.</string>
+    <string name="audio_night_mode_strong_desc">Voor late avonden en kleine kamers. Het meest gelijkmatige geluid. Zachte momenten komen flink omhoog, de luidste gaan iets omlaag.</string>
     <string name="subtitle_panel_languages">Talen</string>
     <string name="subtitle_style_text_color_hdr">Tekstkleur (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Tekstdekking (HDR)</string>
@@ -3410,6 +3417,12 @@
     <string name="update_installed_automatically">Automatisch bijgewerkt terwijl het apparaat niet in gebruik was</string>
     <string name="cd_playback_stats">Afspeelstatistieken</string>
     <string name="player_stats_unavailable_mpv">Statistieken zijn niet beschikbaar voor de libmpv-engine</string>
+    <string name="cd_enable_scraper">%1$s inschakelen</string>
+    <string name="cd_enable_addon">%1$s inschakelen</string>
+    <string name="cd_color_swatch">Kleur %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Trailerbediening</string>
+    <string name="cd_seek_bar">Voortgangsbalk</string>
     <string name="player_dead_source_failover">Bron niet beschikbaar - volgende bron proberen (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Bron niet beschikbaar, %3$s proberen (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Het afspelen is niet gestart - de videodecoder reageert mogelijk niet. Het apparaat opnieuw opstarten lost dit meestal op. Druk op terug en probeer het opnieuw, of kies een andere stream.</string>

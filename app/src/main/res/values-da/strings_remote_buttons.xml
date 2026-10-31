@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Gør intet</string>
     <string name="remote_buttons_job_stats">Afspilningsstatistik til/fra</string>
     <string name="remote_buttons_job_next_audio">Næste lydspor</string>
+    <string name="remote_buttons_job_night_mode">Nattilstand til/fra</string>
+    <string name="remote_buttons_job_night_mode_desc">Slår nattilstand fra, eller til igen på det niveau, du brugte sidst (Middel første gang)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nattilstand: næste niveau</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Hvert tryk skifter mellem Fra, Let, Middel, Kraftig og så Fra igen</string>
     <string name="remote_buttons_job_subtitles_toggle">Undertekster til/fra</string>
     <string name="remote_buttons_job_subtitles_up">Undertekster op</string>
     <string name="remote_buttons_job_subtitles_down">Undertekster ned</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Denne video har ét lydspor</string>
     <string name="remote_buttons_banner_subtitles_on">Undertekster: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Undertekster fra</string>
+    <string name="remote_buttons_banner_night_mode">Nattilstand: %1$s</string>
     <string name="remote_buttons_banner_jump">Sprang til %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Sprang %1$s fremad</string>
     <string name="remote_buttons_banner_skip_back">Sprang %1$s bagud</string>

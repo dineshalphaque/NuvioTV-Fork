@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Nerobiť nič</string>
     <string name="remote_buttons_job_stats">Štatistiky prehrávania zap./vyp.</string>
     <string name="remote_buttons_job_next_audio">Ďalšia zvuková stopa</string>
+    <string name="remote_buttons_job_night_mode">Nočný režim zap./vyp.</string>
+    <string name="remote_buttons_job_night_mode_desc">Vypne nočný režim alebo ho znova zapne na naposledy použitej úrovni (prvýkrát Stredný)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nočný režim: ďalšia úroveň</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Každé stlačenie prepne ďalej: Vypnuté, Mierny, Stredný, Silný a potom znova Vypnuté</string>
     <string name="remote_buttons_job_subtitles_toggle">Titulky zap./vyp.</string>
     <string name="remote_buttons_job_subtitles_up">Titulky vyššie</string>
     <string name="remote_buttons_job_subtitles_down">Titulky nižšie</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Toto video má jednu zvukovú stopu</string>
     <string name="remote_buttons_banner_subtitles_on">Titulky: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Titulky vypnuté</string>
+    <string name="remote_buttons_banner_night_mode">Nočný režim: %1$s</string>
     <string name="remote_buttons_banner_jump">Skok na %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Skok dopredu o %1$s</string>
     <string name="remote_buttons_banner_skip_back">Skok dozadu o %1$s</string>

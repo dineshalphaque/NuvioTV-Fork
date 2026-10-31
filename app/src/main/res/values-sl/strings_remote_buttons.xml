@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Ne naredi nič</string>
     <string name="remote_buttons_job_stats">Statistika predvajanja vklop/izklop</string>
     <string name="remote_buttons_job_next_audio">Naslednji zvočni zapis</string>
+    <string name="remote_buttons_job_night_mode">Nočni način vklop/izklop</string>
+    <string name="remote_buttons_job_night_mode_desc">Izklopi nočni način ali ga znova vklopi na nazadnje uporabljeni ravni (prvič Srednje)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nočni način: naslednja raven</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Vsak pritisk preklopi naprej: Izklopljeno, Rahlo, Srednje, Močno in nato spet Izklopljeno</string>
     <string name="remote_buttons_job_subtitles_toggle">Podnapisi vklop/izklop</string>
     <string name="remote_buttons_job_subtitles_up">Podnapisi višje</string>
     <string name="remote_buttons_job_subtitles_down">Podnapisi nižje</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Ta video ima en zvočni zapis</string>
     <string name="remote_buttons_banner_subtitles_on">Podnapisi: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Podnapisi izklopljeni</string>
+    <string name="remote_buttons_banner_night_mode">Nočni način: %1$s</string>
     <string name="remote_buttons_banner_jump">Skok na %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Preskok naprej za %1$s</string>
     <string name="remote_buttons_banner_skip_back">Preskok nazaj za %1$s</string>

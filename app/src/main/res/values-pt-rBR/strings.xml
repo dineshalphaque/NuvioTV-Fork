@@ -3563,7 +3563,7 @@
     <string name="audio_dialogue_boost_stereo">Esta faixa é estéreo, então não há um canal de fala separado para aumentar.</string>
     <string name="audio_dialogue_boost_mixed">O som chega ao app já mixado em estéreo. Para usar, ative o downmix nos ajustes de áudio.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Com o MPV isso funciona quando o som é mixado em estéreo, por exemplo nos alto-falantes da TV.</string>
-    <string name="audio_night_mode_strong_desc">Para madrugadas e salas pequenas. O som mais uniforme. Tudo fica mais alto, então abaixe um pouco a TV.</string>
+    <string name="audio_night_mode_strong_desc">Para madrugadas e salas pequenas. O som mais uniforme. Os momentos baixos sobem bastante e os mais altos descem um pouco.</string>
     <string name="subtitle_panel_languages">Idiomas</string>
     <string name="library_empty_mdblist_title">Nenhum %1$s na Minha Lista</string>
     <string name="library_empty_mdblist_subtitle">Use + nos detalhes para adicionar itens à Minha Lista do MDBList</string>
@@ -4112,6 +4112,13 @@
     <string name="sub_hdr_brightness">Brilho das legendas HDR</string>
     <string name="sub_libass_render_scale">Resolução de renderização das legendas</string>
     <string name="sub_libass_render_scale_sub">Uma resolução menor melhora o desempenho em legendas muito estilizadas, com menos nitidez</string>
+    <string name="sub_libass_render_mode">Modo de renderização ASS</string>
+    <string name="sub_libass_render_mode_sub">Como as legendas ASS/SSA são desenhadas no vídeo</string>
+    <string name="sub_libass_render_mode_tunneled_sub">A reprodução tunneled ignora o pipeline de efeitos de vídeo. A sobreposição é usada automaticamente.</string>
+    <string name="sub_libass_render_mode_video_effect">Efeito de vídeo</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Desenha as legendas diretamente em cada quadro do vídeo. Sincronia exata por quadro em qualquer hardware. Conteúdo HDR é convertido para SDR com mapeamento de tons.</string>
+    <string name="sub_libass_render_mode_overlay">Sobreposição</string>
+    <string name="sub_libass_render_mode_overlay_sub">Renderiza as legendas em uma camada de superfície separada. Preserva a saída HDR. A sincronia das legendas pode não ser totalmente precisa em alguns dispositivos.</string>
     <string name="settings_stream_badges_in_player_title">Exibir no player</string>
     <string name="settings_stream_badges_in_player_description">Exibe selos do vídeo e do áudio em reprodução abaixo do título no player. Usa os selos do Arc, ou seu pacote de selos se ele corresponder a texto simples, como 2160p ou Atmos.</string>
     <string name="settings_stream_player_badges_title">Selos do player</string>
@@ -4123,6 +4130,12 @@
     <string name="subtitle_style_text_opacity_hdr">Opacidade do Texto (HDR)</string>
     <string name="subtitle_style_brightness_hdr">Brilho (HDR)</string>
     <string name="update_installed_automatically">Atualizado automaticamente enquanto o dispositivo estava ocioso</string>
+    <string name="cd_enable_scraper">Ativar %1$s</string>
+    <string name="cd_enable_addon">Ativar %1$s</string>
+    <string name="cd_color_swatch">Cor %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Controles do trailer</string>
+    <string name="cd_seek_bar">Barra de progresso</string>
     <string name="assessment_value_on_auto">Ativado · Auto, até ≈%1$s</string>
     <string name="assessment_value_connections_auto">Automático (segue a Aceleração automática)</string>
     <string name="assessment_grounds_connections_auto">A Aceleração automática está ativada e adiciona conexões sozinha quando um filme precisa delas; um número fixo a desativaria. Medido: uma conexão %1$s, %3$d × %4$d MB chegaram a %2$s.</string>

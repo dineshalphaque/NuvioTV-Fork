@@ -3464,6 +3464,13 @@
     <string name="sub_hdr_brightness">Svjetlina titlova za HDR</string>
     <string name="sub_libass_render_scale">Rezolucija iscrtavanja titlova</string>
     <string name="sub_libass_render_scale_sub">Niža rezolucija ubrzava zahtjevne stilizirane titlove, ali smanjuje oštrinu</string>
+    <string name="sub_libass_render_mode">Način iscrtavanja ASS</string>
+    <string name="sub_libass_render_mode_sub">Kako se ASS/SSA titlovi iscrtavaju na videu</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunelirana reprodukcija zaobilazi lanac video efekata. Automatski se koristi Prekrivanje.</string>
+    <string name="sub_libass_render_mode_video_effect">Video efekt</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Iscrtava titlove izravno na svaki kadar videa. Sinkronizacija točna do kadra na svakom hardveru. HDR sadržaj se tonski mapira u SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Prekrivanje</string>
+    <string name="sub_libass_render_mode_overlay_sub">Iscrtava titlove na zasebnom sloju površine. Čuva HDR izlaz. Sinkronizacija titlova možda neće biti posve točna na nekim uređajima.</string>
     <string name="autoplay_quality_rules_title">Pravila kvalitete</string>
     <string name="autoplay_quality_rules_subtitle">Filtri, sortiranje i razine release grupa u Povezanim uslugama.</string>
     <string name="stream_sort_sources">Sortiraj izvore</string>
@@ -3542,7 +3549,7 @@
     <string name="audio_dialogue_boost_stereo">Ovaj zapis je stereo, pa nema zasebnog kanala govora koji bi se pojačao.</string>
     <string name="audio_dialogue_boost_mixed">Zvuk u aplikaciju stiže već miksan u stereo. Za korištenje uključite downmix u postavkama zvuka.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">S MPV-om to radi kad se zvuk miksa u stereo, na primjer na zvučnicima televizora.</string>
-    <string name="audio_night_mode_strong_desc">Za kasne sate i male sobe. Najujednačeniji zvuk. Sve postaje glasnije, pa malo stišajte TV.</string>
+    <string name="audio_night_mode_strong_desc">Za kasne sate i male sobe. Najujednačeniji zvuk. Tihi trenuci se dosta pojačavaju, a najglasniji se malo stišaju.</string>
     <string name="subtitle_panel_languages">Jezici</string>
     <string name="subtitle_style_text_color_hdr">Boja teksta (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Neprozirnost teksta (HDR)</string>
@@ -3572,6 +3579,12 @@
     <string name="update_installed_automatically">Automatski ažurirano dok je uređaj mirovao</string>
     <string name="cd_playback_stats">Statistika reprodukcije</string>
     <string name="player_stats_unavailable_mpv">Statistika nije dostupna za libmpv pogon</string>
+    <string name="cd_enable_scraper">Omogući %1$s</string>
+    <string name="cd_enable_addon">Omogući %1$s</string>
+    <string name="cd_color_swatch">Boja %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Kontrole trailera</string>
+    <string name="cd_seek_bar">Traka za premotavanje</string>
     <string name="player_dead_source_failover">Izvor nedostupan - pokušaj sa sljedećim izvorom (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Izvor nedostupan, pokušaj s %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Reprodukcija nije počela - video dekoder možda ne odgovara. Ponovno pokretanje uređaja to obično rješava. Pritisni natrag i pokušaj ponovno ili odaberi drugi stream.</string>

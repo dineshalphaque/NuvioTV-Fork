@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Nic nie rób</string>
     <string name="remote_buttons_job_stats">Statystyki odtwarzania wł./wył.</string>
     <string name="remote_buttons_job_next_audio">Następna ścieżka audio</string>
+    <string name="remote_buttons_job_night_mode">Tryb nocny wł./wył.</string>
+    <string name="remote_buttons_job_night_mode_desc">Wyłącza tryb nocny albo włącza go ponownie na ostatnio używanym poziomie (za pierwszym razem Średni)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Tryb nocny: następny poziom</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Każde naciśnięcie przełącza: Wyłączony, Lekki, Średni, Mocny i znów Wyłączony</string>
     <string name="remote_buttons_job_subtitles_toggle">Napisy wł./wył.</string>
     <string name="remote_buttons_job_subtitles_up">Napisy wyżej</string>
     <string name="remote_buttons_job_subtitles_down">Napisy niżej</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Ten film ma jedną ścieżkę audio</string>
     <string name="remote_buttons_banner_subtitles_on">Napisy: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Napisy wyłączone</string>
+    <string name="remote_buttons_banner_night_mode">Tryb nocny: %1$s</string>
     <string name="remote_buttons_banner_jump">Skok do %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Przeskok do przodu o %1$s</string>
     <string name="remote_buttons_banner_skip_back">Przeskok do tyłu o %1$s</string>

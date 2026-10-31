@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Nu face nimic</string>
     <string name="remote_buttons_job_stats">Statistici de redare: pornit/oprit</string>
     <string name="remote_buttons_job_next_audio">Pista audio următoare</string>
+    <string name="remote_buttons_job_night_mode">Mod noapte: pornit/oprit</string>
+    <string name="remote_buttons_job_night_mode_desc">Oprește modul noapte sau îl repornește la ultimul nivel folosit (Mediu prima dată)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Mod noapte: nivelul următor</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Fiecare apăsare trece prin Oprit, Ușor, Mediu, Puternic, apoi din nou Oprit</string>
     <string name="remote_buttons_job_subtitles_toggle">Subtitrări: pornit/oprit</string>
     <string name="remote_buttons_job_subtitles_up">Subtitrări mai sus</string>
     <string name="remote_buttons_job_subtitles_down">Subtitrări mai jos</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Acest video are o singură pistă audio</string>
     <string name="remote_buttons_banner_subtitles_on">Subtitrări: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Subtitrări dezactivate</string>
+    <string name="remote_buttons_banner_night_mode">Mod noapte: %1$s</string>
     <string name="remote_buttons_banner_jump">Salt la %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Salt înainte %1$s</string>
     <string name="remote_buttons_banner_skip_back">Salt înapoi %1$s</string>

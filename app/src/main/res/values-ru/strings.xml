@@ -3279,6 +3279,13 @@
     <string name="sub_hdr_brightness">Яркость субтитров HDR</string>
     <string name="sub_libass_render_scale">Разрешение отрисовки субтитров</string>
     <string name="sub_libass_render_scale_sub">Меньшее разрешение ускоряет сложное оформление субтитров, но снижает чёткость</string>
+    <string name="sub_libass_render_mode">Режим отрисовки ASS</string>
+    <string name="sub_libass_render_mode_sub">Способ отрисовки субтитров ASS/SSA на видео</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Туннельное воспроизведение обходит цепочку видеоэффектов. Автоматически используется наложение.</string>
+    <string name="sub_libass_render_mode_video_effect">Видеоэффект</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Рисует субтитры прямо на каждом кадре видео. Точная до кадра синхронизация на любом оборудовании. HDR-контент преобразуется в SDR (тональная компрессия).</string>
+    <string name="sub_libass_render_mode_overlay">Наложение</string>
+    <string name="sub_libass_render_mode_overlay_sub">Отрисовывает субтитры на отдельном слое поверхности. Сохраняет вывод HDR. На некоторых устройствах синхронизация субтитров может быть не идеально точной.</string>
     <string name="autoplay_quality_rules_title">Правила качества</string>
     <string name="autoplay_quality_rules_subtitle">Фильтры, сортировка и уровни релиз-групп в разделе «Подключённые сервисы».</string>
     <string name="stream_sort_sources">Сортировка источников</string>
@@ -3357,7 +3364,7 @@
     <string name="audio_dialogue_boost_stereo">Эта дорожка стерео, поэтому отдельного канала речи для усиления нет.</string>
     <string name="audio_dialogue_boost_mixed">Звук приходит в приложение уже сведённым в стерео. Чтобы это работало, включите подмешивание в настройках звука.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">С MPV это работает, когда звук сведён в стерео, например на динамиках телевизора.</string>
-    <string name="audio_night_mode_strong_desc">Для поздней ночи и небольших комнат. Самый ровный звук. Всё становится громче, поэтому немного убавьте громкость телевизора.</string>
+    <string name="audio_night_mode_strong_desc">Для поздней ночи и небольших комнат. Самый ровный звук. Тихие моменты заметно громче, самые громкие немного тише.</string>
     <string name="subtitle_panel_languages">Языки</string>
     <string name="subtitle_style_text_color_hdr">Цвет текста (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Прозрачность текста (HDR)</string>
@@ -3387,6 +3394,12 @@
     <string name="update_installed_automatically">Обновлено автоматически, пока устройство не использовалось</string>
     <string name="cd_playback_stats">Статистика воспроизведения</string>
     <string name="player_stats_unavailable_mpv">Статистика недоступна для движка libmpv</string>
+    <string name="cd_enable_scraper">Включить %1$s</string>
+    <string name="cd_enable_addon">Включить %1$s</string>
+    <string name="cd_color_swatch">Цвет %1$s</string>
+    <string name="cd_emoji_option">Эмодзи %1$s</string>
+    <string name="cd_trailer_controls">Управление трейлером</string>
+    <string name="cd_seek_bar">Полоса перемотки</string>
     <string name="player_dead_source_failover">Источник недоступен - пробуем следующий (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Источник недоступен, пробуем %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Воспроизведение не началось - возможно, видеодекодер не отвечает. Обычно помогает перезагрузка устройства. Нажмите «Назад» и попробуйте снова или выберите другой поток.</string>

@@ -2336,6 +2336,13 @@
     <string name="sub_hdr_brightness">Svetlost podnapisov HDR</string>
     <string name="sub_libass_render_scale">Ločljivost upodabljanja podnapisov</string>
     <string name="sub_libass_render_scale_sub">Nižja ločljivost izboljša delovanje pri zahtevnih učinkih podnapisov, a zmanjša ostrino</string>
+    <string name="sub_libass_render_mode">Način upodabljanja ASS</string>
+    <string name="sub_libass_render_mode_sub">Kako se podnapisi ASS/SSA izrišejo na video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunelirano predvajanje obide verigo video učinkov. Samodejno se uporabi prekrivanje.</string>
+    <string name="sub_libass_render_mode_video_effect">Video učinek</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Izriše podnapise neposredno na vsako sličico videa. Časovna usklajenost natančna na sličico na vsej strojni opremi. Vsebina HDR se s preslikavo tonov pretvori v SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Prekrivanje</string>
+    <string name="sub_libass_render_mode_overlay_sub">Upodobi podnapise na ločeni površinski plasti. Ohrani izhod HDR. Časovna usklajenost podnapisov na nekaterih napravah morda ne bo povsem natančna.</string>
     <string name="autoplay_quality_rules_title">Pravila kakovosti</string>
     <string name="autoplay_quality_rules_subtitle">Filtri, razvrščanje in ravni izdajateljskih skupin v Povezanih storitvah.</string>
     <string name="stream_sort_sources">Razvrsti vire</string>
@@ -2414,7 +2421,7 @@
     <string name="audio_dialogue_boost_stereo">Ta zvočni zapis je stereo, zato ni ločenega govornega kanala, ki bi ga lahko dvignili.</string>
     <string name="audio_dialogue_boost_mixed">Zvok do aplikacije pride že zmešan v stereo. Za uporabo vklopite downmix v nastavitvah zvoka.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Z MPV to deluje, ko je zvok zmešan v stereo, na primer na zvočnikih televizorja.</string>
-    <string name="audio_night_mode_strong_desc">Za pozne ure in majhne sobe. Najbolj izenačen zvok. Vse postane glasnejše, zato TV nekoliko utišajte.</string>
+    <string name="audio_night_mode_strong_desc">Za pozne ure in majhne sobe. Najbolj izenačen zvok. Tihi trenutki se močno dvignejo, najglasnejši se nekoliko utišajo.</string>
     <string name="subtitle_panel_languages">Jeziki</string>
     <string name="subtitle_style_text_color_hdr">Barva besedila (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Prosojnost besedila (HDR)</string>
@@ -2444,6 +2451,12 @@
     <string name="update_installed_automatically">Samodejno posodobljeno, ko je naprava mirovala</string>
     <string name="cd_playback_stats">Statistika predvajanja</string>
     <string name="player_stats_unavailable_mpv">Statistika ni na voljo za pogon libmpv</string>
+    <string name="cd_enable_scraper">Omogoči %1$s</string>
+    <string name="cd_enable_addon">Omogoči %1$s</string>
+    <string name="cd_color_swatch">Barva %1$s</string>
+    <string name="cd_emoji_option">Emodži %1$s</string>
+    <string name="cd_trailer_controls">Kontrolniki napovednika</string>
+    <string name="cd_seek_bar">Vrstica za previjanje</string>
     <string name="player_dead_source_failover">Vir ni na voljo - poskus z naslednjim virom (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Vir ni na voljo, poskus z virom %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Predvajanje se ni začelo - video dekoder se morda ne odziva. Ponovni zagon naprave to običajno odpravi. Pritisnite nazaj in poskusite znova ali izberite drug prenos.</string>

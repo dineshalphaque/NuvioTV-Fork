@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Не ради ништа</string>
     <string name="remote_buttons_job_stats">Статистика репродукције укљ./искљ.</string>
     <string name="remote_buttons_job_next_audio">Следећи звучни запис</string>
+    <string name="remote_buttons_job_night_mode">Ноћни режим укљ./искљ.</string>
+    <string name="remote_buttons_job_night_mode_desc">Искључује ноћни режим или га поново укључује на последњем коришћеном нивоу (први пут Средње)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Ноћни режим: следећи ниво</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Сваки притисак иде редом Искључено, Благо, Средње, Јако, па опет Искључено</string>
     <string name="remote_buttons_job_subtitles_toggle">Титлови укљ./искљ.</string>
     <string name="remote_buttons_job_subtitles_up">Титлови горе</string>
     <string name="remote_buttons_job_subtitles_down">Титлови доле</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Овај видео има један звучни запис</string>
     <string name="remote_buttons_banner_subtitles_on">Титлови: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Титлови искључени</string>
+    <string name="remote_buttons_banner_night_mode">Ноћни режим: %1$s</string>
     <string name="remote_buttons_banner_jump">Скок на %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Напред за %1$s</string>
     <string name="remote_buttons_banner_skip_back">Назад за %1$s</string>

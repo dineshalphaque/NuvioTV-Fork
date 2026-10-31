@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Ничего не делать</string>
     <string name="remote_buttons_job_stats">Статистика воспроизведения вкл./выкл.</string>
     <string name="remote_buttons_job_next_audio">Следующая аудиодорожка</string>
+    <string name="remote_buttons_job_night_mode">Ночной режим вкл./выкл.</string>
+    <string name="remote_buttons_job_night_mode_desc">Выключает ночной режим или снова включает его на последнем использованном уровне (в первый раз Средний)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Ночной режим: следующий уровень</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Каждое нажатие переключает: Выкл, Слабый, Средний, Сильный и снова Выкл</string>
     <string name="remote_buttons_job_subtitles_toggle">Субтитры вкл./выкл.</string>
     <string name="remote_buttons_job_subtitles_up">Субтитры выше</string>
     <string name="remote_buttons_job_subtitles_down">Субтитры ниже</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">В этом видео одна аудиодорожка</string>
     <string name="remote_buttons_banner_subtitles_on">Субтитры: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Субтитры выключены</string>
+    <string name="remote_buttons_banner_night_mode">Ночной режим: %1$s</string>
     <string name="remote_buttons_banner_jump">Переход к %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Вперёд на %1$s</string>
     <string name="remote_buttons_banner_skip_back">Назад на %1$s</string>

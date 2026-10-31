@@ -1159,6 +1159,13 @@
     <string name="sub_hdr_brightness">HDR सबटाइटल ब्राइटनेस</string>
     <string name="sub_libass_render_scale">सबटाइटल रेंडर रेज़ोल्यूशन</string>
     <string name="sub_libass_render_scale_sub">कम रेज़ोल्यूशन भारी टाइपसेटिंग पर परफ़ॉर्मेंस बेहतर करता है, पर शार्पनेस घटती है</string>
+    <string name="sub_libass_render_mode">ASS रेंडर मोड</string>
+    <string name="sub_libass_render_mode_sub">ASS/SSA सबटाइटल वीडियो पर कैसे बनाए जाते हैं</string>
+    <string name="sub_libass_render_mode_tunneled_sub">टनल्ड प्लेबैक वीडियो इफ़ेक्ट पाइपलाइन को बायपास करता है। ओवरले अपने-आप इस्तेमाल होता है।</string>
+    <string name="sub_libass_render_mode_video_effect">वीडियो इफ़ेक्ट</string>
+    <string name="sub_libass_render_mode_video_effect_sub">सबटाइटल को सीधे हर वीडियो फ़्रेम पर बनाता है। हर हार्डवेयर पर फ़्रेम-सटीक टाइमिंग। HDR कंटेंट को SDR में टोन-मैप किया जाता है।</string>
+    <string name="sub_libass_render_mode_overlay">ओवरले</string>
+    <string name="sub_libass_render_mode_overlay_sub">सबटाइटल को अलग सरफ़ेस लेयर पर रेंडर करता है। HDR आउटपुट बना रहता है। कुछ डिवाइस पर सबटाइटल की टाइमिंग पूरी तरह सटीक नहीं हो सकती।</string>
     <string name="autoplay_quality_rules_title">क्वालिटी नियम</string>
     <string name="autoplay_quality_rules_subtitle">कनेक्टेड सर्विसेज़ में फ़िल्टर, सॉर्टिंग और रिलीज़-ग्रुप टियर।</string>
     <string name="stream_sort_sources">सोर्स क्रमबद्ध करें</string>
@@ -1237,7 +1244,7 @@
     <string name="audio_dialogue_boost_stereo">यह ट्रैक स्टीरियो है, इसलिए बढ़ाने के लिए डायलॉग का अलग चैनल नहीं है।</string>
     <string name="audio_dialogue_boost_mixed">आवाज़ ऐप तक पहले से स्टीरियो में मिक्स होकर पहुँचती है। इसे इस्तेमाल करने के लिए ऑडियो सेटिंग्स में डाउनमिक्स चालू करें।</string>
     <string name="audio_dialogue_boost_mpv_multichannel">MPV के साथ यह तब काम करता है जब आवाज़ स्टीरियो में मिक्स हो, जैसे TV स्पीकर पर।</string>
-    <string name="audio_night_mode_strong_desc">देर रात और छोटे कमरों के लिए। सबसे बराबर आवाज़। सब कुछ तेज़ हो जाता है, इसलिए टीवी थोड़ा धीमा कर दें।</string>
+    <string name="audio_night_mode_strong_desc">देर रात और छोटे कमरों के लिए। सबसे बराबर आवाज़। धीमे पल काफ़ी ऊँचे होते हैं, सबसे तेज़ पल थोड़े धीमे होते हैं।</string>
     <string name="subtitle_panel_languages">भाषाएँ</string>
     <string name="subtitle_style_text_color_hdr">टेक्स्ट रंग (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">टेक्स्ट ओपेसिटी (HDR)</string>
@@ -1267,6 +1274,12 @@
     <string name="update_installed_automatically">डिवाइस इस्तेमाल न होने के दौरान अपने-आप अपडेट हुआ</string>
     <string name="cd_playback_stats">प्लेबैक स्टैट्स</string>
     <string name="player_stats_unavailable_mpv">libmpv इंजन के लिए स्टैट्स उपलब्ध नहीं हैं</string>
+    <string name="cd_enable_scraper">%1$s चालू करें</string>
+    <string name="cd_enable_addon">%1$s चालू करें</string>
+    <string name="cd_color_swatch">रंग %1$s</string>
+    <string name="cd_emoji_option">इमोजी %1$s</string>
+    <string name="cd_trailer_controls">ट्रेलर कंट्रोल</string>
+    <string name="cd_seek_bar">सीक बार</string>
     <string name="player_dead_source_failover">सोर्स उपलब्ध नहीं - अगला सोर्स आज़माया जा रहा है (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">सोर्स उपलब्ध नहीं, %3$s आज़माया जा रहा है (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">प्लेबैक शुरू नहीं हुआ - हो सकता है वीडियो डिकोडर जवाब न दे रहा हो। डिवाइस रीस्टार्ट करने से यह आमतौर पर ठीक हो जाता है। वापस जाकर फिर कोशिश करें, या कोई दूसरी स्ट्रीम चुनें।</string>

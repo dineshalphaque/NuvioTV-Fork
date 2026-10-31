@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Não fazer nada</string>
     <string name="remote_buttons_job_stats">Estatísticas de reprodução: ligar/desligar</string>
     <string name="remote_buttons_job_next_audio">Próxima faixa de áudio</string>
+    <string name="remote_buttons_job_night_mode">Modo noturno: ligar/desligar</string>
+    <string name="remote_buttons_job_night_mode_desc">Desliga o modo noturno ou liga de novo no último nível usado (Médio na primeira vez)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Modo noturno: próximo nível</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Cada toque passa por Desligado, Leve, Médio, Forte e volta para Desligado</string>
     <string name="remote_buttons_job_subtitles_toggle">Legendas: ligar/desligar</string>
     <string name="remote_buttons_job_subtitles_up">Subir legendas</string>
     <string name="remote_buttons_job_subtitles_down">Descer legendas</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Este vídeo tem uma faixa de áudio</string>
     <string name="remote_buttons_banner_subtitles_on">Legendas: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Legendas desativadas</string>
+    <string name="remote_buttons_banner_night_mode">Modo noturno: %1$s</string>
     <string name="remote_buttons_banner_jump">Pulou para %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Pulou %1$s para frente</string>
     <string name="remote_buttons_banner_skip_back">Pulou %1$s para trás</string>

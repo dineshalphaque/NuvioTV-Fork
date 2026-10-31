@@ -2861,6 +2861,13 @@
     <string name="sub_hdr_brightness">HDR 字幕の明るさ</string>
     <string name="sub_libass_render_scale">字幕のレンダリング解像度</string>
     <string name="sub_libass_render_scale_sub">解像度を下げると重い装飾字幕の処理が速くなりますが、鮮明さは落ちます</string>
+    <string name="sub_libass_render_mode">ASS レンダリングモード</string>
+    <string name="sub_libass_render_mode_sub">ASS/SSA 字幕を動画に描画する方法</string>
+    <string name="sub_libass_render_mode_tunneled_sub">トンネル再生ではビデオエフェクトの処理を経由しません。オーバーレイが自動的に使われます。</string>
+    <string name="sub_libass_render_mode_video_effect">ビデオエフェクト</string>
+    <string name="sub_libass_render_mode_video_effect_sub">字幕を動画の各フレームに直接描画します。どのハードウェアでもフレーム単位で正確なタイミング。HDR コンテンツは SDR にトーンマッピングされます。</string>
+    <string name="sub_libass_render_mode_overlay">オーバーレイ</string>
+    <string name="sub_libass_render_mode_overlay_sub">字幕を別のサーフェスレイヤーに描画します。HDR 出力を維持します。一部のデバイスでは字幕のタイミングが完全には正確でない場合があります。</string>
     <string name="autoplay_quality_rules_title">品質ルール</string>
     <string name="autoplay_quality_rules_subtitle">接続サービスのフィルター、並べ替え、リリースグループの階層。</string>
     <string name="stream_sort_sources">ソースの並べ替え</string>
@@ -2939,7 +2946,7 @@
     <string name="audio_dialogue_boost_stereo">このトラックはステレオのため、上げられるセリフ専用のチャンネルがありません。</string>
     <string name="audio_dialogue_boost_mixed">音声はすでにステレオにミックスされた状態でアプリに届いています。使うには音声設定でダウンミックスをオンにしてください。</string>
     <string name="audio_dialogue_boost_mpv_multichannel">MPV では、TV スピーカーなど、音声がステレオにミックスされているときに使えます。</string>
-    <string name="audio_night_mode_strong_desc">深夜や小さな部屋向け。いちばん均一な音です。全体が大きくなるので、テレビの音量を少し下げてください。</string>
+    <string name="audio_night_mode_strong_desc">深夜や小さな部屋向け。いちばん均一な音です。静かな場面は大きく持ち上がり、いちばん大きい音は少し下がります。</string>
     <string name="subtitle_panel_languages">言語</string>
     <string name="subtitle_style_text_color_hdr">文字色 (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">文字の不透明度 (HDR)</string>
@@ -2969,6 +2976,12 @@
     <string name="update_installed_automatically">デバイスが使われていない間に自動でアップデートしました</string>
     <string name="cd_playback_stats">再生統計</string>
     <string name="player_stats_unavailable_mpv">libmpvエンジンでは統計を利用できません</string>
+    <string name="cd_enable_scraper">%1$s を有効にする</string>
+    <string name="cd_enable_addon">%1$s を有効にする</string>
+    <string name="cd_color_swatch">色 %1$s</string>
+    <string name="cd_emoji_option">絵文字 %1$s</string>
+    <string name="cd_trailer_controls">予告編のコントロール</string>
+    <string name="cd_seek_bar">シークバー</string>
     <string name="player_dead_source_failover">ソースを利用できません - 次のソースを試行中（%1$d/%2$d）</string>
     <string name="player_dead_source_failover_named">ソースを利用できません。%3$sを試行中（%1$d/%2$d）</string>
     <string name="player_error_startup_timeout">再生が始まりませんでした - ビデオデコーダーが応答していない可能性があります。通常はデバイスの再起動で解消します。戻るを押してもう一度試すか、別のストリームを選択してください。</string>

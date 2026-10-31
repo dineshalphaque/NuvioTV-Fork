@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Không làm gì</string>
     <string name="remote_buttons_job_stats">Bật/tắt thống kê phát lại</string>
     <string name="remote_buttons_job_next_audio">Bản âm thanh tiếp theo</string>
+    <string name="remote_buttons_job_night_mode">Bật/tắt chế độ ban đêm</string>
+    <string name="remote_buttons_job_night_mode_desc">Tắt chế độ ban đêm, hoặc bật lại ở mức dùng gần nhất (lần đầu là Vừa)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Chế độ ban đêm: mức tiếp theo</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Mỗi lần nhấn chuyển lần lượt Tắt, Nhẹ, Vừa, Mạnh rồi lại Tắt</string>
     <string name="remote_buttons_job_subtitles_toggle">Bật/tắt phụ đề</string>
     <string name="remote_buttons_job_subtitles_up">Đưa phụ đề lên</string>
     <string name="remote_buttons_job_subtitles_down">Đưa phụ đề xuống</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Video này chỉ có một bản âm thanh</string>
     <string name="remote_buttons_banner_subtitles_on">Phụ đề: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Đã tắt phụ đề</string>
+    <string name="remote_buttons_banner_night_mode">Chế độ ban đêm: %1$s</string>
     <string name="remote_buttons_banner_jump">Đã chuyển đến %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Đã nhảy tới %1$s</string>
     <string name="remote_buttons_banner_skip_back">Đã nhảy lùi %1$s</string>

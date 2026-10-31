@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">无操作</string>
     <string name="remote_buttons_job_stats">播放统计开/关</string>
     <string name="remote_buttons_job_next_audio">下一条音轨</string>
+    <string name="remote_buttons_job_night_mode">夜间模式开/关</string>
+    <string name="remote_buttons_job_night_mode_desc">关闭夜间模式，或以上次使用的强度重新开启（首次为中度）</string>
+    <string name="remote_buttons_job_night_mode_cycle">夜间模式：下一档</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">每按一次依次切换关闭、轻度、中度、强力，然后回到关闭</string>
     <string name="remote_buttons_job_subtitles_toggle">字幕开/关</string>
     <string name="remote_buttons_job_subtitles_up">字幕上移</string>
     <string name="remote_buttons_job_subtitles_down">字幕下移</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">此视频只有一条音轨</string>
     <string name="remote_buttons_banner_subtitles_on">字幕：%1$s</string>
     <string name="remote_buttons_banner_subtitles_off">字幕已关闭</string>
+    <string name="remote_buttons_banner_night_mode">夜间模式：%1$s</string>
     <string name="remote_buttons_banner_jump">已跳至 %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">已向前跳 %1$s</string>
     <string name="remote_buttons_banner_skip_back">已向后跳 %1$s</string>

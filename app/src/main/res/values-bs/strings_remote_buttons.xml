@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Ne radi ništa</string>
     <string name="remote_buttons_job_stats">Statistika reprodukcije uklj./isklj.</string>
     <string name="remote_buttons_job_next_audio">Sljedeći audio kanal</string>
+    <string name="remote_buttons_job_night_mode">Noćni način uklj./isklj.</string>
+    <string name="remote_buttons_job_night_mode_desc">Isključuje noćni način ili ga ponovo uključuje na posljednjem korištenom nivou (prvi put Srednje)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Noćni način: sljedeći nivo</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Svaki pritisak ide redom Isključeno, Blago, Srednje, Jako, pa opet Isključeno</string>
     <string name="remote_buttons_job_subtitles_toggle">Titlovi uklj./isklj.</string>
     <string name="remote_buttons_job_subtitles_up">Titlovi gore</string>
     <string name="remote_buttons_job_subtitles_down">Titlovi dolje</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Ovaj video ima jedan audio kanal</string>
     <string name="remote_buttons_banner_subtitles_on">Titlovi: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Titlovi isključeni</string>
+    <string name="remote_buttons_banner_night_mode">Noćni način: %1$s</string>
     <string name="remote_buttons_banner_jump">Skok na %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Naprijed za %1$s</string>
     <string name="remote_buttons_banner_skip_back">Nazad za %1$s</string>

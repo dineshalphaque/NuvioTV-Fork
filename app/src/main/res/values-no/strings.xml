@@ -1284,6 +1284,13 @@
     <string name="sub_hdr_brightness">Lysstyrke for HDR-undertekster</string>
     <string name="sub_libass_render_scale">Gjengivelsesoppløsning for undertekster</string>
     <string name="sub_libass_render_scale_sub">Lavere oppløsning gir bedre ytelse ved tung typesetting, men mindre skarphet</string>
+    <string name="sub_libass_render_mode">ASS-gjengivelsesmodus</string>
+    <string name="sub_libass_render_mode_sub">Hvordan ASS/SSA-undertekster tegnes på videoen</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunnelert avspilling går utenom videoeffektkjeden. Overlegg brukes automatisk.</string>
+    <string name="sub_libass_render_mode_video_effect">Videoeffekt</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Tegner undertekster rett på hvert videobilde. Bildenøyaktig timing på all maskinvare. HDR-innhold tonemappes til SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Overlegg</string>
+    <string name="sub_libass_render_mode_overlay_sub">Gjengir undertekster på et eget overflatelag. Bevarer HDR-utgangen. Timingen for undertekster er kanskje ikke helt nøyaktig på enkelte enheter.</string>
     <string name="autoplay_quality_rules_title">Kvalitetsregler</string>
     <string name="autoplay_quality_rules_subtitle">Filtre, sortering og nivåer for utgivelsesgrupper i Tilkoblede tjenester.</string>
     <string name="stream_sort_sources">Sorter kilder</string>
@@ -1362,7 +1369,7 @@
     <string name="audio_dialogue_boost_stereo">Dette sporet er stereo, så det finnes ingen egen talekanal å heve.</string>
     <string name="audio_dialogue_boost_mixed">Lyden kommer til appen allerede mikset til stereo. Slå på downmix i lydinnstillingene for å bruke dette.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Med MPV fungerer dette når lyden mikses til stereo, for eksempel på TV-høyttalere.</string>
-    <string name="audio_night_mode_strong_desc">Til sene kvelder og små rom. Jevnest lyd. Alt blir høyere, så skru ned TV-en litt.</string>
+    <string name="audio_night_mode_strong_desc">Til sene kvelder og små rom. Jevnest lyd. Stille øyeblikk løftes mye, de høyeste dempes litt.</string>
     <string name="subtitle_panel_languages">Språk</string>
     <string name="subtitle_style_text_color_hdr">Tekstfarge (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Tekstdekkevne (HDR)</string>
@@ -1392,6 +1399,12 @@
     <string name="update_installed_automatically">Oppdatert automatisk mens enheten ikke var i bruk</string>
     <string name="cd_playback_stats">Avspillingsstatistikk</string>
     <string name="player_stats_unavailable_mpv">Statistikk er ikke tilgjengelig for libmpv-motoren</string>
+    <string name="cd_enable_scraper">Aktiver %1$s</string>
+    <string name="cd_enable_addon">Aktiver %1$s</string>
+    <string name="cd_color_swatch">Farge %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Trailerkontroller</string>
+    <string name="cd_seek_bar">Tidslinje</string>
     <string name="player_dead_source_failover">Kilden er utilgjengelig - prøver neste kilde (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Kilden er utilgjengelig, prøver %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Avspillingen startet ikke - videodekoderen svarer kanskje ikke. En omstart av enheten løser det som regel. Trykk tilbake og prøv igjen, eller velg en annen strøm.</string>

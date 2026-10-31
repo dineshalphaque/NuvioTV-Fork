@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Tidak melakukan apa-apa</string>
     <string name="remote_buttons_job_stats">Statistik pemutaran aktif/nonaktif</string>
     <string name="remote_buttons_job_next_audio">Trek audio berikutnya</string>
+    <string name="remote_buttons_job_night_mode">Mode malam aktif/nonaktif</string>
+    <string name="remote_buttons_job_night_mode_desc">Mematikan mode malam, atau menyalakannya lagi di level yang terakhir dipakai (Sedang untuk pertama kali)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Mode malam: level berikutnya</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Setiap kali ditekan berpindah: Mati, Ringan, Sedang, Kuat, lalu Mati lagi</string>
     <string name="remote_buttons_job_subtitles_toggle">Subtitle aktif/nonaktif</string>
     <string name="remote_buttons_job_subtitles_up">Subtitle ke atas</string>
     <string name="remote_buttons_job_subtitles_down">Subtitle ke bawah</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Video ini hanya punya satu trek audio</string>
     <string name="remote_buttons_banner_subtitles_on">Subtitle: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Subtitle nonaktif</string>
+    <string name="remote_buttons_banner_night_mode">Mode malam: %1$s</string>
     <string name="remote_buttons_banner_jump">Pindah ke %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Lompat maju %1$s</string>
     <string name="remote_buttons_banner_skip_back">Lompat mundur %1$s</string>

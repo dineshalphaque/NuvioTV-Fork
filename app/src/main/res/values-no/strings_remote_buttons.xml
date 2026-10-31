@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Gjør ingenting</string>
     <string name="remote_buttons_job_stats">Avspillingsstatistikk på/av</string>
     <string name="remote_buttons_job_next_audio">Neste lydspor</string>
+    <string name="remote_buttons_job_night_mode">Nattmodus på/av</string>
+    <string name="remote_buttons_job_night_mode_desc">Slår av nattmodus, eller på igjen på nivået du brukte sist (Middels første gang)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nattmodus: neste nivå</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Hvert trykk går videre: Av, Lett, Middels, Sterk, så Av igjen</string>
     <string name="remote_buttons_job_subtitles_toggle">Undertekster på/av</string>
     <string name="remote_buttons_job_subtitles_up">Undertekster opp</string>
     <string name="remote_buttons_job_subtitles_down">Undertekster ned</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Denne videoen har ett lydspor</string>
     <string name="remote_buttons_banner_subtitles_on">Undertekster: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Undertekster av</string>
+    <string name="remote_buttons_banner_night_mode">Nattmodus: %1$s</string>
     <string name="remote_buttons_banner_jump">Hoppet til %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Hoppet %1$s fremover</string>
     <string name="remote_buttons_banner_skip_back">Hoppet %1$s bakover</string>

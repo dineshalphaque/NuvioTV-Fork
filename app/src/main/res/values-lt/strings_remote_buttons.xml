@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Nieko nedaryti</string>
     <string name="remote_buttons_job_stats">Atkūrimo statistika įj./išj.</string>
     <string name="remote_buttons_job_next_audio">Kitas garso takelis</string>
+    <string name="remote_buttons_job_night_mode">Naktinis režimas įj./išj.</string>
+    <string name="remote_buttons_job_night_mode_desc">Išjungia naktinį režimą arba vėl įjungia paskutiniu naudotu lygiu (pirmą kartą Vidutinis)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Naktinis režimas: kitas lygis</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Kiekvienas paspaudimas perjungia toliau: Išjungta, Švelnus, Vidutinis, Stiprus ir vėl Išjungta</string>
     <string name="remote_buttons_job_subtitles_toggle">Subtitrai įj./išj.</string>
     <string name="remote_buttons_job_subtitles_up">Subtitrai aukštyn</string>
     <string name="remote_buttons_job_subtitles_down">Subtitrai žemyn</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Šiame vaizdo įraše yra vienas garso takelis</string>
     <string name="remote_buttons_banner_subtitles_on">Subtitrai: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Subtitrai išjungti</string>
+    <string name="remote_buttons_banner_night_mode">Naktinis režimas: %1$s</string>
     <string name="remote_buttons_banner_jump">Peršokta į %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Pirmyn %1$s</string>
     <string name="remote_buttons_banner_skip_back">Atgal %1$s</string>

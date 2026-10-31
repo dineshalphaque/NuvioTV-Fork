@@ -3678,7 +3678,7 @@
     <string name="audio_dialogue_boost_stereo">Ta ścieżka jest stereo, więc nie ma osobnego kanału mowy do podbicia.</string>
     <string name="audio_dialogue_boost_mixed">Dźwięk dociera do aplikacji już zmiksowany do stereo. Aby z tego korzystać, włącz downmix w ustawieniach dźwięku.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">W MPV działa to, gdy dźwięk jest miksowany do stereo, na przykład na głośnikach telewizora.</string>
-    <string name="audio_night_mode_strong_desc">Na późne noce i małe pokoje. Najbardziej wyrównany dźwięk. Wszystko jest głośniejsze, więc lekko ścisz telewizor.</string>
+    <string name="audio_night_mode_strong_desc">Na późne noce i małe pokoje. Najbardziej wyrównany dźwięk. Ciche momenty są mocno podbite, najgłośniejsze lekko ściszone.</string>
     <string name="subtitle_panel_languages">Języki</string>
     <string name="library_empty_mdblist_title">Brak %1$s na liście do obejrzenia</string>
     <string name="library_empty_mdblist_subtitle">Użyj + w szczegółach, aby dodać pozycje do listy do obejrzenia MDBList</string>
@@ -4218,6 +4218,12 @@
     <string name="settings_stream_player_badges_title">Odznaki odtwarzacza</string>
     <string name="settings_stream_player_badges_description">Wybierz pakiet odznak używany przez odtwarzacz.</string>
     <string name="settings_stream_player_badges_same">Jak odznaki strumieni</string>
+    <string name="cd_enable_scraper">Włącz %1$s</string>
+    <string name="cd_enable_addon">Włącz %1$s</string>
+    <string name="cd_color_swatch">Kolor %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Sterowanie zwiastunem</string>
+    <string name="cd_seek_bar">Pasek przewijania</string>
     <string name="assessment_value_on_auto">Wł. · Auto, do ≈%1$s</string>
     <string name="assessment_value_connections_auto">Automatycznie (zgodnie z Automatycznym przyspieszeniem)</string>
     <string name="assessment_grounds_connections_auto">Automatyczne przyspieszenie jest włączone i samo dodaje połączenia, gdy film ich potrzebuje; stała liczba by je wyłączyła. Zmierzono: jedno połączenie %1$s, %3$d × %4$d MB osiągnęło %2$s.</string>

@@ -3390,6 +3390,13 @@
     <string name="sub_hdr_brightness">HDR 字幕亮度</string>
     <string name="sub_libass_render_scale">字幕渲染解析度</string>
     <string name="sub_libass_render_scale_sub">降低解析度可提升複雜特效字幕的效能，但會降低清晰度</string>
+    <string name="sub_libass_render_mode">ASS 渲染模式</string>
+    <string name="sub_libass_render_mode_sub">ASS/SSA 字幕繪製到影片上的方式</string>
+    <string name="sub_libass_render_mode_tunneled_sub">通道化播放會略過影片特效管線，將自動使用覆蓋層。</string>
+    <string name="sub_libass_render_mode_video_effect">影片特效</string>
+    <string name="sub_libass_render_mode_video_effect_sub">將字幕直接繪製到每一個影格上。在所有硬體上都能做到影格級精確的時間同步。HDR 內容會色調對應為 SDR。</string>
+    <string name="sub_libass_render_mode_overlay">覆蓋層</string>
+    <string name="sub_libass_render_mode_overlay_sub">在獨立的表面圖層上渲染字幕。保留 HDR 輸出。在部分裝置上字幕時間可能不完全準確。</string>
     <string name="autoplay_quality_rules_title">品質規則</string>
     <string name="autoplay_quality_rules_subtitle">「已連線的服務」中的篩選、排序和發行組分級。</string>
     <string name="stream_sort_sources">排序來源</string>
@@ -3468,7 +3475,7 @@
     <string name="audio_dialogue_boost_stereo">此音軌為立體聲，沒有可提升的獨立人聲聲道。</string>
     <string name="audio_dialogue_boost_mixed">聲音傳到應用程式時已混為立體聲。請在音訊設定中開啟混音下轉後使用。</string>
     <string name="audio_dialogue_boost_mpv_multichannel">使用 MPV 時，聲音混為立體聲才能用，例如電視喇叭。</string>
-    <string name="audio_night_mode_strong_desc">適合深夜和小房間。聲音最平穩。整體會變大聲，請把電視音量調低一些。</string>
+    <string name="audio_night_mode_strong_desc">適合深夜和小房間。聲音最平穩。安靜的片段明顯提升，最響的部分稍微降低。</string>
     <string name="subtitle_panel_languages">語言</string>
     <string name="subtitle_style_text_color_hdr">文字顏色 (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">文字透明度 (HDR)</string>
@@ -3498,6 +3505,12 @@
     <string name="update_installed_automatically">已在裝置閒置時自動更新</string>
     <string name="cd_playback_stats">播放統計</string>
     <string name="player_stats_unavailable_mpv">libmpv 引擎不提供統計資訊</string>
+    <string name="cd_enable_scraper">啟用 %1$s</string>
+    <string name="cd_enable_addon">啟用 %1$s</string>
+    <string name="cd_color_swatch">顏色 %1$s</string>
+    <string name="cd_emoji_option">表情符號 %1$s</string>
+    <string name="cd_trailer_controls">預告片控制項</string>
+    <string name="cd_seek_bar">進度列</string>
     <string name="player_dead_source_failover">來源無法使用 - 正在嘗試下一個來源 (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">來源無法使用，正在嘗試 %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">播放未能開始 - 影片解碼器可能沒有回應。重新啟動裝置通常可以解決。按返回鍵後重試，或選擇其他串流。</string>

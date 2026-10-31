@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Non fare nulla</string>
     <string name="remote_buttons_job_stats">Mostra/nascondi statistiche di riproduzione</string>
     <string name="remote_buttons_job_next_audio">Traccia audio successiva</string>
+    <string name="remote_buttons_job_night_mode">Attiva/disattiva modalità notte</string>
+    <string name="remote_buttons_job_night_mode_desc">Disattiva la modalità notte o la riattiva all\'ultimo livello usato (Media la prima volta)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Modalità notte: livello successivo</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">A ogni pressione: Disattivata, Leggera, Media, Forte, poi di nuovo Disattivata</string>
     <string name="remote_buttons_job_subtitles_toggle">Attiva/disattiva sottotitoli</string>
     <string name="remote_buttons_job_subtitles_up">Sottotitoli più su</string>
     <string name="remote_buttons_job_subtitles_down">Sottotitoli più giù</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Questo video ha una sola traccia audio</string>
     <string name="remote_buttons_banner_subtitles_on">Sottotitoli: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Sottotitoli disattivati</string>
+    <string name="remote_buttons_banner_night_mode">Modalità notte: %1$s</string>
     <string name="remote_buttons_banner_jump">Salto al %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Salto avanti di %1$s</string>
     <string name="remote_buttons_banner_skip_back">Salto indietro di %1$s</string>

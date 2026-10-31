@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Gör ingenting</string>
     <string name="remote_buttons_job_stats">Uppspelningsstatistik på/av</string>
     <string name="remote_buttons_job_next_audio">Nästa ljudspår</string>
+    <string name="remote_buttons_job_night_mode">Nattläge på/av</string>
+    <string name="remote_buttons_job_night_mode_desc">Stänger av nattläget, eller slår på det igen på nivån du använde senast (Medel första gången)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nattläge: nästa nivå</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Varje tryck stegar vidare: Av, Lätt, Medel, Stark och sedan Av igen</string>
     <string name="remote_buttons_job_subtitles_toggle">Undertexter på/av</string>
     <string name="remote_buttons_job_subtitles_up">Undertexter upp</string>
     <string name="remote_buttons_job_subtitles_down">Undertexter ned</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Den här videon har ett ljudspår</string>
     <string name="remote_buttons_banner_subtitles_on">Undertexter: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Undertexter av</string>
+    <string name="remote_buttons_banner_night_mode">Nattläge: %1$s</string>
     <string name="remote_buttons_banner_jump">Hoppade till %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Hoppade framåt %1$s</string>
     <string name="remote_buttons_banner_skip_back">Hoppade bakåt %1$s</string>

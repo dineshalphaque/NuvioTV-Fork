@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Hiçbir şey yapma</string>
     <string name="remote_buttons_job_stats">Oynatma istatistiklerini aç/kapat</string>
     <string name="remote_buttons_job_next_audio">Sonraki ses parçası</string>
+    <string name="remote_buttons_job_night_mode">Gece modunu aç/kapat</string>
+    <string name="remote_buttons_job_night_mode_desc">Gece modunu kapatır ya da en son kullandığınız seviyede yeniden açar (ilk seferde Orta)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Gece modu: sonraki seviye</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Her basışta sırayla Kapalı, Hafif, Orta, Güçlü, sonra yine Kapalı</string>
     <string name="remote_buttons_job_subtitles_toggle">Altyazıları aç/kapat</string>
     <string name="remote_buttons_job_subtitles_up">Altyazıyı yukarı taşı</string>
     <string name="remote_buttons_job_subtitles_down">Altyazıyı aşağı taşı</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Bu videoda tek ses parçası var</string>
     <string name="remote_buttons_banner_subtitles_on">Altyazı: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Altyazı kapalı</string>
+    <string name="remote_buttons_banner_night_mode">Gece modu: %1$s</string>
     <string name="remote_buttons_banner_jump">%%%1$d konumuna gidildi</string>
     <string name="remote_buttons_banner_skip_forward">%1$s ileri atlandı</string>
     <string name="remote_buttons_banner_skip_back">%1$s geri atlandı</string>

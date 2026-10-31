@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Καμία ενέργεια</string>
     <string name="remote_buttons_job_stats">Στατιστικά αναπαραγωγής ενεργ./απενεργ.</string>
     <string name="remote_buttons_job_next_audio">Επόμενο κομμάτι ήχου</string>
+    <string name="remote_buttons_job_night_mode">Νυχτερινή λειτουργία ενεργ./απενεργ.</string>
+    <string name="remote_buttons_job_night_mode_desc">Απενεργοποιεί τη νυχτερινή λειτουργία ή την ενεργοποιεί ξανά στο τελευταίο επίπεδο (Μέτριο την πρώτη φορά)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Νυχτερινή λειτουργία: επόμενο επίπεδο</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Κάθε πάτημα περνά από Ανενεργό, Ήπιο, Μέτριο, Έντονο και ξανά Ανενεργό</string>
     <string name="remote_buttons_job_subtitles_toggle">Υπότιτλοι ενεργ./απενεργ.</string>
     <string name="remote_buttons_job_subtitles_up">Υπότιτλοι πιο πάνω</string>
     <string name="remote_buttons_job_subtitles_down">Υπότιτλοι πιο κάτω</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Αυτό το βίντεο έχει ένα κομμάτι ήχου</string>
     <string name="remote_buttons_banner_subtitles_on">Υπότιτλοι: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Χωρίς υπότιτλους</string>
+    <string name="remote_buttons_banner_night_mode">Νυχτερινή λειτουργία: %1$s</string>
     <string name="remote_buttons_banner_jump">Μετάβαση στο %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Εμπρός %1$s</string>
     <string name="remote_buttons_banner_skip_back">Πίσω %1$s</string>

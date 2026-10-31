@@ -2432,6 +2432,13 @@
     <string name="sub_hdr_brightness">HDR-Untertitelhelligkeit</string>
     <string name="sub_libass_render_scale">Auflösung der Untertitel-Darstellung</string>
     <string name="sub_libass_render_scale_sub">Geringere Auflösung verbessert die Leistung bei aufwendigem Typesetting, auf Kosten der Schärfe</string>
+    <string name="sub_libass_render_mode">ASS-Darstellungsmodus</string>
+    <string name="sub_libass_render_mode_sub">Wie ASS/SSA-Untertitel ins Video gezeichnet werden</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Getunnelte Wiedergabe umgeht die Videoeffekt-Kette. Overlay wird automatisch verwendet.</string>
+    <string name="sub_libass_render_mode_video_effect">Videoeffekt</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Zeichnet Untertitel direkt in jedes Videobild. Bildgenaues Timing auf jeder Hardware. HDR-Inhalte werden per Tone-Mapping in SDR umgewandelt.</string>
+    <string name="sub_libass_render_mode_overlay">Overlay</string>
+    <string name="sub_libass_render_mode_overlay_sub">Zeichnet Untertitel auf einer separaten Ebene. Erhält die HDR-Ausgabe. Das Untertitel-Timing ist auf manchen Geräten eventuell nicht ganz genau.</string>
     <string name="autoplay_quality_rules_title">Qualitätsregeln</string>
     <string name="autoplay_quality_rules_subtitle">Filter, Sortierung und Release-Gruppen-Stufen unter Verbundene Dienste.</string>
     <string name="stream_sort_sources">Quellen sortieren</string>
@@ -2510,7 +2517,7 @@
     <string name="audio_dialogue_boost_stereo">Diese Tonspur ist Stereo, es gibt also keinen eigenen Sprachkanal zum Anheben.</string>
     <string name="audio_dialogue_boost_mixed">Der Ton kommt schon auf Stereo gemischt in der App an. Aktiviere dafür Downmix in den Audioeinstellungen.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Mit MPV geht das, wenn der Ton auf Stereo gemischt wird, zum Beispiel über TV-Lautsprecher.</string>
-    <string name="audio_night_mode_strong_desc">Für späte Stunden und kleine Räume. Der gleichmäßigste Ton. Alles wird lauter, stell den Fernseher also etwas leiser.</string>
+    <string name="audio_night_mode_strong_desc">Für späte Stunden und kleine Räume. Der gleichmäßigste Ton. Leise Momente werden deutlich angehoben, die lautesten etwas abgesenkt.</string>
     <string name="subtitle_panel_languages">Sprachen</string>
     <string name="subtitle_style_text_color_hdr">Textfarbe (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Text-Deckkraft (HDR)</string>
@@ -2540,6 +2547,12 @@
     <string name="update_installed_automatically">Automatisch aktualisiert, während das Gerät nicht genutzt wurde</string>
     <string name="cd_playback_stats">Wiedergabestatistik</string>
     <string name="player_stats_unavailable_mpv">Für die libmpv-Engine ist keine Statistik verfügbar</string>
+    <string name="cd_enable_scraper">%1$s aktivieren</string>
+    <string name="cd_enable_addon">%1$s aktivieren</string>
+    <string name="cd_color_swatch">Farbe %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Trailer-Steuerung</string>
+    <string name="cd_seek_bar">Fortschrittsleiste</string>
     <string name="player_dead_source_failover">Quelle nicht verfügbar - nächste Quelle wird versucht (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Quelle nicht verfügbar, %3$s wird versucht (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Wiedergabe nicht gestartet - der Videodecoder reagiert möglicherweise nicht. Ein Neustart des Geräts behebt das meist. Zurück drücken und erneut versuchen oder einen anderen Stream wählen.</string>

@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">何もしない</string>
     <string name="remote_buttons_job_stats">再生統計のオン/オフ</string>
     <string name="remote_buttons_job_next_audio">次の音声トラック</string>
+    <string name="remote_buttons_job_night_mode">ナイトモードのオン/オフ</string>
+    <string name="remote_buttons_job_night_mode_desc">ナイトモードをオフにするか、前回使ったレベルでもう一度オンにします（初回は中）</string>
+    <string name="remote_buttons_job_night_mode_cycle">ナイトモード: 次のレベル</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">押すたびにオフ、弱、中、強、オフの順に切り替わります</string>
     <string name="remote_buttons_job_subtitles_toggle">字幕のオン/オフ</string>
     <string name="remote_buttons_job_subtitles_up">字幕を上へ</string>
     <string name="remote_buttons_job_subtitles_down">字幕を下へ</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">この動画の音声トラックは1つです</string>
     <string name="remote_buttons_banner_subtitles_on">字幕: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">字幕オフ</string>
+    <string name="remote_buttons_banner_night_mode">ナイトモード: %1$s</string>
     <string name="remote_buttons_banner_jump">%1$d %%の位置へジャンプ</string>
     <string name="remote_buttons_banner_skip_forward">%1$s進みました</string>
     <string name="remote_buttons_banner_skip_back">%1$s戻りました</string>

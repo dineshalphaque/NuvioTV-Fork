@@ -2997,6 +2997,13 @@
     <string name="sub_hdr_brightness">Jas titulků HDR</string>
     <string name="sub_libass_render_scale">Rozlišení vykreslování titulků</string>
     <string name="sub_libass_render_scale_sub">Nižší rozlišení zlepšuje výkon u náročné typografie za cenu ostrosti</string>
+    <string name="sub_libass_render_mode">Režim vykreslování ASS</string>
+    <string name="sub_libass_render_mode_sub">Jak se titulky ASS/SSA vykreslují do videa</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunelované přehrávání obchází řetězec video efektů. Automaticky se použije překryvná vrstva.</string>
+    <string name="sub_libass_render_mode_video_effect">Video efekt</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Vykresluje titulky přímo do každého snímku videa. Časování přesné na snímek na veškerém hardwaru. Obsah HDR se tónově mapuje do SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Překryvná vrstva</string>
+    <string name="sub_libass_render_mode_overlay_sub">Vykresluje titulky na samostatnou vrstvu. Zachovává výstup HDR. Časování titulků nemusí být na některých zařízeních zcela přesné.</string>
     <string name="autoplay_quality_rules_title">Pravidla kvality</string>
     <string name="autoplay_quality_rules_subtitle">Filtry, řazení a úrovně release groups v Připojených službách.</string>
     <string name="stream_sort_sources">Řazení zdrojů</string>
@@ -3075,7 +3082,7 @@
     <string name="audio_dialogue_boost_stereo">Tato stopa je stereo, takže není žádný samostatný kanál řeči, který by šel zesílit.</string>
     <string name="audio_dialogue_boost_mixed">Zvuk dorazí do aplikace už smíchaný do sterea. Pro použití zapněte downmix v nastavení zvuku.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">S MPV to funguje, když se zvuk míchá do sterea, například na reproduktorech TV.</string>
-    <string name="audio_night_mode_strong_desc">Na pozdní hodiny a malé místnosti. Nejvyrovnanější zvuk. Vše bude hlasitější, proto TV trochu ztlumte.</string>
+    <string name="audio_night_mode_strong_desc">Na pozdní hodiny a malé místnosti. Nejvyrovnanější zvuk. Tiché chvíle hodně zesílí, ty nejhlasitější se trochu ztlumí.</string>
     <string name="subtitle_panel_languages">Jazyky</string>
     <string name="subtitle_style_text_color_hdr">Barva textu (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Neprůhlednost textu (HDR)</string>
@@ -3105,6 +3112,12 @@
     <string name="update_installed_automatically">Automaticky aktualizováno, když se zařízení nepoužívalo</string>
     <string name="cd_playback_stats">Statistiky přehrávání</string>
     <string name="player_stats_unavailable_mpv">Statistiky nejsou pro engine libmpv dostupné</string>
+    <string name="cd_enable_scraper">Povolit %1$s</string>
+    <string name="cd_enable_addon">Povolit %1$s</string>
+    <string name="cd_color_swatch">Barva %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Ovládání traileru</string>
+    <string name="cd_seek_bar">Posuvník přehrávání</string>
     <string name="player_dead_source_failover">Zdroj nedostupný - zkouší se další zdroj (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Zdroj nedostupný, zkouší se %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Přehrávání se nespustilo - video dekodér možná neodpovídá. Obvykle pomůže restart zařízení. Stiskem Zpět se vraťte a zkuste to znovu, nebo vyberte jiný stream.</string>

@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">لا شيء</string>
     <string name="remote_buttons_job_stats">إظهار/إخفاء إحصائيات التشغيل</string>
     <string name="remote_buttons_job_next_audio">المسار الصوتي التالي</string>
+    <string name="remote_buttons_job_night_mode">تشغيل/إيقاف وضع الليل</string>
+    <string name="remote_buttons_job_night_mode_desc">يوقف وضع الليل، أو يعيد تشغيله بالمستوى الذي استخدمته آخر مرة (متوسط في المرة الأولى)</string>
+    <string name="remote_buttons_job_night_mode_cycle">وضع الليل: المستوى التالي</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">كل ضغطة تنتقل بين معطل وخفيف ومتوسط وقوي، ثم معطل من جديد</string>
     <string name="remote_buttons_job_subtitles_toggle">تشغيل/إيقاف الترجمات</string>
     <string name="remote_buttons_job_subtitles_up">تحريك الترجمات للأعلى</string>
     <string name="remote_buttons_job_subtitles_down">تحريك الترجمات للأسفل</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">هذا الفيديو يحتوي على مسار صوتي واحد</string>
     <string name="remote_buttons_banner_subtitles_on">الترجمات: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">الترجمات متوقفة</string>
+    <string name="remote_buttons_banner_night_mode">وضع الليل: %1$s</string>
     <string name="remote_buttons_banner_jump">تم الانتقال إلى %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">تم القفز للأمام %1$s</string>
     <string name="remote_buttons_banner_skip_back">تم القفز للخلف %1$s</string>

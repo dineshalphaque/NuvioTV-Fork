@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">कुछ न करें</string>
     <string name="remote_buttons_job_stats">प्लेबैक स्टैट्स चालू/बंद</string>
     <string name="remote_buttons_job_next_audio">अगला ऑडियो ट्रैक</string>
+    <string name="remote_buttons_job_night_mode">नाइट मोड चालू/बंद</string>
+    <string name="remote_buttons_job_night_mode_desc">नाइट मोड बंद करता है, या उसे पिछली बार इस्तेमाल किए गए लेवल पर फिर चालू करता है (पहली बार मध्यम)</string>
+    <string name="remote_buttons_job_night_mode_cycle">नाइट मोड: अगला लेवल</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">हर बार दबाने पर बंद, हल्का, मध्यम, ज़्यादा और फिर बंद पर जाता है</string>
     <string name="remote_buttons_job_subtitles_toggle">सबटाइटल चालू/बंद</string>
     <string name="remote_buttons_job_subtitles_up">सबटाइटल ऊपर</string>
     <string name="remote_buttons_job_subtitles_down">सबटाइटल नीचे</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">इस वीडियो में एक ही ऑडियो ट्रैक है</string>
     <string name="remote_buttons_banner_subtitles_on">सबटाइटल: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">सबटाइटल बंद</string>
+    <string name="remote_buttons_banner_night_mode">नाइट मोड: %1$s</string>
     <string name="remote_buttons_banner_jump">%1$d %% पर जंप किया</string>
     <string name="remote_buttons_banner_skip_forward">%1$s आगे स्किप किया</string>
     <string name="remote_buttons_banner_skip_back">%1$s पीछे स्किप किया</string>

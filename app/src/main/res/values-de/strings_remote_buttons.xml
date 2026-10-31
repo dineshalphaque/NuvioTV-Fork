@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Nichts tun</string>
     <string name="remote_buttons_job_stats">Wiedergabestatistik an/aus</string>
     <string name="remote_buttons_job_next_audio">Nächste Audiospur</string>
+    <string name="remote_buttons_job_night_mode">Nachtmodus an/aus</string>
+    <string name="remote_buttons_job_night_mode_desc">Schaltet den Nachtmodus aus oder wieder an, mit der zuletzt genutzten Stufe (beim ersten Mal Mittel)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nachtmodus: nächste Stufe</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Jeder Tastendruck schaltet weiter: Aus, Leicht, Mittel, Stark, dann wieder Aus</string>
     <string name="remote_buttons_job_subtitles_toggle">Untertitel an/aus</string>
     <string name="remote_buttons_job_subtitles_up">Untertitel höher</string>
     <string name="remote_buttons_job_subtitles_down">Untertitel tiefer</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Dieses Video hat nur eine Audiospur</string>
     <string name="remote_buttons_banner_subtitles_on">Untertitel: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Untertitel aus</string>
+    <string name="remote_buttons_banner_night_mode">Nachtmodus: %1$s</string>
     <string name="remote_buttons_banner_jump">Zu %1$d %% gesprungen</string>
     <string name="remote_buttons_banner_skip_forward">%1$s vorwärts gesprungen</string>
     <string name="remote_buttons_banner_skip_back">%1$s rückwärts gesprungen</string>

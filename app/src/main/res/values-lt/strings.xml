@@ -1165,6 +1165,13 @@ Klaida: Bandomoji simuliuojama klaida — tai nėra tikras gedimas. Šaltinis gr
     <string name="sub_hdr_brightness">HDR subtitrų ryškumas</string>
     <string name="sub_libass_render_scale">Subtitrų atvaizdavimo raiška</string>
     <string name="sub_libass_render_scale_sub">Mažesnė raiška pagreitina sudėtingų stilizuotų subtitrų atvaizdavimą, bet sumažina aiškumą</string>
+    <string name="sub_libass_render_mode">ASS atvaizdavimo režimas</string>
+    <string name="sub_libass_render_mode_sub">Kaip ASS/SSA subtitrai piešiami ant vaizdo</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunelinis atkūrimas apeina vaizdo efektų grandinę. Automatiškai naudojama perdanga.</string>
+    <string name="sub_libass_render_mode_video_effect">Vaizdo efektas</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Piešia subtitrus tiesiai ant kiekvieno vaizdo kadro. Kadro tikslumo sinchronizacija bet kokioje aparatinėje įrangoje. HDR turinys tonų atvaizdavimu paverčiamas SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Perdanga</string>
+    <string name="sub_libass_render_mode_overlay_sub">Atvaizduoja subtitrus atskirame paviršiaus sluoksnyje. Išsaugo HDR išvestį. Kai kuriuose įrenginiuose subtitrų laikas gali būti ne visiškai tikslus.</string>
     <string name="autoplay_quality_rules_title">Kokybės taisyklės</string>
     <string name="autoplay_quality_rules_subtitle">Filtrai, rūšiavimas ir leidimo grupių lygiai skiltyje „Susietos paslaugos“.</string>
     <string name="stream_sort_sources">Rikiuoti šaltinius</string>
@@ -1243,7 +1250,7 @@ Klaida: Bandomoji simuliuojama klaida — tai nėra tikras gedimas. Šaltinis gr
     <string name="audio_dialogue_boost_stereo">Šis takelis yra stereo, todėl atskiro kalbos kanalo, kurį galima pakelti, nėra.</string>
     <string name="audio_dialogue_boost_mixed">Garsas į programą atkeliauja jau sumaišytas į stereo. Norėdami tai naudoti, garso nustatymuose įjunkite downmix.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Su MPV tai veikia, kai garsas sumaišomas į stereo, pavyzdžiui, per TV garsiakalbius.</string>
-    <string name="audio_night_mode_strong_desc">Vėlyvoms naktims ir mažiems kambariams. Tolygiausias garsas. Viskas skamba garsiau, tad šiek tiek patildykite TV.</string>
+    <string name="audio_night_mode_strong_desc">Vėlyvoms naktims ir mažiems kambariams. Tolygiausias garsas. Tylios akimirkos gerokai pakyla, garsiausios šiek tiek nutildomos.</string>
     <string name="subtitle_panel_languages">Kalbos</string>
     <string name="subtitle_style_text_color_hdr">Teksto spalva (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Teksto nepermatomumas (HDR)</string>
@@ -1273,6 +1280,12 @@ Klaida: Bandomoji simuliuojama klaida — tai nėra tikras gedimas. Šaltinis gr
     <string name="update_installed_automatically">Atnaujinta automatiškai, kol įrenginys buvo nenaudojamas</string>
     <string name="cd_playback_stats">Atkūrimo statistika</string>
     <string name="player_stats_unavailable_mpv">Statistika nepasiekiama naudojant libmpv variklį</string>
+    <string name="cd_enable_scraper">Įjungti %1$s</string>
+    <string name="cd_enable_addon">Įjungti %1$s</string>
+    <string name="cd_color_swatch">Spalva %1$s</string>
+    <string name="cd_emoji_option">Jaustukas %1$s</string>
+    <string name="cd_trailer_controls">Anonso valdikliai</string>
+    <string name="cd_seek_bar">Laiko juosta</string>
     <string name="player_dead_source_failover">Šaltinis nepasiekiamas - bandomas kitas šaltinis (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Šaltinis nepasiekiamas, bandomas %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Atkūrimas neprasidėjo - vaizdo dekoderis gali neatsakyti. Paprastai padeda įrenginio paleidimas iš naujo. Paspauskite „Atgal“ ir bandykite dar kartą arba pasirinkite kitą srautą.</string>

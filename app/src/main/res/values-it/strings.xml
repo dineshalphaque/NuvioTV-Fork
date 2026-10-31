@@ -3565,7 +3565,7 @@
     <string name="audio_dialogue_boost_stereo">Questa traccia è stereo, quindi non c\'è un canale voce separato da alzare.</string>
     <string name="audio_dialogue_boost_mixed">L\'audio arriva all\'app già mixato in stereo. Per usarlo, attiva il downmix nelle impostazioni audio.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Con MPV funziona quando l\'audio è mixato in stereo, ad esempio sugli altoparlanti della TV.</string>
-    <string name="audio_night_mode_strong_desc">Per la notte fonda e le stanze piccole. Il suono più uniforme. Tutto diventa più forte, quindi abbassa un po\' la TV.</string>
+    <string name="audio_night_mode_strong_desc">Per la notte fonda e le stanze piccole. Il suono più uniforme. I momenti tranquilli salgono molto, quelli più forti scendono un po\'.</string>
     <string name="subtitle_panel_languages">Lingue</string>
     <string name="library_sort_released_desc">Data di uscita ↓</string>
     <string name="library_sort_released_asc">Data di uscita ↑</string>
@@ -4113,6 +4113,13 @@
     <string name="sub_hdr_brightness">Luminosità sottotitoli HDR</string>
     <string name="sub_libass_render_scale">Risoluzione di rendering sottotitoli</string>
     <string name="sub_libass_render_scale_sub">Una risoluzione più bassa migliora le prestazioni con typesetting pesante, a scapito della nitidezza</string>
+    <string name="sub_libass_render_mode">Modalità di rendering ASS</string>
+    <string name="sub_libass_render_mode_sub">Come vengono disegnati i sottotitoli ASS/SSA sul video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">La riproduzione tunneled salta la pipeline degli effetti video. Viene usato automaticamente Overlay.</string>
+    <string name="sub_libass_render_mode_video_effect">Effetto video</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Disegna i sottotitoli direttamente su ogni fotogramma. Sincronizzazione precisa al fotogramma su qualsiasi hardware. I contenuti HDR vengono convertiti in SDR con tone mapping.</string>
+    <string name="sub_libass_render_mode_overlay">Overlay</string>
+    <string name="sub_libass_render_mode_overlay_sub">Renderizza i sottotitoli su un livello separato. Mantiene l\'uscita HDR. La sincronizzazione dei sottotitoli potrebbe non essere perfetta su alcuni dispositivi.</string>
     <string name="settings_stream_badges_in_player_title">Mostra nel player</string>
     <string name="settings_stream_badges_in_player_description">Mostra i badge del video e dell\'audio in riproduzione sotto il titolo nel player. Usa i badge di Arc, o il tuo pacchetto di badge se corrisponde a testo semplice, come 2160p o Atmos.</string>
     <string name="settings_stream_player_badges_title">Badge del player</string>
@@ -4124,6 +4131,12 @@
     <string name="subtitle_style_text_opacity_hdr">Opacità testo (HDR)</string>
     <string name="subtitle_style_brightness_hdr">Luminosità (HDR)</string>
     <string name="update_installed_automatically">Aggiornata automaticamente mentre il dispositivo era inattivo</string>
+    <string name="cd_enable_scraper">Abilita %1$s</string>
+    <string name="cd_enable_addon">Abilita %1$s</string>
+    <string name="cd_color_swatch">Colore %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Controlli del trailer</string>
+    <string name="cd_seek_bar">Barra di avanzamento</string>
     <string name="assessment_value_on_auto">Attivo · Auto, fino a ≈%1$s</string>
     <string name="assessment_value_connections_auto">Automatico (segue Accelerazione automatica)</string>
     <string name="assessment_grounds_connections_auto">Accelerazione automatica è attiva e aggiunge da sola connessioni quando un film ne ha bisogno; un numero fisso la disattiverebbe. Misurato: una connessione %1$s, %3$d × %4$d MB hanno raggiunto %2$s.</string>

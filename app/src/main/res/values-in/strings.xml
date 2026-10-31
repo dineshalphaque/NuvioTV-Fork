@@ -2606,6 +2606,13 @@
     <string name="sub_hdr_brightness">Kecerahan subtitle HDR</string>
     <string name="sub_libass_render_scale">Resolusi render subtitle</string>
     <string name="sub_libass_render_scale_sub">Resolusi lebih rendah mempercepat typesetting berat, tetapi kurang tajam</string>
+    <string name="sub_libass_render_mode">Mode render ASS</string>
+    <string name="sub_libass_render_mode_sub">Cara subtitle ASS/SSA digambar di atas video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunneled Playback melewati pipeline efek video. Overlay digunakan secara otomatis.</string>
+    <string name="sub_libass_render_mode_video_effect">Efek video</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Menggambar subtitle langsung ke setiap frame video. Timing akurat per frame di semua hardware. Konten HDR di-tone-map ke SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Overlay</string>
+    <string name="sub_libass_render_mode_overlay_sub">Merender subtitle di lapisan permukaan terpisah. Mempertahankan output HDR. Timing subtitle mungkin tidak sepenuhnya akurat di beberapa perangkat.</string>
     <string name="autoplay_quality_rules_title">Aturan kualitas</string>
     <string name="autoplay_quality_rules_subtitle">Filter, pengurutan, dan tingkatan grup rilis di Layanan Debrid.</string>
     <string name="stream_sort_sources">Urutkan sumber</string>
@@ -2684,7 +2691,7 @@
     <string name="audio_dialogue_boost_stereo">Trek ini stereo, jadi tidak ada kanal suara bicara terpisah untuk dinaikkan.</string>
     <string name="audio_dialogue_boost_mixed">Suara sampai ke aplikasi sudah dicampur ke stereo. Aktifkan downmix di pengaturan audio untuk memakainya.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Dengan MPV ini berfungsi saat suara dicampur ke stereo, misalnya di speaker TV.</string>
-    <string name="audio_night_mode_strong_desc">Untuk larut malam dan ruangan kecil. Suara paling rata. Semuanya jadi lebih keras, jadi kecilkan sedikit volume TV.</string>
+    <string name="audio_night_mode_strong_desc">Untuk larut malam dan ruangan kecil. Suara paling rata. Momen pelan naik cukup banyak, yang paling keras turun sedikit.</string>
     <string name="subtitle_panel_languages">Bahasa</string>
     <string name="subtitle_style_text_color_hdr">Warna Teks (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Transparansi Teks (HDR)</string>
@@ -2714,6 +2721,12 @@
     <string name="update_installed_automatically">Diperbarui otomatis saat perangkat tidak digunakan</string>
     <string name="cd_playback_stats">Statistik pemutaran</string>
     <string name="player_stats_unavailable_mpv">Statistik tidak tersedia untuk mesin libmpv</string>
+    <string name="cd_enable_scraper">Aktifkan %1$s</string>
+    <string name="cd_enable_addon">Aktifkan %1$s</string>
+    <string name="cd_color_swatch">Warna %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Kontrol trailer</string>
+    <string name="cd_seek_bar">Bilah progres</string>
     <string name="player_dead_source_failover">Sumber tidak tersedia - mencoba sumber berikutnya (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Sumber tidak tersedia, mencoba %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">Pemutaran tidak dimulai - dekoder video mungkin tidak merespons. Memulai ulang perangkat biasanya mengatasinya. Tekan kembali untuk mencoba lagi, atau pilih stream lain.</string>

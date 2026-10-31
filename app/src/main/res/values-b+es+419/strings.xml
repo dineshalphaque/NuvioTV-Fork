@@ -3520,6 +3520,13 @@
     <string name="sub_hdr_brightness">Brillo de subtítulos HDR</string>
     <string name="sub_libass_render_scale">Resolución de renderizado de subtítulos</string>
     <string name="sub_libass_render_scale_sub">Una resolución más baja mejora el rendimiento con rótulos complejos a costa de nitidez</string>
+    <string name="sub_libass_render_mode">Modo de renderizado ASS</string>
+    <string name="sub_libass_render_mode_sub">Cómo se dibujan los subtítulos ASS/SSA sobre el video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">La reproducción en túnel omite la cadena de efectos de video. Se usa Superposición automáticamente.</string>
+    <string name="sub_libass_render_mode_video_effect">Efecto de video</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Dibuja los subtítulos directamente en cada fotograma del video. Sincronización exacta por fotograma en todo el hardware. El contenido HDR se convierte a SDR con mapeo de tonos.</string>
+    <string name="sub_libass_render_mode_overlay">Superposición</string>
+    <string name="sub_libass_render_mode_overlay_sub">Dibuja los subtítulos en una capa de superficie aparte. Conserva la salida HDR. La sincronización de los subtítulos puede no ser del todo exacta en algunos dispositivos.</string>
     <string name="autoplay_quality_rules_title">Reglas de calidad</string>
     <string name="autoplay_quality_rules_subtitle">Filtros, orden y niveles de grupos de lanzamiento en Servicios conectados.</string>
     <string name="stream_sort_sources">Ordenar fuentes</string>
@@ -3597,7 +3604,7 @@
     <string name="audio_dialogue_boost_stereo">Esta pista es estéreo, así que no hay un canal de voz aparte que subir.</string>
     <string name="audio_dialogue_boost_mixed">El sonido llega a la app ya mezclado a estéreo. Para usarlo, activa el downmix en la configuración de audio.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Con MPV funciona cuando el sonido se mezcla a estéreo, por ejemplo en los parlantes del televisor.</string>
-    <string name="audio_night_mode_strong_desc">Para la madrugada y cuartos pequeños. El sonido más parejo. Todo suena más fuerte, así que baja un poco el volumen del televisor.</string>
+    <string name="audio_night_mode_strong_desc">Para la madrugada y cuartos pequeños. El sonido más parejo. Los momentos bajos suben mucho y los más fuertes bajan un poco.</string>
     <string name="subtitle_panel_languages">Idiomas</string>
     <string name="subtitle_style_text_color_hdr">Color del texto (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Opacidad del texto (HDR)</string>
@@ -3625,6 +3632,12 @@
     <string name="update_installed_automatically">Actualizado automáticamente mientras el dispositivo estaba inactivo</string>
     <string name="cd_playback_stats">Estadísticas de reproducción</string>
     <string name="player_stats_unavailable_mpv">Las estadísticas no están disponibles con el motor libmpv</string>
+    <string name="cd_enable_scraper">Activar %1$s</string>
+    <string name="cd_enable_addon">Activar %1$s</string>
+    <string name="cd_color_swatch">Color %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Controles del tráiler</string>
+    <string name="cd_seek_bar">Barra de progreso</string>
     <string name="player_dead_source_failover">Fuente no disponible - probando la siguiente fuente (%1$d/%2$d)</string>
     <string name="player_dead_source_failover_named">Fuente no disponible, probando %3$s (%1$d/%2$d)</string>
     <string name="player_error_startup_timeout">La reproducción no se inició - puede que el decodificador de video no responda. Reiniciar el dispositivo suele resolverlo. Presiona atrás para volver e intentarlo de nuevo, o elige otro stream.</string>

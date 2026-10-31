@@ -39,6 +39,10 @@
     <string name="remote_buttons_job_nothing">Niets doen</string>
     <string name="remote_buttons_job_stats">Afspeelstatistieken aan/uit</string>
     <string name="remote_buttons_job_next_audio">Volgend audiospoor</string>
+    <string name="remote_buttons_job_night_mode">Nachtmodus aan/uit</string>
+    <string name="remote_buttons_job_night_mode_desc">Zet de nachtmodus uit, of weer aan op het niveau dat je het laatst gebruikte (de eerste keer Gemiddeld)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Nachtmodus: volgend niveau</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Elke druk schakelt door: Uit, Mild, Gemiddeld, Sterk en dan weer Uit</string>
     <string name="remote_buttons_job_subtitles_toggle">Ondertiteling aan/uit</string>
     <string name="remote_buttons_job_subtitles_up">Ondertiteling omhoog</string>
     <string name="remote_buttons_job_subtitles_down">Ondertiteling omlaag</string>
@@ -101,6 +105,7 @@
     <string name="remote_buttons_banner_one_audio">Deze video heeft één audiospoor</string>
     <string name="remote_buttons_banner_subtitles_on">Ondertiteling: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Ondertiteling uit</string>
+    <string name="remote_buttons_banner_night_mode">Nachtmodus: %1$s</string>
     <string name="remote_buttons_banner_jump">Naar %1$d %% gesprongen</string>
     <string name="remote_buttons_banner_skip_forward">%1$s vooruit gesprongen</string>
     <string name="remote_buttons_banner_skip_back">%1$s terug gesprongen</string>
