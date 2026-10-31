@@ -107,7 +107,12 @@ class CalendarTitleFetcher(
             ).withSource(CalendarSource.TVMAZE, dates.entries, now)
             return withFinales(withTraktTime(withTvdbTimes(updated, CalendarSource.TVMAZE, now), now), now)
         }
-        val trakt = remote.traktNextEpisode(record.ids)
+        val trakt = try {
+            remote.traktNextEpisode(record.ids)
+        } catch (unreachable: TraktUnreachable) {
+            if (!record.sources[CalendarSource.TRAKT_NEXT].isNullOrEmpty()) return record
+            null
+        }
         if (trakt != null && trakt.entries.isNotEmpty()) return record.withSource(CalendarSource.TRAKT_NEXT, trakt.entries, now)
         val withTmdb = withTmdbId(if (trakt != null) record.withoutSources(CalendarSource.TRAKT_NEXT) else record)
         val tmdbId = withTmdb.ids.tmdb ?: return withTmdb

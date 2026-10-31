@@ -85,12 +85,18 @@ class CalendarSourcePlanTest {
         assertNull(calendarSimklOrigin(null, asLibrary = true))
     }
 
-    @Test fun mdbListLikedDynamicAndExternalListsAreNeverFollowed() {
+    @Test fun mdbListLikedAndExternalListsAreNeverFollowed() {
         assertTrue(calendarFollowsMdbListList("mdblist:watchlist"))
         assertTrue(calendarFollowsMdbListList("mdblist:list:12"))
+        assertTrue(calendarFollowsMdbListList("mdblist:dynamic:12"))
         assertFalse(calendarFollowsMdbListList("mdblist:liked:12"))
-        assertFalse(calendarFollowsMdbListList("mdblist:dynamic:12"))
         assertFalse(calendarFollowsMdbListList("mdblist:external:12"))
+    }
+
+    @Test fun onlyDynamicMdbListListsAreCapped() {
+        assertEquals(CALENDAR_DYNAMIC_LIST_LIMIT, calendarMdbListItemLimit("mdblist:dynamic:12"))
+        assertEquals(Int.MAX_VALUE, calendarMdbListItemLimit("mdblist:list:12"))
+        assertEquals(Int.MAX_VALUE, calendarMdbListItemLimit("mdblist:watchlist"))
     }
 
     private fun reader(

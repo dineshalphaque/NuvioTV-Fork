@@ -170,9 +170,9 @@ data class CalendarEntry(
     val shownTitle: String?
         get() = title?.trim()?.takeIf { it.isNotEmpty() && it.uppercase() !in PLACEHOLDER_TITLES }
 
-    /** A plain date counts from UTC midnight. */
-    fun sortInstant(): Instant? = airInstantMs?.let(Instant::ofEpochMilli)
-        ?: airDate?.let { runCatching { LocalDate.parse(it).atStartOfDay(java.time.ZoneOffset.UTC).toInstant() }.getOrNull() }
+    /** A plain date counts from midnight on the box's clock, so it sorts with the day it is shown under. */
+    fun sortInstant(zone: ZoneId = ZoneId.systemDefault()): Instant? = airInstantMs?.let(Instant::ofEpochMilli)
+        ?: airDate?.let { runCatching { LocalDate.parse(it).atStartOfDay(zone).toInstant() }.getOrNull() }
 }
 
 private val PLACEHOLDER_TITLES = setOf("TBA", "TBD", "TBC", "TBA.", "TBD.", "TO BE ANNOUNCED", "TO BE DETERMINED")

@@ -36,16 +36,23 @@ class TraktCalendarClient @Inject constructor(
         return traktCalendarItems(rows)
     }
 
-    /** Null when Trakt does not know the show or cannot be reached, so the caller moves on to TMDB. */
+    /**
+     * Null when Trakt does not know the show, so the caller moves on to TMDB. Throws when Trakt cannot be reached,
+     * so the caller keeps what Trakt said before.
+     */
     suspend fun nextEpisode(ids: CalendarIds): CalendarShowDates? {
         val id = ids.trakt?.toString() ?: ids.imdb ?: return null
-        val response = traktAuthService.executePublicRequest { traktApi.getShowNextEpisode(id) } ?: return null
-        if (!response.isSuccessful) return null
+        val response = traktAuthService.executePublicRequest { traktApi.getShowNextEpisode(id) }
+            ?: throw TraktUnreachable("no answer")
+        if (response.code() == 404) return null
+        if (!response.isSuccessful) throw TraktUnreachable("HTTP ${response.code()}")
         return CalendarShowDates(
             entries = listOfNotNull(response.body()?.let { traktEpisodeEntry(it, null, CalendarSource.TRAKT_NEXT) })
         )
     }
 }
+
+class TraktUnreachable(why: String) : Exception("Trakt could not be reached: $why")
 
 fun traktCalendarRanges(today: LocalDate): List<Pair<LocalDate, Int>> =
     listOf(today.minusDays(7) to TRAKT_CALENDAR_DAYS, today.plusDays(26) to TRAKT_CALENDAR_DAYS)

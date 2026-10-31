@@ -89,15 +89,15 @@ class TraktCalendarClientTest {
         assertTrue(client.nextEpisode(CalendarIds(trakt = 10))!!.entries.isEmpty())
         assertEquals("/shows/10/next_episode?extended=full", server.takeRequest().path)
         assertNull(client.nextEpisode(CalendarIds(imdb = "tt2")))
-        assertNull(client.nextEpisode(CalendarIds(imdb = "tt3")))
+        assertTrue(runCatching { client.nextEpisode(CalendarIds(imdb = "tt3")) }.exceptionOrNull() is TraktUnreachable)
         assertNull(client.nextEpisode(CalendarIds(tmdb = 3)))
     }
 
-    @Test fun traktThatCannotBeReachedGivesNoAnswerSoTmdbIsAsked() = runBlocking {
+    @Test fun traktThatCannotBeReachedSaysSoInsteadOfGivingNoAnswer() = runBlocking {
         val auth = mockk<TraktAuthService>()
         coEvery { auth.executePublicRequest<Any>(any()) } returns null
         val offline = TraktCalendarClient(mockk(), auth)
-        assertNull(offline.nextEpisode(CalendarIds(imdb = "tt1000")))
+        assertTrue(runCatching { offline.nextEpisode(CalendarIds(imdb = "tt1000")) }.exceptionOrNull() is TraktUnreachable)
     }
 
     @Test fun theCalendarReplacesItsOwnDatesAndLeavesTraktNextEpisodeDates() {

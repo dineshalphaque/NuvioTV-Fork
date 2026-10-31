@@ -12,11 +12,13 @@ import com.nuvio.tv.data.local.TraktSettingsDataStore
 import com.nuvio.tv.data.local.WatchProgressPreferences
 import com.nuvio.tv.data.local.WatchProgressSource
 import com.nuvio.tv.data.local.WatchedItemsPreferences
+import com.nuvio.tv.data.mdblist.MDBLIST_DYNAMIC_LIST_KEY_PREFIX
+import com.nuvio.tv.data.mdblist.MDBLIST_EXTERNAL_LIST_KEY_PREFIX
+import com.nuvio.tv.data.mdblist.MDBLIST_LIKED_LIST_KEY_PREFIX
 import com.nuvio.tv.data.mdblist.MDBLIST_WATCHLIST_KEY
 import com.nuvio.tv.data.mdblist.MdbListIds
 import com.nuvio.tv.data.mdblist.MdbListItemType
 import com.nuvio.tv.data.mdblist.MdbListSyncRepository
-import com.nuvio.tv.data.mdblist.isMdbListReadOnlyListKey
 import com.nuvio.tv.data.repository.TraktLibraryService
 import com.nuvio.tv.data.repository.TraktProgressService
 import com.nuvio.tv.domain.model.LibrarySourceMode
@@ -217,8 +219,15 @@ fun calendarSimklOrigin(status: SimklListStatus?, asLibrary: Boolean): CalendarO
     null -> null
 }
 
-/** Liked, dynamic and external MDBList lists are other people's lists and are never followed. */
-fun calendarFollowsMdbListList(listKey: String): Boolean = !isMdbListReadOnlyListKey(listKey)
+/** Liked and external MDBList lists are other people's lists and are never followed. */
+fun calendarFollowsMdbListList(listKey: String): Boolean =
+    !listKey.startsWith(MDBLIST_LIKED_LIST_KEY_PREFIX) && !listKey.startsWith(MDBLIST_EXTERNAL_LIST_KEY_PREFIX)
+
+/** A dynamic list follows a filter and can hold thousands of titles, so only its first ones are followed. */
+fun calendarMdbListItemLimit(listKey: String): Int =
+    if (listKey.startsWith(MDBLIST_DYNAMIC_LIST_KEY_PREFIX)) CALENDAR_DYNAMIC_LIST_LIMIT else Int.MAX_VALUE
+
+internal const val CALENDAR_DYNAMIC_LIST_LIMIT = 150
 
 /** Reads only what the app already holds; it never starts a sync of its own. */
 @Singleton
@@ -369,7 +378,8 @@ class CalendarFollowedSourceReader @Inject constructor(
             if (mdbListLibrary) snapshot.library?.visible()?.itemsByList?.forEach { (listKey, items) ->
                 if (!calendarFollowsMdbListList(listKey)) return@forEach
                 val origin = if (listKey == MDBLIST_WATCHLIST_KEY) CalendarOrigin.MDBLIST_WATCHLIST else CalendarOrigin.MDBLIST_LIST
-                items.filter { it.type == MdbListItemType.MOVIE || it.type == MdbListItemType.SHOW }.forEach { item ->
+                items.filter { it.type == MdbListItemType.MOVIE || it.type == MdbListItemType.SHOW }
+                    .take(calendarMdbListItemLimit(listKey)).forEach { item ->
                     add(item.media.ids, item.type, origin, item.listedAt.toInstantOrNull(), item.media.title, item.media.poster)
                 }
             }

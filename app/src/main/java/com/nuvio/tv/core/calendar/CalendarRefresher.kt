@@ -359,7 +359,7 @@ class CalendarRefresher internal constructor(
                 var records = applyAddonEntries(reconcileCalendarRecords(followed, data.titles), sources.addonEntries, now)
                     .withCachedArt(sources.cachedArt)
                 records = when {
-                    !traktSignedIn -> records.map { it.withoutSources(CalendarSource.TRAKT, CalendarSource.TRAKT_NEXT) }
+                    !traktSignedIn -> records.map { it.dueWithoutTraktCalendar() }
                     traktItems != null -> applyTraktCalendar(records, traktItems, now)
                     else -> records
                 }
@@ -427,8 +427,10 @@ class CalendarRefresher internal constructor(
         } ?: return
         if (record == null) return
         val now = clock.instant()
+        val signedIn = inputs.traktSignedIn()
         val outcome = try {
-            fetcher.refresh(record, tvMazeIds, record.isCoveredByTrakt(traktFetchedAt, now), now)
+            fetcher.refresh(record, tvMazeIds, signedIn && record.isCoveredByTrakt(traktFetchedAt, now), now)
+                .withoutTraktCalendarIfSignedOut(signedIn)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (error: Exception) {
@@ -564,3 +566,14 @@ class CalendarRefresher internal constructor(
         const val TAG = "CalendarRefresher"
     }
 }
+
+/**
+ * Signed out of Trakt: the times its calendar gave stay on show until TVmaze, TheTVDB or Trakt's public next-episode
+ * answer replaces them, so the title is asked again now instead of losing its times for hours.
+ */
+internal fun CalendarTitleRecord.dueWithoutTraktCalendar(): CalendarTitleRecord =
+    if (sources[CalendarSource.TRAKT].isNullOrEmpty() || nextRefreshAtMs == 0L) this else copy(nextRefreshAtMs = 0L)
+
+/** After a good fetch while signed out, the Trakt calendar's own times give way to what was just fetched. */
+internal fun CalendarFetchOutcome.withoutTraktCalendarIfSignedOut(signedIn: Boolean): CalendarFetchOutcome =
+    if (signedIn || record.failures > 0) this else copy(record = record.withoutSources(CalendarSource.TRAKT))

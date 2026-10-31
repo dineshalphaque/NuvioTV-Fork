@@ -226,6 +226,33 @@ class CalendarTitleFetcherTest {
         assertEquals(listOf(inDays(50)), outcome.record.entries.map { it.airInstantMs })
     }
 
+    @Test fun traktOutOfReachKeepsItsEarlierAnswer() = runBlocking {
+        val known = CalendarEntry(season = 4, episode = 1, airInstantMs = inDays(40), source = CalendarSource.TRAKT_NEXT)
+        val remote = FakeRemote().apply { failOn = "trakt"; failWith = { TraktUnreachable("no answer") } }
+        val record = show.copy(sources = mapOf(CalendarSource.TRAKT_NEXT to listOf(known)))
+        val outcome = CalendarTitleFetcher(remote, "AU").refresh(record, emptyMap(), false, now)
+        assertEquals(listOf(inDays(40)), outcome.record.entries.map { it.airInstantMs })
+    }
+
+    @Test fun signedOutOfTraktKeepsItsTimesUntilAGoodFetchReplacesThem() {
+        val fromTrakt = CalendarEntry(season = 6, episode = 1, airInstantMs = inDays(1), source = CalendarSource.TRAKT)
+        val record = show.copy(sources = mapOf(CalendarSource.TRAKT to listOf(fromTrakt)), nextRefreshAtMs = inDays(1))
+        val due = record.dueWithoutTraktCalendar()
+        assertEquals(0L, due.nextRefreshAtMs)
+        assertEquals(listOf(inDays(1)), due.entries.map { it.airInstantMs })
+        val fetched = CalendarFetchOutcome(due.withSource(CalendarSource.TVMAZE, listOf(fromTrakt.copy(source = CalendarSource.TVMAZE)), now))
+        assertNull(fetched.withoutTraktCalendarIfSignedOut(signedIn = false).record.sources[CalendarSource.TRAKT])
+        assertEquals(listOf(fromTrakt), fetched.withoutTraktCalendarIfSignedOut(signedIn = true).record.sources[CalendarSource.TRAKT])
+        val failed = CalendarFetchOutcome(due.copy(failures = 1))
+        assertEquals(listOf(fromTrakt), failed.withoutTraktCalendarIfSignedOut(signedIn = false).record.sources[CalendarSource.TRAKT])
+    }
+
+    @Test fun aPlainDateSortsFromMidnightOnTheBoxClock() {
+        val detroit = java.time.ZoneId.of("America/Detroit")
+        val entry = CalendarEntry(season = 1, episode = 1, airDate = "2026-10-30", source = CalendarSource.TMDB)
+        assertEquals(Instant.parse("2026-10-30T04:00:00Z"), entry.sortInstant(detroit))
+    }
+
     private val dateOnlyShow = CalendarShowDates(
         entries = listOf(CalendarEntry(season = 1, episode = 4, airDate = "2026-10-09", source = CalendarSource.TVMAZE))
     )
