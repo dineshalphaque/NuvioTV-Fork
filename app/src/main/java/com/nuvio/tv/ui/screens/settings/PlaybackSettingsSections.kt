@@ -182,7 +182,6 @@ private fun PlaybackThumbnailRows(
     // Null until the store has answered: the rows below are not greyed out for that first frame.
     val seekThumbModeRead by SeekThumbnailPreferences.modeFlow(context)
         .collectAsState<SeekThumbMode, SeekThumbMode?>(initial = null)
-    val seekThumbMode = seekThumbModeRead ?: SeekThumbMode.OFF
     val seekThumbsOn = seekThumbModeRead != SeekThumbMode.OFF
     val seekThumbPrepareRead by SeekThumbnailPreferences.prepareModeFlow(context)
         .collectAsState<ThumbPrepareMode, ThumbPrepareMode?>(initial = null)
@@ -197,12 +196,17 @@ private fun PlaybackThumbnailRows(
         seekThumbStoredBytes = withContext(Dispatchers.IO) { SeekThumbnails.storedBytes(context) }
     }
 
-    SettingsActionRow(
+    SettingsToggleRow(
         title = stringResource(R.string.seek_thumbnails_title),
-        subtitle = null,
-        value = stringResource(seekThumbMode.label),
-        enabled = internalPlayer,
-        onClick = { onOpenDialog(PlaybackDialog.SEEK_THUMBNAILS) }
+        subtitle = stringResource(R.string.seek_thumbnails_mode_all_desc),
+        checked = seekThumbModeRead == SeekThumbMode.ALL,
+        onToggle = {
+            val read = seekThumbModeRead ?: return@SettingsToggleRow
+            seekThumbScope.launch {
+                SeekThumbnailPreferences.setMode(context, if (read == SeekThumbMode.OFF) SeekThumbMode.ALL else SeekThumbMode.OFF)
+            }
+        },
+        enabled = internalPlayer
     )
     SettingsActionRow(
         title = stringResource(R.string.seek_thumbnails_prepare_title),
@@ -322,7 +326,6 @@ internal fun PlaybackSettingsDialogs(
             },
             onDismiss = onDismiss
         )
-        PlaybackDialog.SEEK_THUMBNAILS -> SeekThumbnailModeDialog(onUpdate = onUpdate, onDismiss = onDismiss)
         PlaybackDialog.SEEK_THUMBNAIL_PREPARE -> SeekThumbnailPrepareDialog(onUpdate = onUpdate, onDismiss = onDismiss)
         PlaybackDialog.SEEK_THUMBNAILS_BEFORE_PLAY -> SeekThumbnailBeforePlayDialog(onUpdate = onUpdate, onDismiss = onDismiss)
         PlaybackDialog.SEEKING -> SeekingDialog(settings.seekingMode, onUpdate = onUpdate, onDismiss = onDismiss)
@@ -334,25 +337,6 @@ internal fun PlaybackSettingsDialogs(
             P2pSettingsDialogs(dialog, p2p, onUpdate, onDismiss)
         }
     }
-}
-
-@Composable
-private fun SeekThumbnailModeDialog(onUpdate: PlaybackSettingsUpdate, onDismiss: () -> Unit) {
-    val context = LocalContext.current.applicationContext
-    val mode by SeekThumbnailPreferences.modeFlow(context).collectAsState(initial = SeekThumbMode.OFF)
-    SettingsSingleChoiceDialog(
-        title = stringResource(R.string.seek_thumbnails_title),
-        subtitle = stringResource(R.string.seek_thumbnails_subtitle),
-        options = SeekThumbMode.entries.map {
-            SettingsPickerOption(it, stringResource(it.label), stringResource(it.description))
-        },
-        selectedValue = mode,
-        onOptionSelected = { chosen ->
-            onUpdate { SeekThumbnailPreferences.setMode(context, chosen) }
-            onDismiss()
-        },
-        onDismiss = onDismiss
-    )
 }
 
 @Composable
