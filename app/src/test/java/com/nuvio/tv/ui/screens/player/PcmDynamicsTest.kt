@@ -67,12 +67,16 @@ class PcmDynamicsTest {
     }
 
     @Test
-    fun `night mode lifts quiet passages and never turns loud ones down`() {
+    fun `night mode lifts quiet passages, only strong turns the loudest down`() {
         for (level in listOf(NightModeLevel.LIGHT, NightModeLevel.MEDIUM, NightModeLevel.STRONG)) {
             val loudChange = db(steadyPeak(dynamics(level = level), 0.85f)) - db(0.85f)
             val talkChange = db(steadyPeak(dynamics(level = level), 0.1f)) - db(0.1f)
             val quietChange = db(steadyPeak(dynamics(level = level), 0.01f)) - db(0.01f)
-            assertTrue("$level loud $loudChange", loudChange > -0.1f)
+            if (level == NightModeLevel.STRONG) {
+                assertTrue("$level loud $loudChange", loudChange in -7f..-3f)
+            } else {
+                assertTrue("$level loud $loudChange", loudChange > -0.1f)
+            }
             assertTrue("$level talk $talkChange vs loud $loudChange", talkChange > loudChange)
             assertTrue("$level quiet $quietChange vs loud $loudChange", quietChange > loudChange + 5f)
         }
@@ -93,7 +97,8 @@ class PcmDynamicsTest {
                 d.processFrame(frame)
                 if (i > rate) peak = max(peak, abs(frame[0]))
             }
-            assertTrue("$level rumble ${db(peak) - db(0.53f)}", db(peak) >= db(0.53f) - 0.1f)
+            val allowed = if (level == NightModeLevel.STRONG) 1.5f else 0.1f
+            assertTrue("$level rumble ${db(peak) - db(0.53f)}", db(peak) >= db(0.53f) - allowed)
         }
     }
 
@@ -229,8 +234,21 @@ class PcmDynamicsTest {
     }
 
     @Test
-    fun `no preset turns anything below full scale down`() {
-        for (level in listOf(NightModeLevel.LIGHT, NightModeLevel.MEDIUM, NightModeLevel.STRONG)) {
+    fun `strong turns full scale down about 6 dB and nothing below -7 dBFS down`() {
+        val strong = PcmDynamics.presetFor(NightModeLevel.STRONG)
+        assertEquals(-6f, PcmDynamics.compressorTargetDb(1f, strong), 0.5f)
+        var db = -90f
+        while (db <= -7f) {
+            val change = PcmDynamics.compressorTargetDb(10f.pow(db / 20f), strong)
+            assertTrue("at $db dB: $change", change >= -0.05f)
+            db += 0.5f
+        }
+        assertEquals(15f, PcmDynamics.compressorTargetDb(10f.pow(-35f / 20f), strong), 0.05f)
+    }
+
+    @Test
+    fun `light and medium turn nothing below full scale down`() {
+        for (level in listOf(NightModeLevel.LIGHT, NightModeLevel.MEDIUM)) {
             val preset = PcmDynamics.presetFor(level)
             assertEquals("$level at full scale", 0f, PcmDynamics.compressorTargetDb(1f, preset), 0.05f)
             var db = -90f

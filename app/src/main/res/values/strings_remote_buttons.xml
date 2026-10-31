@@ -40,6 +40,10 @@
     <string name="remote_buttons_job_nothing">Do nothing</string>
     <string name="remote_buttons_job_stats">Playback stats on/off</string>
     <string name="remote_buttons_job_next_audio">Next audio track</string>
+    <string name="remote_buttons_job_night_mode">Night mode on/off</string>
+    <string name="remote_buttons_job_night_mode_desc">Turns night mode off, or back on at the level you used last (Medium the first time)</string>
+    <string name="remote_buttons_job_night_mode_cycle">Night mode: next level</string>
+    <string name="remote_buttons_job_night_mode_cycle_desc">Each press steps Off, Light, Medium, Strong, then Off again</string>
     <string name="remote_buttons_job_subtitles_toggle">Subtitles on/off</string>
     <string name="remote_buttons_job_subtitles_up">Subtitles up</string>
     <string name="remote_buttons_job_subtitles_down">Subtitles down</string>
@@ -104,6 +108,7 @@
     <string name="remote_buttons_banner_one_audio">This video has one audio track</string>
     <string name="remote_buttons_banner_subtitles_on">Subtitles: %1$s</string>
     <string name="remote_buttons_banner_subtitles_off">Subtitles off</string>
+    <string name="remote_buttons_banner_night_mode">Night mode: %1$s</string>
     <string name="remote_buttons_banner_jump">Jumped to %1$d %%</string>
     <string name="remote_buttons_banner_skip_forward">Skipped forward %1$s</string>
     <string name="remote_buttons_banner_skip_back">Skipped back %1$s</string>

@@ -67,4 +67,23 @@ class NightModePreferenceTest {
         for (level in NightModeLevel.entries) assertEquals(level, NightModeLevel.fromKey(level.key))
         assertEquals(NightModeLevel.OFF, NightModeLevel.fromKey(null))
     }
+
+    @Test
+    fun `turning night mode off remembers the level it had`() = withStore { store, _ ->
+        assertEquals(NightModeLevel.MEDIUM, store.playerSettings.first().nightModeLastOn)
+        store.setNightMode(NightModeLevel.STRONG)
+        store.setNightMode(NightModeLevel.OFF)
+        assertEquals(NightModeLevel.STRONG, store.playerSettings.first().nightModeLastOn)
+        store.setNightMode(NightModeLevel.OFF)
+        assertEquals(NightModeLevel.STRONG, store.playerSettings.first().nightModeLastOn)
+        store.setNightMode(NightModeLevel.LIGHT)
+        assertEquals(NightModeLevel.LIGHT, store.playerSettings.first().nightModeLastOn)
+    }
+
+    @Test
+    fun `a level set before the remembered level existed is kept when turned off`() = withStore { store, memory ->
+        memory.updateData { it.toMutablePreferences().apply { this[stringPreferencesKey("night_mode")] = "strong" } }
+        store.setNightMode(NightModeLevel.OFF)
+        assertEquals(NightModeLevel.STRONG, store.playerSettings.first().nightModeLastOn)
+    }
 }

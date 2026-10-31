@@ -3,6 +3,8 @@ package com.nuvio.tv.ui.screens.player
 import android.content.Context
 import android.view.KeyEvent
 import com.nuvio.tv.R
+import com.nuvio.tv.data.local.NIGHT_MODE_KEY_STYLE
+import com.nuvio.tv.data.local.NightModeKeyStyle
 import com.nuvio.tv.data.local.RemoteButtonBinding
 import com.nuvio.tv.data.local.RemoteButtonJob
 import com.nuvio.tv.data.local.RemoteButtonMap
@@ -71,6 +73,10 @@ internal fun remoteJobLabel(context: Context, job: RemoteButtonJob): String = co
     RemoteButtonJob.EPISODES -> R.string.player_pill_episodes
     RemoteButtonJob.AUDIO -> R.string.cd_audio_tracks
     RemoteButtonJob.NEXT_AUDIO -> R.string.remote_buttons_job_next_audio
+    RemoteButtonJob.NIGHT_MODE -> when (NIGHT_MODE_KEY_STYLE) {
+        NightModeKeyStyle.TOGGLE -> R.string.remote_buttons_job_night_mode
+        NightModeKeyStyle.CYCLE -> R.string.remote_buttons_job_night_mode_cycle
+    }
     RemoteButtonJob.SUBTITLES -> R.string.cd_subtitles
     RemoteButtonJob.SUBTITLES_TOGGLE -> R.string.remote_buttons_job_subtitles_toggle
     RemoteButtonJob.SUBTITLES_UP -> R.string.remote_buttons_job_subtitles_up
@@ -116,6 +122,10 @@ internal fun remoteJobDescription(
     RemoteButtonJob.SKIP_INTRO_OR_NEXT -> context.getString(R.string.remote_buttons_job_skip_intro_or_next_desc)
     RemoteButtonJob.JUMP_TO_PERCENT -> context.getString(R.string.remote_buttons_number_keys_desc)
     RemoteButtonJob.SHOW_DETAILS -> context.getString(R.string.remote_buttons_job_show_details_desc)
+    RemoteButtonJob.NIGHT_MODE -> context.getString(when (NIGHT_MODE_KEY_STYLE) {
+        NightModeKeyStyle.TOGGLE -> R.string.remote_buttons_job_night_mode_desc
+        NightModeKeyStyle.CYCLE -> R.string.remote_buttons_job_night_mode_cycle_desc
+    })
     RemoteButtonJob.CHAPTERS_LIST -> context.getString(R.string.remote_buttons_job_chapters_list_desc)
     RemoteButtonJob.PREVIOUS_CHAPTER -> context.getString(R.string.remote_buttons_job_previous_chapter_desc)
     else -> null

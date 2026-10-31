@@ -11,6 +11,7 @@ enum class RemoteButtonJob(val id: String) {
     EPISODES("episodes"),
     AUDIO("audio"),
     NEXT_AUDIO("next_audio"),
+    NIGHT_MODE("night_mode"),
     SUBTITLES("subtitles"),
     SUBTITLES_TOGGLE("subtitles_toggle"),
     SUBTITLES_UP("subtitles_up"),
