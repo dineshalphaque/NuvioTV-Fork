@@ -278,6 +278,8 @@ internal class ConnectionLedger(
         var downloads: Int? = null
         var tooManyAtMs = Long.MIN_VALUE
         var budget: ConnectionBudget? = null
+        /** Thumbnail requests at once at most, whatever the budget allows. */
+        var thumbCap = UNLIMITED
     }
 
     private val lock = ReentrantLock()
@@ -436,7 +438,19 @@ internal class ConnectionLedger(
             val yielding = yielding(now)
             val quiet = yielding || now < quietUntilMs
             val live = e.playback - if (yielding) e.streams else 0
-            b.thumbSlots(playbackOf(e), if (quiet) live else maxOf(playbackOf(e), live), quiet, yielding)
+            minOf(b.thumbSlots(playbackOf(e), if (quiet) live else maxOf(playbackOf(e), live), quiet, yielding), e.thumbCap)
+        }
+    }
+
+    /**
+     * Never more than [max] thumbnail requests at once on [url]'s server for the rest of the run, whichever pass asks:
+     * a media server away from the home network gets one, shared by its seek spots and a copy read from it.
+     */
+    fun capThumbnails(url: String?, max: Int) {
+        val key = LedgerKey.of(url) ?: return
+        lock.withLock {
+            val e = entry(key)
+            e.thumbCap = minOf(e.thumbCap, max.coerceAtLeast(1))
         }
     }
 
@@ -458,7 +472,7 @@ internal class ConnectionLedger(
             val e = entry(key)
             val b = budgetOf(key, e)
             persist(key, b)
-            b.thumbSlots(playbackOf(e), 0, true, yielding(clock()))
+            minOf(b.thumbSlots(playbackOf(e), 0, true, yielding(clock())), e.thumbCap)
         }
     }
 
@@ -530,7 +544,7 @@ internal class ConnectionLedger(
         persist(key, b)
         val yielding = yielding(now)
         val live = e.playback - if (yielding) e.streams else 0
-        return b.thumbSlots(playbackOf(e), live, yielding || now < quietUntilMs, yielding)
+        return minOf(b.thumbSlots(playbackOf(e), live, yielding || now < quietUntilMs, yielding), e.thumbCap)
     }
 
     private fun add(e: Entry, kind: Kind) {

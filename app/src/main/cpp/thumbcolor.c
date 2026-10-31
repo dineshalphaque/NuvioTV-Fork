@@ -77,6 +77,15 @@ tc_ctx *tc_create(const tc_params *p) {
 
 void tc_free(tc_ctx *c) { free(c); }
 
+void tc_tables(const tc_ctx *c, float *lin, float *scale, float *oetf, float *inv_peak) {
+    for (int i = 0; i < LUT_SIZE; i++) {
+        lin[i] = c->lin[i];
+        scale[i] = c->scale[i];
+        oetf[i] = c->oetf[i] / (255.0f * 256.0f);
+    }
+    *inv_peak = c->inv_peak;
+}
+
 static const uint8_t BAYER4[16] = {0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5};
 
 static inline int lut_index(float v) {        /* v in [0,1], sqrt spacing */

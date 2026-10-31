@@ -30,7 +30,7 @@ private val Context.seekThumbnailDataStore by preferencesDataStore(
 /** When 4K thumbnails are made is not a user choice; the engine decides per device and free memory. */
 enum class SeekThumbMode(@StringRes val label: Int, @StringRes val description: Int) {
     OFF(R.string.seek_thumbnails_mode_off, R.string.seek_thumbnails_mode_off_desc),
-    /** Every resolution up to 1080p. */
+    /** No longer offered; a stored value reads as [ALL]. */
     HD(R.string.seek_thumbnails_mode_hd, R.string.seek_thumbnails_mode_hd_desc),
     ALL(R.string.seek_thumbnails_mode_all, R.string.seek_thumbnails_mode_all_desc),
 }
@@ -82,11 +82,16 @@ object SeekThumbnailPreferences {
 
     /** A stored choice (or an older key's) always wins; only an install without one gets [default]. */
     internal fun modeOf(prefs: Preferences, default: SeekThumbMode = SeekThumbMode.ALL): SeekThumbMode {
-        prefs[modeKey]?.let { v -> return SeekThumbMode.entries.firstOrNull { it.name == v } ?: SeekThumbMode.OFF }
+        prefs[modeKey]?.let { v ->
+            return when (SeekThumbMode.entries.firstOrNull { it.name == v }) {
+                null, SeekThumbMode.OFF -> SeekThumbMode.OFF
+                else -> SeekThumbMode.ALL
+            }
+        }
         return when (prefs[legacyEnabledKey]) {
             null -> default
             false -> SeekThumbMode.OFF
-            else -> if (prefs[legacyFourKKey] == "OFF") SeekThumbMode.HD else SeekThumbMode.ALL
+            else -> SeekThumbMode.ALL
         }
     }
 

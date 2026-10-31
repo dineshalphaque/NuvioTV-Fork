@@ -2,6 +2,7 @@ package com.nuvio.tv.ui.screens.player
 
 import android.util.Log
 import com.nuvio.tv.core.debrid.CopyRoute
+import com.nuvio.tv.core.debrid.DebridProviders
 import com.nuvio.tv.core.debrid.DirectDebridPlayableResult
 import com.nuvio.tv.core.debrid.DirectDebridStreamFilter
 import com.nuvio.tv.core.debrid.ThumbnailCopyDebrid
@@ -14,6 +15,7 @@ import com.nuvio.tv.core.player.thumbnail.CopyOffer
 import com.nuvio.tv.core.player.thumbnail.CopyOffers
 import com.nuvio.tv.core.player.thumbnail.CopySources
 import com.nuvio.tv.core.player.thumbnail.MediaServerThumbs
+import com.nuvio.tv.core.player.thumbnail.MultiRangeSupport
 import com.nuvio.tv.data.mediaserver.ServerPlayMethod
 import com.nuvio.tv.domain.model.DebridStreamEncode
 import com.nuvio.tv.domain.model.DebridStreamQuality
@@ -166,7 +168,7 @@ internal class ThumbnailCopySources(
         if (leftOut.isNotEmpty()) {
             Log.i(TAG, "left out: " + leftOut.entries.joinToString("; ") { "${it.value} x ${it.key}" })
         }
-        return CopyOffers(snap.playingText, offers)
+        return CopyOffers(snap.playingText, offers, playingTranscoded = !snap.serverCopies)
     }
 
     private fun offerOf(
@@ -205,6 +207,23 @@ internal class ThumbnailCopySources(
             text = text,
             remote = remote,
         )
+    }
+
+    override fun multiRange(offer: CopyOffer): Boolean? {
+        val stream = byId[offer.id] ?: return null
+        return when (offer.kind) {
+            CopyKind.LINK -> stream.getStreamUrl()?.let { MultiRangeSupport.app(controller.context).known(it) }
+            CopyKind.RESOLVE -> if (stream.isDirectDebrid()) {
+                when (stream.clientResolve?.service?.let { DebridProviders.byId(it)?.id }) {
+                    DebridProviders.TORBOX_ID -> true
+                    DebridProviders.REAL_DEBRID_ID, DebridProviders.PREMIUMIZE_ID -> false
+                    else -> null
+                }
+            } else {
+                CopyChoice.resolveBatched(stream.getStreamUrl().orEmpty(), streamText(stream))
+            }
+            else -> null
+        }
     }
 
     override suspend fun open(offer: CopyOffer): CopyLink? {

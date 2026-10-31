@@ -34,6 +34,7 @@ internal enum class VideoCodec(val ffmpegName: String, val nal: Boolean) {
     VC1("vc1", false),            // WVC1 (advanced profile)
     WMV3("wmv3", false),          // VC-1 simple/main (needs coded width/height)
     AV1("libdav1d", false),
+    VP9("vp9", false),
 }
 
 /** Colour as declared by the container (ISO/IEC 23091-2 code points; 0 = not present). */

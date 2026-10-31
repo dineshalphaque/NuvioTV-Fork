@@ -93,6 +93,8 @@ internal object ThumbNative {
     @JvmStatic external fun nativeRelease(handle: Long)
     /** Returns freed allocator pages to the system (mallopt M_PURGE). */
     @JvmStatic external fun nativePurge()
+    /** thumbcolor's tables for [transfer] (1 PQ, 2 HLG), see [ToneLuts]. */
+    @JvmStatic external fun nativeToneLuts(transfer: Int, peakNits: Float, bt2020: Boolean): FloatArray?
 }
 
 /** When a failed native load may be tried again: [FIRST_WAIT_MS] after the first failure, doubling, at most [MAX_WAIT_MS]. */
@@ -143,11 +145,18 @@ internal object ThumbGeometry {
     }
 }
 
+/** A decode lane's decoder: software ([FfmpegThumbDecoder]) or hardware ([HardwareThumbDecoder]). */
+internal interface ThumbLaneDecoder : Closeable {
+    /** The working set is allocated and already missing from MemAvailable, so the governor must not charge it again. */
+    val warm: Boolean
+    fun trim()
+}
+
 /**
  * Software keyframe decoder over the in-APK FFmpeg. One context, reused across a title's keyframes.
  * Not thread-safe: each decode lane owns one.
  */
-internal class FfmpegThumbDecoder : Closeable {
+internal class FfmpegThumbDecoder : ThumbLaneDecoder {
     private var handle = 0L
     private var handleTrack: VideoTrack? = null
     private var handleThreads = 0
@@ -155,8 +164,7 @@ internal class FfmpegThumbDecoder : Closeable {
     private var decodedSinceTrim = false
     @Volatile private var directDecode = true
 
-    /** The working set is allocated and already missing from MemAvailable, so the governor must not charge it again. */
-    val warm: Boolean get() = handle != 0L && decodedSinceTrim
+    override val warm: Boolean get() = handle != 0L && decodedSinceTrim
 
     /** [annexB]: one keyframe access unit, Annex-B for H.264/HEVC, the raw sample otherwise. */
     fun decode(annexB: ByteArray, track: VideoTrack, threads: Int): DecodedFrame? {
@@ -243,7 +251,7 @@ internal class FfmpegThumbDecoder : Closeable {
         return bmp
     }
 
-    fun trim() {
+    override fun trim() {
         if (handle != 0L) ThumbNative.nativeTrim(handle)
         decodedSinceTrim = false
     }
@@ -258,12 +266,31 @@ internal class FfmpegThumbDecoder : Closeable {
     }
 }
 
-/** One decode lane and its decoder. Close and trim asked for during a decode are done once it ends. */
+/**
+ * One decode lane and its decoders: always the software one, and a hardware one while the hardware path runs. Close
+ * and trim asked for during a decode are done once it ends.
+ */
 internal class DecoderLane {
     val decoder = FfmpegThumbDecoder()
+    @Volatile var hardware: HardwareThumbDecoder? = null
+        private set
+    /** When the running hardware decode began, 0 when none runs. */
+    @Volatile var hardwareSince = 0L
     private var busy = false
     private var closeWhenFree = false
     private var trimWhenFree = false
+    private var closeHardwareWhenFree = false
+
+    /** The decoder a decode on this lane uses. */
+    fun decoderFor(hardware: Boolean): ThumbLaneDecoder = if (hardware) this.hardware ?: NOT_OPEN else decoder
+
+    /** The lane's hardware decoder for [codecName], opened on first use. Only during a decode on this lane. */
+    fun hardwareFor(codecName: String): HardwareThumbDecoder = synchronized(this) {
+        hardware?.takeIf { it.codecName == codecName } ?: run {
+            hardware?.close()
+            HardwareThumbDecoder(codecName).also { hardware = it }
+        }
+    }
 
     val inUse: Boolean get() = synchronized(this) { busy }
 
@@ -278,15 +305,42 @@ internal class DecoderLane {
         synchronized(this) {
             busy = false
             if (closeWhenFree) decoder.close() else if (trimWhenFree) decoder.trim()
+            if (closeWhenFree || closeHardwareWhenFree) dropHardware()
             closeWhenFree = false
             trimWhenFree = false
+            closeHardwareWhenFree = false
         }
     }
 
     fun close() {
         synchronized(this) {
-            if (!busy) decoder.close()
+            if (!busy) {
+                decoder.close()
+                dropHardware()
+            }
             closeWhenFree = busy
+        }
+    }
+
+    /** Gives the hardware decoder back (to the player), at once or when the running decode ends. Any thread. */
+    fun closeHardware() {
+        synchronized(this) {
+            if (hardware == null) return
+            if (!busy) dropHardware()
+            closeHardwareWhenFree = busy
+        }
+    }
+
+    private fun dropHardware() {
+        hardware?.close()
+        hardware = null
+    }
+
+    private companion object {
+        val NOT_OPEN = object : ThumbLaneDecoder {
+            override val warm = false
+            override fun trim() = Unit
+            override fun close() = Unit
         }
     }
 

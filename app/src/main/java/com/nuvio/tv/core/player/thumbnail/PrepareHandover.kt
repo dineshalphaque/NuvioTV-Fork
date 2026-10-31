@@ -47,6 +47,12 @@ internal object PrepareHandover {
         return left
     }
 
+    /** Every slot the screen makes before its grid ([stride]) is complete: what its count and percentage show. */
+    fun screenSet(order: List<Int>, stride: Int): List<Int> {
+        val last = order.indexOfLast { it % stride == 0 }
+        return if (last < 0) emptyList() else order.subList(0, last + 1)
+    }
+
     /** Null while the screen should keep waiting. A rate-limited source fetches one at a time: it never keeps up. */
     fun reason(
         nowMs: Long,

@@ -5,15 +5,23 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 /**
  * Our own thumbnails for a media server's stream (Silo, Jellyfin, Emby) that has none of its own. A server away from
- * the home network is usually someone else's: it only gets asked for the picture a seek lands on, one request at a
- * time. No media server's stream is read again once the player closes.
+ * the home network is usually someone else's: its stream only gets asked for the picture a seek lands on, one request
+ * at a time. The full set may come from a copy of the title instead ([copyFills]). No media server's stream is read
+ * again once the player closes.
  */
 internal object MediaServerThumbs {
     /** Thumbnail requests to a server away from the home network at once. */
     const val ON_DEMAND_FETCHES = 1
 
-    /** No coverage pass, no generating screen, no copy: only the spot a seek asks for. */
+    /** No coverage pass on the stream itself: only the spot a seek asks for (and the pictures that check a copy). */
     fun onDemandOnly(mediaServer: Boolean, url: String): Boolean = mediaServer && !onHomeNetwork(url)
+
+    /**
+     * A server away from home whose title has a copy that fits ([fits]) with copies on in settings: the copy makes the
+     * full set and the generating screen may come up. Without one only the spot a seek asks for, as before.
+     */
+    fun copyFills(onDemand: Boolean, copiesOn: Boolean, identityExact: Boolean, fits: Boolean): Boolean =
+        onDemand && copiesOn && identityExact && fits
 
     /** A private, link-local or Tailscale address, a home-network name, or the box itself. */
     fun onHomeNetwork(url: String): Boolean {
@@ -35,6 +43,9 @@ internal object MediaServerThumbs {
     }
 
     fun fetchLimit(onDemand: Boolean, limit: Int): Int = if (onDemand) minOf(limit, ON_DEMAND_FETCHES) else limit
+
+    /** A remote server's thumbnails in batches stop here: about the keyframes of a 4K remux's full set. */
+    const val REMOTE_DATA_CAP_BYTES = 150L * 1024 * 1024
 
     private fun isLoopback(host: String): Boolean {
         val h = host.lowercase()

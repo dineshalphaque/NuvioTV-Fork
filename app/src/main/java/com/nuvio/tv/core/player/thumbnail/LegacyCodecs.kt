@@ -48,6 +48,27 @@ internal object LegacyCodecs {
         return false
     }
 
+    /**
+     * Matroska VP9 CodecPrivate: (id, length, value) features, 3 = bit depth, 1 = profile (2 and 3 are 10 or 12-bit).
+     * 8 when neither is given.
+     */
+    fun vp9BitDepth(cp: ByteArray): Int {
+        var profile = -1
+        var p = 0
+        while (p + 2 <= cp.size) {
+            val id = cp[p].toInt() and 0xFF
+            val len = cp[p + 1].toInt() and 0xFF
+            if (p + 2 + len > cp.size) break
+            if (len == 1) {
+                val v = cp[p + 2].toInt() and 0xFF
+                if (id == 3 && v in 8..12) return v
+                if (id == 1) profile = v
+            }
+            p += 2 + len
+        }
+        return if (profile >= 2) 10 else 8
+    }
+
     /** av1C (AV1CodecConfigurationRecord): 10/12-bit from high_bitdepth / twelve_bit, else 8. */
     fun av1BitDepth(av1c: ByteArray): Int {
         if (av1c.size < 3) return 8

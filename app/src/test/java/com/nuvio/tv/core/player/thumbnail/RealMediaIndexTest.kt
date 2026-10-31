@@ -63,7 +63,7 @@ class RealMediaIndexTest {
                         val ext = when (idx.video.codec) {
                             VideoCodec.HEVC -> "hevc"; VideoCodec.H264 -> "h264"; VideoCodec.MPEG4 -> "m4v"
                             VideoCodec.MPEG2, VideoCodec.MPEG1 -> "m2v"; VideoCodec.VC1, VideoCodec.WMV3 -> "vc1"
-                            VideoCodec.AV1 -> "obu"
+                            VideoCodec.AV1 -> "obu"; VideoCodec.VP9 -> "vp9"
                         }
                         val bytes = if (idx.video.codec.nal) au else idx.video.extradata + au
                         out?.let { File(it, "${label}_$n.$ext").writeBytes(bytes) }

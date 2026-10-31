@@ -16,6 +16,7 @@ internal class ThumbDecodeLanes(
     companion object {
         const val MAX = 6
         const val MAX_4K = 4
+        const val SMALL_4K_STRIP_LANES = 2
         const val WINDOW = 6
         const val GAIN_RATIO = 1.25
         /** Decodes before a lane count that brought no gain, or was given up for memory, is tried again. */
@@ -32,6 +33,9 @@ internal class ThumbDecodeLanes(
     private val processors = processors.coerceAtLeast(1)
     var phase = phase
         private set
+    /** The title's 4K keyframes decode in strips (a quarter of a whole decode's memory). */
+    var strips = false
+        private set
     var lanes = startLanes().coerceAtMost(ceiling())
         private set
     /** Recent decode times by the number of decodes running when each started. */
@@ -45,8 +49,17 @@ internal class ThumbDecodeLanes(
         val spare = (processors - 1).coerceAtLeast(1)
         return when (p) {
             FetchPhase.PLAYBACK -> minOf(spare, if (strongBox || !fourK) 2 else 1)
-            else -> minOf(spare, if (!strongBox && fourK) 1 else if (fourK) MAX_4K else MAX)
+            // With no film decoding, a small box has the memory for two strip decodes (2 x 25 MB) and the cores for
+            // their two strip decoders each; a whole 4K decode (80 MB) stays at one.
+            else -> minOf(spare, if (!strongBox && fourK) (if (strips) SMALL_4K_STRIP_LANES else 1) else if (fourK) MAX_4K else MAX)
         }
+    }
+
+    /** Strips known for the title: the ceiling may rise or fall with it. */
+    fun onStrips(on: Boolean): Change? {
+        if (on == strips) return null
+        strips = on
+        return if (lanes > ceiling()) set(ceiling(), "keyframes decode whole") else null
     }
 
     private fun startLanes(): Int = if (!strongBox && fourK) 1 else 2

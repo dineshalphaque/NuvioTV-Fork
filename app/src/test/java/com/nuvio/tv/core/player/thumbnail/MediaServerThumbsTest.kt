@@ -63,4 +63,13 @@ class MediaServerThumbsTest {
         assertEquals(3, MediaServerThumbs.fetchLimit(onDemand = false, limit = 3))
         assertEquals(8, MediaServerThumbs.fetchLimit(onDemand = false, limit = 8))
     }
+
+    @Test
+    fun aCopyFillsOnlyForAServerAwayFromHomeWithCopiesOnAndOneThatFits() {
+        assertTrue(MediaServerThumbs.copyFills(onDemand = true, copiesOn = true, identityExact = true, fits = true))
+        assertFalse(MediaServerThumbs.copyFills(onDemand = false, copiesOn = true, identityExact = true, fits = true))
+        assertFalse(MediaServerThumbs.copyFills(onDemand = true, copiesOn = false, identityExact = true, fits = true))
+        assertFalse(MediaServerThumbs.copyFills(onDemand = true, copiesOn = true, identityExact = false, fits = true))
+        assertFalse(MediaServerThumbs.copyFills(onDemand = true, copiesOn = true, identityExact = true, fits = false))
+    }
 }

@@ -35,6 +35,7 @@ internal class ThumbStore private constructor(
         private const val MAGIC = 0x4E545333            // "NTS3"
         private const val FORMAT = 2
         private const val WEBP_QUALITY = 80
+        private const val JPEG_QUALITY = 85
         private const val PREFIX_CHARS = 12
         /** Memory LRU size in frames. */
         const val MEM_FRAMES_STRONG = 36
@@ -396,9 +397,10 @@ internal class ThumbStore private constructor(
 
     /**
      * Stores one thumbnail for every slot it serves: one WebP append shared by all [slotsUs], written from the full-colour
-     * [bmp]. Memory keeps an RGB565 copy when the app's image setting asks for it. IO thread.
+     * [bmp] ([jpeg]: a JPEG, ten times quicker to write, for the hardware path). Memory keeps an RGB565 copy when the
+     * app's image setting asks for it. IO thread.
      */
-    fun put(slotsUs: LongArray, keyframePtsUs: Long, bmp: Bitmap) {
+    fun put(slotsUs: LongArray, keyframePtsUs: Long, bmp: Bitmap, jpeg: Boolean = false) {
         val kept = if (rgb565 && bmp.config != Bitmap.Config.RGB_565) bmp.copy(Bitmap.Config.RGB_565, false) ?: bmp else bmp
         if (rgb565) fullColourWanted.takeIf { it in slotsUs }?.let { fullColour = it to bmp }
         synchronized(this) { for (s in slotsUs) mem.put(s, kept) }
@@ -406,7 +408,7 @@ internal class ThumbStore private constructor(
         val webp = ByteArrayOutputStream(8 * 1024).also {
             @Suppress("DEPRECATION")
             val fmt = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
-            bmp.compress(fmt, WEBP_QUALITY, it)
+            if (jpeg) bmp.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, it) else bmp.compress(fmt, WEBP_QUALITY, it)
         }.toByteArray()
         synchronized(diskLock) {
             val offset = datFile.length()
@@ -538,6 +540,7 @@ internal object KeyframeIndexCodec {
             val segStart = s.readLong()
             val tcScale = s.readLong()
             val codec = VideoCodec.values()[s.readInt()]
+            check(codec != VideoCodec.VP9 || HardwareThumbSwitch.on)
             val w = s.readInt(); val h = s.readInt(); val aspect = s.readDouble()
             val nal = s.readInt(); val ps = ByteArray(s.readInt()).also { s.readFully(it) }
             val bitDepth = s.readInt(); val track = s.readLong()

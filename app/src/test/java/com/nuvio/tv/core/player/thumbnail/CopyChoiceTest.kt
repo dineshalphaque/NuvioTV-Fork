@@ -87,7 +87,7 @@ class CopyChoiceTest {
     }
 
     @Test
-    fun orderPrefersNoSideEffectsThenSdrH264Then1080pWebSmaller() {
+    fun orderPrefersFastServersThenSdrH264Then1080pWebSmaller() {
         val ordered = CopyChoice.order(listOf(
             offer("debrid", kind = CopyKind.DEBRID, size = 1_000_000_000L),
             offer("720", height = 720, size = 1_000_000_000L),
@@ -99,22 +99,22 @@ class CopyChoiceTest {
             offer("server", kind = CopyKind.SERVER, size = 3_000_000_000L),
             offer("nosize", size = null),
         )).map { it.id }
-        assertEquals(listOf("debrid", "small", "server", "big", "nosize", "bluray", "720", "hevc", "hdr"), ordered)
+        assertEquals(listOf("debrid", "server", "small", "big", "nosize", "bluray", "720", "hevc", "hdr"), ordered)
     }
 
     @Test
-    fun a720pH264CopyComesBeforeA1080pHevcOneButNotBeforeAnAccountChange() {
+    fun a720pH264CopyComesBeforeA1080pHevcOneAndATorBoxCopyBeforeAnUnknownLink() {
         val ordered = CopyChoice.order(listOf(
             offer("hevc1080", codec = CopyCodec.HEVC),
             offer("added720", kind = CopyKind.TORBOX_ADD, height = 720),
             offer("h264720", height = 720),
             offer("h2641080"),
         )).map { it.id }
-        assertEquals(listOf("h2641080", "h264720", "hevc1080", "added720"), ordered)
+        assertEquals(listOf("added720", "h2641080", "h264720", "hevc1080"), ordered)
     }
 
     @Test
-    fun accountSideEffectsLastAndSourceCostBreaksTies() {
+    fun batchedServersFirstThenSourceCostThenTheRest() {
         val ordered = CopyChoice.order(listOf(
             offer("usenet", kind = CopyKind.USENET, size = 1_000_000_000L),
             offer("premiumize", kind = CopyKind.PREMIUMIZE, size = 1_000_000_000L),
@@ -123,7 +123,7 @@ class CopyChoiceTest {
             offer("link", size = 2_000_000_000L),
             offer("list", kind = CopyKind.DEBRID, size = 2_000_000_000L),
         )).map { it.id }
-        assertEquals(listOf("list", "link", "link720", "added", "premiumize", "usenet"), ordered)
+        assertEquals(listOf("list", "added", "link", "link720", "premiumize", "usenet"), ordered)
     }
 
     @Test
@@ -154,12 +154,12 @@ class CopyChoiceTest {
     }
 
     @Test
-    fun heavyCopiesStayBehindTheSideEffectRule() {
+    fun aLightTorBoxCopyComesBeforeAHeavyRemuxLink() {
         val ordered = CopyChoice.order(listOf(
             offer("added", kind = CopyKind.TORBOX_ADD, size = 5_000_000_000L),
             offer("remux", web = false, size = 30_000_000_000L),
         ), ownMs = ownMs).map { it.id }
-        assertEquals(listOf("remux", "added"), ordered)
+        assertEquals(listOf("added", "remux"), ordered)
     }
 
     @Test
@@ -324,7 +324,7 @@ class CopyChoiceTest {
             offer("home", kind = CopyKind.SERVER, codec = CopyCodec.HEVC),
             offer("resolve", kind = CopyKind.RESOLVE),
         )).map { it.id }
-        assertEquals(listOf("home", "remote", "added", "resolve"), ordered)
+        assertEquals(listOf("home", "added", "resolve", "remote"), ordered)
     }
 
     @Test
@@ -346,7 +346,7 @@ class CopyChoiceTest {
     }
 
     @Test
-    fun aDebridResolveLinkComesAfterTheAddThenRemoveCopyAndPremiumize() {
+    fun aDebridResolveLinkJoinsTheFirstGroupBehindTheCopiesThatAddNothing() {
         val ordered = CopyChoice.order(listOf(
             offer("resolve", kind = CopyKind.RESOLVE, size = 1_000_000_000L),
             offer("usenet", kind = CopyKind.USENET, size = 1_000_000_000L),
@@ -358,7 +358,7 @@ class CopyChoiceTest {
             offer("resolveHdr", kind = CopyKind.RESOLVE, hdr = true),
         )).map { it.id }
         assertEquals(
-            listOf("link", "added", "premiumize", "resolve", "resolve720", "resolveHevc", "resolveHdr", "usenet"),
+            listOf("added", "link", "resolve", "resolve720", "resolveHevc", "resolveHdr", "premiumize", "usenet"),
             ordered,
         )
         val usenet = CopyChoice.order(listOf(
@@ -382,5 +382,71 @@ class CopyChoiceTest {
         assertFalse(CopyChoice.ownPassWaitsForLook(false, true, CopyChoice.LOOK_HOLD_MS))
         assertFalse(CopyChoice.ownPassWaitsForLook(false, looking = false, sinceStartMs = 0L))
         assertFalse(CopyChoice.ownPassWaitsForLook(strongBox = true, looking = true, sinceStartMs = 0L))
+    }
+
+    @Test
+    fun aTitleOnAServerAwayFromHomeNeverTakesACopyFromAServerAwayFromHome() {
+        val offers = listOf(
+            offer("remote", kind = CopyKind.SERVER, remote = true),
+            offer("usenet", kind = CopyKind.USENET),
+            offer("added", kind = CopyKind.TORBOX_ADD),
+            offer("resolve", kind = CopyKind.RESOLVE),
+            offer("premiumize", kind = CopyKind.PREMIUMIZE),
+            offer("home", kind = CopyKind.SERVER),
+            offer("link"),
+        )
+        assertEquals(listOf("home", "added", "link", "resolve", "premiumize", "usenet"),
+            CopyChoice.order(offers, awayServer = true).map { it.id })
+        assertEquals("remote", CopyChoice.order(offers).map { it.id }[5])
+    }
+
+    @Test
+    fun aServerAwayFromHomeIsNoCopyForATitleAwayFromHome() {
+        val remote = offer("remote", kind = CopyKind.SERVER, remote = true)
+        assertFalse(CopyChoice.awayUsable(remote))
+        assertTrue(CopyChoice.awayUsable(offer("home", kind = CopyKind.SERVER)))
+        assertTrue(CopyChoice.order(listOf(remote), ownMs = ownMs, awayServer = true).isEmpty())
+        assertFalse(CopyChoice.anyFits(CopyOffers(playing, listOf(remote)), ownMs))
+    }
+
+    @Test
+    fun anyFitsNeedsOneCopyThatMayStandInAndNoTranscode() {
+        val fits = CopyOffers(playing, listOf(offer("big", height = 2160), offer("ok")))
+        assertTrue(CopyChoice.anyFits(fits, ownMs))
+        assertFalse(CopyChoice.anyFits(CopyOffers(playing, listOf(offer("big", height = 2160))), ownMs))
+        assertFalse(CopyChoice.anyFits(CopyOffers(playing, emptyList()), ownMs))
+        assertFalse(CopyChoice.anyFits(CopyOffers(playing, listOf(offer("short", durationMs = 3_600_000L))), ownMs))
+        assertFalse(CopyChoice.anyFits(CopyOffers(playing, listOf(offer("ok")), playingTranscoded = true), ownMs))
+    }
+
+    @Test
+    fun serversKnownToBatchKeyframesComeFirstAmongFreeCopies() {
+        val known = mapOf("fast" to true, "slow" to false)
+        val ordered = CopyChoice.order(listOf(
+            offer("slow", height = 720),
+            offer("unknown"),
+            offer("fast", codec = CopyCodec.HEVC),
+            offer("premiumize", kind = CopyKind.PREMIUMIZE),
+            offer("added", kind = CopyKind.TORBOX_ADD),
+            offer("list", kind = CopyKind.DEBRID, height = 720),
+        )) { known[it.id] }.map { it.id }
+        assertEquals(listOf("list", "fast", "added", "unknown", "slow", "premiumize"), ordered)
+    }
+
+    @Test
+    fun aTorBoxResolveLinkIsBatchedAndRealDebridIsNot() {
+        assertEquals(true, CopyChoice.resolveBatched("https://addon.example/torbox/KEY/abc/0/Film.mkv", "Comet 1080p"))
+        assertEquals(true, CopyChoice.resolveBatched("https://addon.example/resolve/x", "[TB+] Torrentio 1080p"))
+        assertEquals(false, CopyChoice.resolveBatched("https://addon.example/realdebrid/KEY/abc", "Comet"))
+        assertEquals(false, CopyChoice.resolveBatched("https://addon.example/resolve/x", "[RD+] Torrentio"))
+        assertNull(CopyChoice.resolveBatched("https://addon.example/resolve/x", "[AD+] Torrentio"))
+        val known = mapOf("tbResolve" to true, "rdResolve" to false)
+        val ordered = CopyChoice.order(listOf(
+            offer("rdResolve", kind = CopyKind.RESOLVE),
+            offer("link"),
+            offer("tbResolve", kind = CopyKind.RESOLVE),
+            offer("added", kind = CopyKind.TORBOX_ADD),
+        )) { known[it.id] }.map { it.id }
+        assertEquals(listOf("added", "tbResolve", "link", "rdResolve"), ordered)
     }
 }

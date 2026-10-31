@@ -14,6 +14,8 @@ internal enum class DecodeTier(val rssMb: Int, val addressSpaceMb: Int) {
     SW_4K(rssMb = 80, addressSpaceMb = 85),
     /** Two strip decoders of about 10 MB each (StripDecode). */
     SW_4K_STRIPS(rssMb = 25, addressSpaceMb = 30),
+    /** A hardware decoder: its pictures sit in the video memory pool, the app keeps a small GPU target and one bitmap. */
+    HW(rssMb = 8, addressSpaceMb = 16),
 }
 
 /** [swapFreeMb] >= 0 when the refusal was for swap. */
@@ -85,6 +87,14 @@ internal object MemoryGovernor {
      * Shield with full swap still had 583-794 MB available, and lmkd does not kill on swap alone while that much is free.
      */
     private const val STRONG_SWAP_ROOM_MB = 200L
+
+    /**
+     * The same for smaller boxes, with a wider margin: Google TV keeps a 2 GB Xiaomi's swap nearly full (62 MB free) while
+     * 658 MB is still available, and swap alone then stopped every thumbnail.
+     */
+    private const val SMALL_SWAP_ROOM_MB = 300L
+    /** Below this a small box never decodes, whatever is available: lmkd's swap-low line is about 40 MB on a Fire TV Stick. */
+    private const val SMALL_SWAP_ROOM_MIN_SWAP_MB = 48L
     /** 2.5 GiB: boxes sold as 3 GB report about 2.7-2.9 GB, 2 GB boxes stay below. */
     private const val STRONG_BOX_TOTAL_BYTES = 2_560L * 1024 * 1024
     /** The smallest Java heap limit (dalvik.vm.heapsize) the strong 4K path has run on. */
@@ -115,11 +125,17 @@ internal object MemoryGovernor {
      */
     val isStrongBox: Boolean get() = strongBox
 
+    /** Under 2.3 GB, or Android's own low-RAM flag. */
+    val isLowRam: Boolean get() = lowRam
+
     /**
      * The box class alone (64-bit, RAM, Java heap limit), without the memory free at the moment: for media-server
      * thumbnails, the disk budget and the settings figure, which have no session of their own to decide in.
      */
     val isStrongHardware: Boolean get() = strongHardware
+
+    /** Total RAM in MB, 0 when not known. */
+    val totalMemMb: Long get() = totalMemBytes / MB
     @Volatile private var strongHardware = false
     @Volatile private var registered = false
 
@@ -239,14 +255,15 @@ internal object MemoryGovernor {
         when {
             lowMemory -> "system low on memory"
             availMb in 0 until floorMb -> "MemAvailable $availMb MB < $floorMb"
-            swapTotalMb > 0 && swapFreeMb < SWAP_FLOOR_MB && !roomBesideSwap(availMb, floorMb, strongHardware) ->
+            swapTotalMb > 0 && swapFreeMb < SWAP_FLOOR_MB && !roomBesideSwap(availMb, floorMb, strongHardware, swapFreeMb) ->
                 "SwapFree $swapFreeMb MB < $SWAP_FLOOR_MB"
             else -> null
         }
 
-    /** A strong box with MemAvailable well above [floorMb] (after the decode's charge) is not held back by swap. */
-    internal fun roomBesideSwap(availAfterMb: Long, floorMb: Long, strongHardware: Boolean): Boolean =
-        strongHardware && availAfterMb >= floorMb + STRONG_SWAP_ROOM_MB
+    /** A box with MemAvailable well above [floorMb] (after the decode's charge) is not held back by swap. */
+    internal fun roomBesideSwap(availAfterMb: Long, floorMb: Long, strongHardware: Boolean, swapFreeMb: Long = Long.MAX_VALUE): Boolean =
+        if (strongHardware) availAfterMb >= floorMb + STRONG_SWAP_ROOM_MB
+        else swapFreeMb >= SMALL_SWAP_ROOM_MIN_SWAP_MB && availAfterMb >= floorMb + SMALL_SWAP_ROOM_MB
 
     private const val PRELOAD_STRONG_BYTES = 32L * 1024 * 1024
     private const val PRELOAD_SMALL_BYTES = 6L * 1024 * 1024
@@ -288,7 +305,8 @@ internal object MemoryGovernor {
      * second decoder next to the session's also checks the 32-bit address space.
      */
     fun allow(
-        tier: DecodeTier, decoderWarm: Boolean = false, funded: Boolean = false, addressSpace: Boolean = tier != DecodeTier.SW_UP_TO_1080P,
+        tier: DecodeTier, decoderWarm: Boolean = false, funded: Boolean = false,
+        addressSpace: Boolean = tier != DecodeTier.SW_UP_TO_1080P && tier != DecodeTier.HW,
     ): GovernorVerdict {
         // When 4K may decode is the scheduler's rule, this only checks that it is affordable.
         if (addressSpace && !is64Bit && !decoderWarm) {
@@ -313,7 +331,8 @@ internal object MemoryGovernor {
     internal fun fundedDecode(
         busy: Int, tier: DecodeTier, reserveFunded: Boolean, naturalFunded: Boolean, screenHolds: Boolean, lowRam: Boolean,
     ): Boolean = busy == 0 &&
-        (reserveFunded || naturalFunded || (screenHolds && tier == DecodeTier.SW_UP_TO_1080P && !lowRam))
+        (reserveFunded || naturalFunded ||
+            (screenHolds && (tier == DecodeTier.SW_UP_TO_1080P || tier == DecodeTier.HW) && !lowRam))
 
     /** Swap is only checked where the box has some. */
     internal fun decodeVerdict(
@@ -348,7 +367,7 @@ internal object MemoryGovernor {
     ): GovernorVerdict? {
         val swapFloor = if (funded) FUNDED_SWAP_FLOOR_MB else SWAP_FLOOR_MB
         if (mem.swapTotalMb > 0 && mem.swapFreeMb < swapFloor &&
-            !roomBesideSwap(mem.availableMb - chargeMb, decodeFloorMb(funded, lowRam), strongHardware)
+            !roomBesideSwap(mem.availableMb - chargeMb, decodeFloorMb(funded, lowRam), strongHardware, mem.swapFreeMb)
         ) {
             return GovernorVerdict(false, "SwapFree ${mem.swapFreeMb} MB < $swapFloor", mem.swapFreeMb)
         }

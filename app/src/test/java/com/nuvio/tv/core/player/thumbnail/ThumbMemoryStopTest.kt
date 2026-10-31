@@ -98,6 +98,8 @@ class ThumbMemoryStopTest {
     fun pressureSignals() {
         assertEquals("system low on memory", MemoryGovernor.pressureReason(true, 2_000, 0, 0, 300))
         assertTrue(MemoryGovernor.pressureReason(false, 250, 0, 0, 300)!!.startsWith("MemAvailable"))
+        assertTrue(MemoryGovernor.pressureReason(false, 500, 1_024, 10, 300)!!.startsWith("SwapFree"))
+        assertNull("plenty of memory beside a nearly full swap", MemoryGovernor.pressureReason(false, 900, 1_024, 60, 300))
         assertTrue(MemoryGovernor.pressureReason(false, 900, 1_024, 10, 300)!!.startsWith("SwapFree"))
         assertNull(MemoryGovernor.pressureReason(false, 900, 1_024, 500, 300))
         assertNull(MemoryGovernor.pressureReason(false, -1, 0, 0, 300))

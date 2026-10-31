@@ -195,34 +195,85 @@ internal object CopyChoice {
     }
 
     /**
-     * Copies with no account side effects first (TorBox list, server versions, ready links), then a version on a media
-     * server away from home, then a TorBox copy added
-     * and removed again, then Premiumize, then a debrid resolve link (may stay in that account), then Usenet (an
-     * indexer grab); within that light copies before [heavy] ones (fewer bytes per thumbnail), SDR before HDR, H.264
-     * before HEVC
-     * (a thumbnail is 480 wide, so a 720p H.264 copy gives the same picture faster than a 1080p HEVC one), 1080p before
-     * 720p, WEB first, smaller files first, and by source cost last (TorBox list before server versions and links). For a title playing from Usenet ([usenet]) the source comes first: server versions, the TorBox list,
+     * Every copy a link or a key reaches first (TorBox list, server versions, ready links, a TorBox copy added and
+     * removed again, Premiumize, a debrid resolve link), then a version on a media server away from home, then Usenet
+     * (an indexer grab). Within that: light copies before [heavy] ones (fewer bytes per
+     * thumbnail), then servers known to send many keyframes in one request ([batched]: TorBox and the home network
+     * always, a TorBox resolve link too, Real-Debrid and Premiumize never, others as remembered) before unknown ones and those known to refuse, then the cheaper
+     * source (nothing added before added and removed again), SDR before HDR, H.264 before HEVC (a thumbnail is 480 wide,
+     * so a 720p H.264 copy gives the same picture faster than a 1080p HEVC one), 1080p before 720p, WEB first, smaller
+     * files first. For a title playing from Usenet ([usenet]) the source comes first: server versions, the TorBox list,
      * Premiumize, ready links, a TorBox copy added and removed again, then a debrid resolve link.
      */
-    fun order(offers: List<CopyOffer>, usenet: Boolean = false, ownMs: Long? = null): List<CopyOffer> = offers.sortedWith(
+    fun order(
+        offers: List<CopyOffer>, usenet: Boolean = false, ownMs: Long? = null, awayServer: Boolean = false,
+        batched: (CopyOffer) -> Boolean? = { null },
+    ): List<CopyOffer> = offers.filter { !awayServer || awayUsable(it) }.sortedWith(
         compareBy<CopyOffer> { if (usenet) usenetRank(it.kind) else sideEffects(it) }
             .thenBy { if (heavy(it, ownMs)) 1 else 0 }
+            .thenBy { batchedRank(it, batched(it)) }
+            .thenBy { costRank(it.kind) }
             .thenBy { if (it.hdr) 1 else 0 }
             .thenBy { codecRank(it.codec) }
             .thenBy { HEIGHTS.indexOf(it.height).let { i -> if (i < 0) HEIGHTS.size else i } }
             .thenBy { if (it.web) 0 else 1 }
             .thenBy { it.sizeBytes ?: Long.MAX_VALUE }
-            .thenBy { if (it.kind == CopyKind.DEBRID) 0 else 1 }
     )
 
     private fun sideEffects(o: CopyOffer): Int = when (o.kind) {
         CopyKind.SERVER -> if (o.remote) 1 else 0
-        CopyKind.DEBRID, CopyKind.LINK -> 0
-        CopyKind.TORBOX_ADD -> 2
-        CopyKind.PREMIUMIZE -> 3
-        CopyKind.RESOLVE -> 4
-        CopyKind.USENET -> 5
+        CopyKind.DEBRID, CopyKind.LINK, CopyKind.TORBOX_ADD, CopyKind.PREMIUMIZE, CopyKind.RESOLVE -> 0
+        CopyKind.USENET -> 2
     }
+
+    /** 0 = many keyframes per request (or a home server, fast anyway), 1 = not known, 2 = known to refuse. */
+    internal fun batchedRank(o: CopyOffer, known: Boolean?): Int = when {
+        o.kind == CopyKind.DEBRID || o.kind == CopyKind.TORBOX_ADD -> 0
+        o.kind == CopyKind.SERVER && !o.remote -> 0
+        o.kind == CopyKind.PREMIUMIZE -> 2
+        known == true -> 0
+        known == false -> 2
+        else -> 1
+    }
+
+    /** Nothing added, then added and removed again, then a title that may stay in the account. */
+    private fun costRank(k: CopyKind): Int = when (k) {
+        CopyKind.TORBOX_ADD -> 1
+        CopyKind.PREMIUMIZE -> 2
+        CopyKind.RESOLVE -> 3
+        else -> 0
+    }
+
+    /**
+     * Whether a debrid resolve link's server sends many keyframes in one request, from the service named in its path or
+     * the add-on's tag: TorBox yes, Real-Debrid and Premiumize no, otherwise not known.
+     */
+    fun resolveBatched(url: String, text: String): Boolean? {
+        val segments = pathOf(url).split('/')
+        val t = text.lowercase()
+        return when {
+            "torbox" in segments || TORBOX_TAG.containsMatchIn(t) -> true
+            segments.any { it in SINGLE_READ_SEGMENTS } || SINGLE_READ_TAG.containsMatchIn(t) -> false
+            else -> null
+        }
+    }
+
+    private val TORBOX_TAG = Regex("""\[tb(?![a-z])|(?<![a-z])tb\+""")
+    private val SINGLE_READ_SEGMENTS = setOf("realdebrid", "premiumize")
+    private val SINGLE_READ_TAG = Regex("""\[(rd|pm)(?![a-z])|(?<![a-z])(rd|pm)\+""")
+
+    /**
+     * The title plays from a media server away from home: a copy may come from anywhere but a server away from home.
+     * Those are only read by the playing server's own capped pass.
+     */
+    fun awayUsable(o: CopyOffer): Boolean = !(o.kind == CopyKind.SERVER && o.remote)
+
+    /**
+     * Whether any offer may stand in for the playing title by [rejection], with the playing picture's height not known
+     * yet. Never while the playing server transcodes.
+     */
+    fun anyFits(offers: CopyOffers, ownMs: Long): Boolean =
+        !offers.playingTranscoded && offers.offers.any { awayUsable(it) && rejection(it, offers.playingText, ownMs) == null }
 
     private fun usenetRank(k: CopyKind): Int = when (k) {
         CopyKind.SERVER -> 0

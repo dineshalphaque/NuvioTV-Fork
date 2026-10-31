@@ -31,10 +31,10 @@ class ThumbSwapHoldTest {
 
     @Test
     fun decodeDuringPlaybackBacksOffForSwapEvenWithMemAvailableFine() {
-        val v = fireStick(availMb = 600, swapFreeMb = 63, funded = false, chargeMb = 80)
+        val v = fireStick(availMb = 450, swapFreeMb = 63, funded = false, chargeMb = 80)
         assertFalse(v.allowed)
         assertTrue(v.swapLow)
-        assertTrue(fireStick(availMb = 600, swapFreeMb = 64, funded = false, chargeMb = 80).allowed)
+        assertTrue(fireStick(availMb = 450, swapFreeMb = 64, funded = false, chargeMb = 80).allowed)
     }
 
     @Test
@@ -52,6 +52,10 @@ class ThumbSwapHoldTest {
         assertNotNull(MemoryGovernor.swapVerdict(mem(swapFreeMb = 63), funded = false))
         assertNull(MemoryGovernor.swapVerdict(mem(swapFreeMb = 64), funded = false))
         assertNull("no swap on the box", MemoryGovernor.swapVerdict(mem(swapTotalMb = 0, swapFreeMb = 0), funded = true))
+        assertNull("Xiaomi: 658 MB available beside a full swap",
+            MemoryGovernor.swapVerdict(mem(availMb = 658, swapFreeMb = 62), funded = false, chargeMb = 120))
+        assertNotNull("Fire Stick: little memory and a full swap",
+            MemoryGovernor.swapVerdict(mem(availMb = 250, swapFreeMb = 36), funded = false))
     }
 
     @Test

@@ -75,14 +75,14 @@ class SeekThumbnailPreferencesTest {
         val default = SeekThumbnailPreferences.defaultMode(2_900L * 1024 * 1024)
         assertEquals(SeekThumbMode.OFF, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = SeekThumbMode.OFF.name }, default))
         assertEquals(SeekThumbMode.OFF, SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = false }, default))
-        assertEquals(SeekThumbMode.HD, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = SeekThumbMode.HD.name }, default))
+        assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = SeekThumbMode.HD.name }, default))
     }
 
     @Test
     fun `a stored choice is kept whatever the RAM`() {
         listOf(SeekThumbMode.ALL, SeekThumbMode.OFF).forEach { default ->
             SeekThumbMode.entries.forEach { mode ->
-                assertEquals(mode, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = mode.name }, default))
+                assertEquals(onOrOff(mode), SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = mode.name }, default))
             }
             assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = true }, default))
             assertEquals(SeekThumbMode.OFF, SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = false }, default))
@@ -92,9 +92,17 @@ class SeekThumbnailPreferencesTest {
     @Test
     fun `stored mode is kept`() {
         SeekThumbMode.entries.forEach { mode ->
-            assertEquals(mode, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = mode.name }))
+            assertEquals(onOrOff(mode), SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = mode.name }))
         }
     }
+
+    @Test
+    fun `a stored up to 1080p reads as on`() {
+        assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = SeekThumbMode.HD.name }))
+        assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(prefs { this[modeKey] = SeekThumbMode.HD.name }, SeekThumbMode.OFF))
+    }
+
+    private fun onOrOff(mode: SeekThumbMode) = if (mode == SeekThumbMode.OFF) SeekThumbMode.OFF else SeekThumbMode.ALL
 
     @Test
     fun `unknown stored mode reads as off`() {
@@ -102,14 +110,14 @@ class SeekThumbnailPreferencesTest {
     }
 
     @Test
-    fun `legacy switch on reads as all, with 4K off as up to 1080p`() {
+    fun `legacy switch on reads as on, with 4K off too`() {
         assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = true }))
         assertEquals(
             SeekThumbMode.ALL,
             SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = true; this[legacyFourKKey] = "AUTO" })
         )
         assertEquals(
-            SeekThumbMode.HD,
+            SeekThumbMode.ALL,
             SeekThumbnailPreferences.modeOf(prefs { this[legacyEnabledKey] = true; this[legacyFourKKey] = "OFF" })
         )
     }
@@ -142,7 +150,7 @@ class SeekThumbnailPreferencesTest {
         listOf(SeekThumbMode.ALL, SeekThumbMode.HD, SeekThumbMode.OFF).forEach { mode ->
             val out = migrated(prefs { this[modeKey] = mode.name })
             assertEquals(true, out[copyKey])
-            assertEquals(mode, SeekThumbnailPreferences.modeOf(out))
+            assertEquals(onOrOff(mode), SeekThumbnailPreferences.modeOf(out))
         }
     }
 
@@ -150,7 +158,7 @@ class SeekThumbnailPreferencesTest {
     fun `legacy switch without copy key keeps copies on and the mode`() {
         val on = migrated(prefs { this[legacyEnabledKey] = true; this[legacyFourKKey] = "OFF" })
         assertEquals(true, on[copyKey])
-        assertEquals(SeekThumbMode.HD, SeekThumbnailPreferences.modeOf(on))
+        assertEquals(SeekThumbMode.ALL, SeekThumbnailPreferences.modeOf(on))
         val off = migrated(prefs { this[legacyEnabledKey] = false })
         assertEquals(true, off[copyKey])
         assertEquals(SeekThumbMode.OFF, SeekThumbnailPreferences.modeOf(off))

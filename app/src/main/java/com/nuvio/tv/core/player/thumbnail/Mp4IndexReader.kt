@@ -115,8 +115,10 @@ internal object Mp4IndexReader {
             "hvc1", "hev1", "dvh1", "dvhe" -> VideoCodec.HEVC
             "mp4v" -> VideoCodec.MPEG4          // refined by the esds objectTypeIndication
             "av01" -> VideoCodec.AV1
+            "vp09" -> if (HardwareThumbSwitch.on) VideoCodec.VP9 else return null
             else -> return null
         }
+        var vp9Bits = 8
         var extradata = ByteArray(0)
         var esdsOk = codec != VideoCodec.MPEG4
         // VisualSampleEntry: 6 reserved + 2 dri + 16 predefined/reserved, width@24, height@26, then 50 more bytes
@@ -141,6 +143,18 @@ internal object Mp4IndexReader {
                     }
                 }
                 "av1C" -> if (codec == VideoCodec.AV1) extradata = b.copyOfRange(c.dataStart, c.end)
+                // FullBox, then profile, level, bit depth (4 bits) | chroma | range, primaries, transfer, matrix.
+                "vpcC" -> if (codec == VideoCodec.VP9 && c.end - c.dataStart >= 10) {
+                    vp9Bits = (b[c.dataStart + 6].toInt() and 0xFF) shr 4
+                    if (colour.transfer == 0) {
+                        colour = colour.copy(
+                            primaries = b[c.dataStart + 7].toInt() and 0xFF,
+                            transfer = b[c.dataStart + 8].toInt() and 0xFF,
+                            matrix = b[c.dataStart + 9].toInt() and 0xFF,
+                            range = if ((b[c.dataStart + 6].toInt() and 1) != 0) 2 else 1,
+                        )
+                    }
+                }
                 "pasp" -> {
                     val h = u32(b, c.dataStart)
                     val v = u32(b, c.dataStart + 4)
@@ -165,7 +179,11 @@ internal object Mp4IndexReader {
         }
         if (!codec.nal) {
             if (!esdsOk) return null
-            val bits = if (codec == VideoCodec.AV1) LegacyCodecs.av1BitDepth(extradata) else 8
+            val bits = when (codec) {
+                VideoCodec.AV1 -> LegacyCodecs.av1BitDepth(extradata)
+                VideoCodec.VP9 -> vp9Bits
+                else -> 8
+            }
             return VideoTrack(codec, width, height, aspect, 4, ByteArray(0), bits, colour, dv,
                 trackNumber = 0L, extradata = extradata)
         }

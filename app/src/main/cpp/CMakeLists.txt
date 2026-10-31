@@ -108,6 +108,7 @@ add_library(
     thumb_backend_mpv.cpp
     thumb_backend_ff60.cpp
     thumbcolor.c
+    thumb_luts.c
     thumbdovi.c
 )
 find_library(jnigraphics-lib jnigraphics)

@@ -25,6 +25,12 @@ tc_ctx *tc_create(const tc_params *p);
 void tc_free(tc_ctx *c);
 
 /*
+ * The LUTs for a GPU pass: lin and scale as built, oetf as 0..1, each LUT_SIZE (4096) floats, and 1 / peak.
+ */
+#define TC_LUT_SIZE 4096
+void tc_tables(const tc_ctx *c, float *lin, float *scale, float *oetf, float *inv_peak);
+
+/*
  * g/b/r strides in samples, out_stride in bytes.
  * out: RGBA8888 when rgb565 == 0, else RGB565 little-endian, ordered-dithered.
  */

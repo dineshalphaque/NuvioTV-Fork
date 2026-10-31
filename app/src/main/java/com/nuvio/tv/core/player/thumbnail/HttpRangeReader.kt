@@ -186,4 +186,86 @@ internal class HttpRangeReader(
             call?.let { inFlight.remove(it) }
         }
     }
+
+    /** The server answered a many-range request with something other than its parts: single reads from now on. */
+    class MultiRangeRefused(why: String) : IOException(why)
+
+    /**
+     * One request for several byte ranges, each `first until last` exclusive, sorted and apart. Returns the parts as
+     * (start, bytes); a server that merges ranges may send one part covering several. Throws [MultiRangeRefused] when
+     * the server ignores or refuses the ranges; never reads a whole-file answer. One [ConnectionLedger] slot.
+     */
+    fun readRanges(ranges: List<LongRange>, maxBytes: Long): List<Pair<Long, ByteArray>> {
+        require(ranges.isNotEmpty())
+        val asked = ranges.sumOf { it.last - it.first }
+        if (asked > maxBytes) throw MultiRangeRefused("asked ${asked / 1024} KB above ${maxBytes / 1024} KB")
+        val target = effectiveUrl
+        val builder = Request.Builder().url(target)
+        for ((k, v) in headers) {
+            if (!k.equals("Range", ignoreCase = true)) builder.header(k, v)
+        }
+        val request = builder
+            .header("Range", "bytes=" + ranges.joinToString(",") { "${it.first}-${it.last - 1}" })
+            .header("Accept-Encoding", "identity")
+            .build()
+        if (closed) throw IOException("closed")
+        val cancels0 = cancels
+        var slot: ConnectionLedger.Slot? = null
+        var call: Call? = null
+        try {
+            val held = ledger.acquire(target, slotWaitMs) { closed || cancels != cancels0 }
+            slot = held
+            val c = client.newCall(request)
+            call = c
+            inFlight.add(c)
+            if (closed) c.cancel()
+            requestCount.incrementAndGet()
+            c.execute().use { resp ->
+                held.moveTo(resp.request.url.toString())
+                when (resp.code) {
+                    206 -> Unit
+                    429, 503 -> throw RateLimitedException(
+                        ThumbRateLimit.retryAfterMs(resp.header("Retry-After"), System.currentTimeMillis()),
+                        resp.code,
+                        resp.request.url.toString(),
+                    )
+                    200 -> throw MultiRangeRefused("server sent the whole file")
+                    400, 416, 501 -> throw MultiRangeRefused("HTTP ${resp.code}")
+                    else -> throw HttpStatusException(resp.code, ConnectionLedger.saysTooMany(
+                        runCatching { resp.peekBody(TOO_MANY_PEEK_BYTES).string() }.getOrNull()))
+                }
+                val finalUrl = resp.request.url.toString()
+                if (finalUrl != target) effectiveUrl = finalUrl
+                val body = resp.body ?: throw IOException("empty body")
+                val type = resp.header("Content-Type").orEmpty()
+                val parts = if (type.startsWith("multipart/byteranges", ignoreCase = true)) {
+                    val boundary = MultipartRanges.boundary(type) ?: throw MultiRangeRefused("no boundary")
+                    MultipartRanges.read(body.source(), boundary, maxBytes) { totalLength = it }
+                } else {
+                    // One part: fine when it covers every range (merged), else the server served only the first.
+                    val cr = MultipartRanges.contentRange(resp.header("Content-Range"))
+                        ?: throw MultiRangeRefused("no Content-Range")
+                    cr.third.takeIf { it > 0 }?.let { totalLength = it }
+                    val len = cr.second - cr.first + 1
+                    if (ranges.size > 1 && (cr.first > ranges.first().first || cr.second < ranges.last().last - 1)) {
+                        throw MultiRangeRefused("server sent one range")
+                    }
+                    if (len > maxBytes) throw MultiRangeRefused("merged answer of ${len / 1024} KB")
+                    listOf(cr.first to body.source().readByteArray(len))
+                }
+                byteCount.addAndGet(parts.sumOf { it.second.size.toLong() })
+                held.succeeded()
+                return parts
+            }
+        } catch (e: IOException) {
+            val refusal = ConnectionLedger.refusalOf(e) ?: (e as? HttpStatusException)?.takeIf { it.tooMany }?.let {
+                Refusal.TOO_MANY
+            }
+            refusal?.let { slot?.refused(it) }
+            throw e
+        } finally {
+            slot?.close()
+            call?.let { inFlight.remove(it) }
+        }
+    }
 }

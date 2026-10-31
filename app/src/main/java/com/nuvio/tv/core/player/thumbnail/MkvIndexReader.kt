@@ -240,6 +240,8 @@ internal object MkvIndexReader {
             codecId == "V_MPEG2" -> VideoCodec.MPEG2 to priv
             codecId == "V_MPEG1" -> VideoCodec.MPEG1 to priv
             codecId == "V_AV1" -> VideoCodec.AV1 to priv
+            // Only the hardware path makes VP9 thumbnails.
+            codecId == "V_VP9" && HardwareThumbSwitch.on -> VideoCodec.VP9 to ByteArray(0)
             codecId == "V_MS/VFW/FOURCC" && priv.size >= 40 -> {
                 val c = LegacyCodecs.codecForFourcc(LegacyCodecs.fourccAt(priv, 16))
                 if (c == null || c.nal) null else c to priv.copyOfRange(40, priv.size)
@@ -311,7 +313,11 @@ internal object MkvIndexReader {
                     // Raw-sample codecs, decoded with CodecPrivate as extradata.
                     val (legacy, extra) = legacyCodec(codecId, cp)
                         ?: throw UnsupportedMediaException("video codec $codecId")
-                    val bits = if (legacy == VideoCodec.AV1) LegacyCodecs.av1BitDepth(extra) else 8
+                    val bits = when (legacy) {
+                        VideoCodec.AV1 -> LegacyCodecs.av1BitDepth(extra)
+                        VideoCodec.VP9 -> LegacyCodecs.vp9BitDepth(cp ?: ByteArray(0))
+                        else -> 8
+                    }
                     return VideoTrack(
                         codec = legacy, width = w, height = h, displayAspect = aspect, nalLengthSize = 4,
                         parameterSetsAnnexB = ByteArray(0), bitDepth = bits, colour = colour, dolbyVision = dv,

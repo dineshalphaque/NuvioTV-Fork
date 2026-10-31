@@ -176,4 +176,21 @@ class ThumbDecodeLanesTest {
         assertEquals(5L, ThumbDecodeLanes.median(listOf(9L, 5L, 1L)))
         assertEquals(4L, ThumbDecodeLanes.median(listOf(1L, 3L, 5L, 100L)))
     }
+
+    @Test fun small4KInStripsGetsTwoLanesWhileNoFilmDecodes() {
+        val c = lanes(strong = false, fourK = true, cpus = 4)
+        assertNull(c.onStrips(true))
+        assertEquals(2, c.ceiling(FetchPhase.GENERATING))
+        assertEquals(2, c.ceiling(FetchPhase.PLAYER_CLOSED))
+        assertEquals(1, c.ceiling(FetchPhase.PLAYBACK))
+        val up = c.feed(900, concurrent = 1)
+        assertNotNull(up)
+        assertEquals(2, up!!.to)
+        assertNull(c.onStrips(true))
+        val down = c.onStrips(false)
+        assertNotNull(down)
+        assertEquals(1, down!!.to)
+        assertEquals("keyframes decode whole", down.reason)
+        assertEquals(1, lanes(strong = false, fourK = true, cpus = 2).also { it.onStrips(true) }.ceiling(FetchPhase.GENERATING))
+    }
 }

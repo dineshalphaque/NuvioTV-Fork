@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.os.Build
 import android.os.SystemClock
 import android.util.Log
 import androidx.media3.common.C
@@ -37,9 +38,17 @@ internal interface CopySources {
      * [CopyLink.done]; a debrid resolve link ([CopyKind.RESOLVE]) may leave the title in that account.
      */
     suspend fun open(offer: CopyOffer): CopyLink?
+
+    /** Whether [offer]'s server is known to send many keyframes in one request; null when not known. */
+    fun multiRange(offer: CopyOffer): Boolean? = null
 }
 
-internal class CopyOffers(val playingText: String, val offers: List<CopyOffer>)
+internal class CopyOffers(
+    val playingText: String,
+    val offers: List<CopyOffer>,
+    /** The playing stream is a media server's transcode. */
+    val playingTranscoded: Boolean = false,
+)
 
 /**
  * Never logged: [url] and [headers] may carry tokens. [via] says how it was reached, for the log. [done] is called once
@@ -72,6 +81,8 @@ internal class CopyOwn(
     val usenet: Boolean = false,
     /** The generating screen counts every [screenStride]th own slot: those are made first. 1: no such order. */
     val screenStride: Int = 1,
+    /** The title plays from a media server away from home: its stream is never read for the copy's pictures. */
+    val awayServer: Boolean = false,
 )
 
 /** A copy's pictures, ready for the picture check: its store and its timing against the playing title. */
@@ -98,6 +109,8 @@ internal class CopyPass(
     private val ownDecoderBusy: () -> Boolean,
     private val pacer: PlaybackDecodePacer?,
     private val screenUp: () -> Boolean = { false },
+    /** The player has closed and the session finishes on its own. */
+    private val playerClosed: () -> Boolean = { false },
 ) {
     private companion object {
         const val TAG = "ThumbCopy"
@@ -227,16 +240,21 @@ internal class CopyPass(
 
     private suspend fun run() {
         MemoryGovernor.init(context)
-        Log.i(TAG, "looking for ${if (own.usenet) "a copy of this Usenet title" else "a smaller copy of this 4K title"} " +
+        Log.i(TAG, "looking for ${when {
+            own.usenet -> "a copy of this Usenet title"
+            own.awayServer -> "a copy of this title from a media server away from home"
+            else -> "a smaller copy of this 4K title"
+        }} " +
             "(${own.store.slots().size} own thumbnails stored, ${own.durationMs / 1000} s)")
         val offers = awaitOffers() ?: return end(State.STOPPED, "the player's source list did not load")
         val usable = ArrayList<CopyOffer>()
         var logged = 0
         for (o in offers.offers) {
-            val why = CopyChoice.rejection(o, offers.playingText, own.durationMs, own.maxHeight, own.usenet)
+            val why = if (own.awayServer && !CopyChoice.awayUsable(o)) "a media server away from home"
+                else CopyChoice.rejection(o, offers.playingText, own.durationMs, own.maxHeight, own.usenet)
             if (why == null) usable += o else if (logged++ < MAX_REJECT_LOGS) Log.i(TAG, "not used: ${o.label} - $why")
         }
-        val ranked = CopyChoice.order(usable, own.usenet, own.durationMs)
+        val ranked = CopyChoice.order(usable, own.usenet, own.durationMs, own.awayServer) { sources.multiRange(it) }
         if (ranked.isEmpty()) return end(State.DONE, "no copy of this title among ${offers.offers.size} sources fits")
         Log.i(TAG, "${ranked.size} possible copies, in order: " + ranked.take(5).joinToString("; ") { describe(it) })
         var checks = 0
@@ -276,6 +294,10 @@ internal class CopyPass(
             ready = null
             currentKey = null
             state = State.LOOKING
+        }
+        if (own.awayServer) {
+            return end(State.DONE, (if (checks > 0) "no copy matched the pictures of the media server stream"
+                else "no copy could be used") + " - only the spot a seek asks for")
         }
         val ownFile = if (own.usenet) "the Usenet stream" else "the 4K file"
         end(State.DONE, if (checks > 0) "no copy matched the pictures of $ownFile - $ownFile makes the rest" else "no copy could be used")
@@ -337,6 +359,7 @@ internal class CopyPass(
         }
         ledgerUrl = link.url
         laneCap = link.maxLanes.coerceAtLeast(1)
+        if (laneCap < Int.MAX_VALUE) ConnectionLedger.app.capThumbnails(link.url, laneCap)
         if (!awaitReady(null, host)) return Outcome.STOP
         val r = HttpRangeReader(link.url, link.headers, thumbnailHttpClient(link.headers),
             slotWaitMs = ConnectionLedger.START_SLOT_WAIT_MS)
@@ -346,6 +369,7 @@ internal class CopyPass(
             val head = request(host) { r.read(0, MkvIndexReader.HEAD_BYTES) }
             val fileLength = r.totalLength
             ledgerUrl = r.resolvedUrl
+            if (laneCap < Int.MAX_VALUE) ConnectionLedger.app.capThumbnails(r.resolvedUrl, laneCap)
             // A Usenet title may borrow the same release from elsewhere, never through another Usenet stream.
             if (own.usenet) {
                 if (SlowStartServer.isUsenet(r.resolvedUrl)) throw Unusable("a Usenet stream")
@@ -439,7 +463,15 @@ internal class CopyPass(
         val extractors = ArrayList<KeyframeExtractor>()
         val spare = ArrayDeque<KeyframeExtractor>()
         fun bytesRead() = extractors.sumOf { it.bytesRead }
+        // Keyframes in batches where the server allows it, as for the title's own pass; single reads while the film plays.
+        val batch = BatchRangeReader(r, MultiRangeSupport.app(context),
+            if (MemoryGovernor.isStrongBox) BatchRangeReader.STRONG_BUDGET else BatchRangeReader.SMALL_BUDGET)
+        val k = idx.keyframes
+        fun planned(kf: Int): BatchRangeReader.Planned? =
+            if (idx.kind == ContainerKind.MATROSKA) k.relPos[kf].takeIf { it >= 0 }?.let { BatchRangeReader.Planned(k.offset[kf] + it, 0) }
+            else k.size[kf].takeIf { it > 0 }?.let { BatchRangeReader.Planned(k.offset[kf], it) }
         val decoder = FfmpegThumbDecoder()
+        val hardware = if (HardwareThumbSwitch.on) CopyHardware(offer.label) else null
         val attempts = HashMap<Int, Int>()
         val dv5 = idx.video.dolbyVision?.profile == 5
         val smallBox = !MemoryGovernor.isStrongBox
@@ -457,6 +489,19 @@ internal class CopyPass(
                 var next = 0
                 var out: Outcome? = null
                 try {
+                    fun planBatches() {
+                        if (lastPlaying) {
+                            batch.plan(emptyList())
+                            return
+                        }
+                        val coming = (again.asSequence() + order.asSequence().drop(next))
+                            .map { kfOf[it] }
+                            .filter { kf -> kf >= 0 && kf !in underWay && (attempts[kf] ?: 0) < 2 }
+                            .filter { kf -> kfSlots[kf]?.any { !store.has(slotUs(it)) } == true }
+                            .distinct()
+                            .take(BatchRangeReader.PIECES * ThumbFetchLanes.MAX)
+                        batch.plan(coming.mapNotNull { planned(it) }.toList())
+                    }
                     work@ while (true) {
                         if (stopping) {
                             out = Outcome.STOP
@@ -487,6 +532,7 @@ internal class CopyPass(
                             pending.clear()
                             r.cancel()
                         }
+                        planBatches()
                         while (!refused.get() && pending.size < lanes && bytesRead() < MAX_BYTES &&
                             (!lastPlaying || (pending.size < headroom.lanes.coerceAtLeast(1) &&
                                 pending.count { it.result.isCompleted } < PlaybackHeadroom.DECODE_AHEAD))) {
@@ -503,7 +549,7 @@ internal class CopyPass(
                                 break@work
                             }
                             attempts[kf] = (attempts[kf] ?: 0) + 1
-                            val ex = spare.removeFirstOrNull() ?: KeyframeExtractor(idx, r).also { extractors += it }
+                            val ex = spare.removeFirstOrNull() ?: KeyframeExtractor(idx, batch).also { extractors += it }
                             underWay += kf
                             val way = givenWay
                             pending += Fetch(m, kf, ex, shared = lanes > 1, async(Dispatchers.IO) {
@@ -539,6 +585,30 @@ internal class CopyPass(
                         if (swapLow && !MemoryGovernor.swapAllows(funded = false).allowed) continue@work
                         val kf = f.kf
                         val playing = lastPlaying
+                        suspend fun counted(n: Int) {
+                            made += n
+                            pictures++
+                            if (!MemoryGovernor.isStrongBox) store.trimMemory(SMALL_MEM_FRAMES)
+                            if (ready == null && (pictures >= READY_PICTURES || coarse.all { store.has(slotUs(it)) })) {
+                                ready = CopySet(store, ratio, copyCount, offer.label)
+                            }
+                            if (pictures % PROGRESS_LOG_EVERY == 0) {
+                                Log.i(TAG, "$pictures thumbnails from ${offer.label} in " +
+                                    "${(SystemClock.elapsedRealtime() - t0) / 1000} s, ${bytesRead() / (1024 * 1024)} MB")
+                            }
+                            delay(pace(playing))
+                        }
+                        val hwPicture = hardware?.make(au, idx.video, hardwarePhase())
+                        if (hwPicture != null) {
+                            val slots = kfSlots[kf].orEmpty().filter { !store.has(slotUs(it)) }
+                            if (slots.isEmpty()) {
+                                hwPicture.recycle()
+                                continue@work
+                            }
+                            atBackground { store.put(LongArray(slots.size) { slotUs(slots[it]) }, pts[kf], hwPicture, jpeg = true) }
+                            counted(slots.size)
+                            continue@work
+                        }
                         val frame = paced(playing) { atBackground { decoder.decode(au, idx.video, threads = 1) } }
                             ?: continue@work
                         if (dv5 && !frame.colour.doviIpt) throw Unusable("Dolby Vision 5 without decoder metadata")
@@ -546,25 +616,17 @@ internal class CopyPass(
                         val size = ThumbGeometry.outputSize(frame.width, frame.height, frame.sarNum, frame.sarDen,
                             idx.video.displayAspect)
                         val plan = CopyFit.plan(size[0], size[1], own.pictureW, own.pictureH) ?: continue@work
+                        hardware?.learn(decision, plan)
                         val rendered = paced(playing) {
                             atBackground { decoder.render(frame, decision, plan.renderW, plan.renderH) }
                         } ?: continue@work
+                        hardware?.softwareMade(rendered)
                         val slots = kfSlots[kf].orEmpty().filter { !store.has(slotUs(it)) }
                         if (slots.isEmpty()) continue@work
                         paced(playing) {
                             atBackground { store.put(LongArray(slots.size) { slotUs(slots[it]) }, pts[kf], compose(rendered, plan)) }
                         }
-                        made += slots.size
-                        pictures++
-                        if (!MemoryGovernor.isStrongBox) store.trimMemory(SMALL_MEM_FRAMES)
-                        if (ready == null && (pictures >= READY_PICTURES || coarse.all { store.has(slotUs(it)) })) {
-                            ready = CopySet(store, ratio, copyCount, offer.label)
-                        }
-                        if (pictures % PROGRESS_LOG_EVERY == 0) {
-                            Log.i(TAG, "$pictures thumbnails from ${offer.label} in ${(SystemClock.elapsedRealtime() - t0) / 1000} s, " +
-                                "${bytesRead() / (1024 * 1024)} MB")
-                        }
-                        delay(pace(playing))
+                        counted(slots.size)
                     }
                 } finally {
                     if (pending.isNotEmpty()) {
@@ -577,6 +639,7 @@ internal class CopyPass(
             if (end != null) return end
         } finally {
             runCatching { decoder.close() }
+            hardware?.close()
         }
         if (pictures == 0 && store.slots().isEmpty()) {
             Log.i(TAG, "${offer.label}: no thumbnail could be made")
@@ -589,6 +652,115 @@ internal class CopyPass(
     }
 
     private fun slotUs(slot: Int): Long = slot.toLong() * SPACING_MS * 1000L
+
+    /** Hardware only with no film decoding: behind the generating screen (playback held) or after the player closed. */
+    private fun hardwarePhase(): FetchPhase = when {
+        playerClosed() -> FetchPhase.PLAYER_CLOSED
+        screenUp() && !lastPlaying -> FetchPhase.GENERATING
+        else -> FetchPhase.PLAYBACK
+    }
+
+    /**
+     * A copy's thumbnails from the hardware decoder, one decoder, under the same rules as the title's own: the copy's
+     * first keyframe is decoded in software for colour and size, a failure sends the rest of the copy to software and
+     * counts against the box. Behind the generating screen the held player keeps its decoder, so only where the
+     * decoder allows two at once. Pass thread only.
+     */
+    private inner class CopyHardware(private val label: String) {
+        private var decoder: HardwareThumbDecoder? = null
+        private var plan: HardwarePlan? = null
+        private var fit: CopyFit.Plan? = null
+        private var off: String? = null
+        private var whyLogged: String? = null
+        private var flatSeen = false
+        private var name: String? = null
+
+        fun learn(decision: ColourDecision, p: CopyFit.Plan) {
+            if (plan != null || off != null) return
+            if (HardwareRoute.planUsable(decision)) {
+                plan = HardwarePlan(decision, p.renderW, p.renderH)
+                fit = p
+            } else {
+                off = decision.reason
+            }
+        }
+
+        /** The finished copy thumbnail, or null when this keyframe is made in software. */
+        fun make(au: ByteArray, track: VideoTrack, phase: FetchPhase): Bitmap? {
+            val choice = choice(track, phase)
+            if (choice == null) {
+                closeDecoder()
+                return null
+            }
+            val p = plan ?: return null
+            val f = fit ?: return null
+            val dec = decoder?.takeIf { it.codecName == choice.name } ?: run {
+                closeDecoder()
+                HardwareThumbDecoder(choice.name).also {
+                    decoder = it
+                    name = choice.name
+                    Log.i(TAG, "hardware decoder for $label: ${choice.name} on Android API ${Build.VERSION.SDK_INT}")
+                }
+            }
+            val bmp = try {
+                atBackground { dec.make(au, track, p) }
+            } catch (e: HardwareThumbFailure) {
+                if (!e.keyframeOnly) failed(e.why)
+                return null
+            }
+            if (HardwarePicture.flat(bmp.width, bmp.height, bmp::getPixel)) {
+                // Black or one colour: the software decode of the same keyframe decides.
+                bmp.recycle()
+                flatSeen = true
+                return null
+            }
+            return compose(bmp, f)
+        }
+
+        /** After a software render of a keyframe the hardware gave as one colour. */
+        fun softwareMade(rendered: Bitmap) {
+            if (!flatSeen) return
+            flatSeen = false
+            if (!HardwarePicture.flat(rendered.width, rendered.height, rendered::getPixel)) {
+                failed("one-colour picture where software shows one")
+            }
+        }
+
+        private fun choice(track: VideoTrack, phase: FetchPhase): HardwareCodecs.Choice? {
+            val c = HardwareCodecs.choose(track)
+            val blocked = c != null &&
+                runCatching { HardwareFailures.book(context).blocked(HardwareFailures.key(c.name)) }.getOrDefault(false)
+            val why = HardwareRoute.softwareBecause(Build.VERSION.SDK_INT, phase, track.codec, track.bitDepth,
+                track.dolbyVision?.profile, off, blocked, c != null) ?: if (phase == FetchPhase.GENERATING && c != null &&
+                c.maxInstances < 2) "one decoder at a time, the held player has it"
+            else if (phase == FetchPhase.GENERATING && c != null && !MemoryGovernor.isStrongBox)
+                "small box, the held player keeps the video memory" else null
+            if (why == null) return c
+            if (why != whyLogged && phase != FetchPhase.PLAYBACK && why != off) {
+                whyLogged = why
+                Log.i(TAG, "software for $label: $why")
+            }
+            return null
+        }
+
+        private fun failed(why: String) {
+            if (off != null) return
+            off = why
+            closeDecoder()
+            val n = name ?: return
+            val blocked = runCatching { HardwareFailures.book(context).failed(HardwareFailures.key(n)) }.getOrDefault(false)
+            Log.w(TAG, "back to software for $label: $why" + if (blocked) " ($n failed " +
+                "${HardwareFailureBook.FAILURES} times on this box: software for ${HardwareFailureBook.BLOCK_DAYS} days)" else "")
+        }
+
+        private fun closeDecoder() {
+            decoder?.let { runCatching { it.close() } }
+            decoder = null
+        }
+
+        fun close() = closeDecoder()
+    }
+
 
     private fun lanes(url: String, smallBox: Boolean): Int {
         val ledger = ConnectionLedger.app

@@ -100,4 +100,28 @@ class PrepareHandoverTest {
         val left = (PrepareHandover.workLeft(order, 3) { true } * 0.6).toInt()
         assertEquals(241, left)
     }
+
+    @Test fun theScreenCountsTheCloseSlotsMadeBeforeItsGrid() {
+        // Full: ten close slots near the start, then the whole-film grid (every 3rd), then the rest.
+        val order = SeekGrid.latticeOrder(30, listOf(3, 1), anchorSlot = 0, beforeSlots = 0, afterSlots = 9)
+        val shown = PrepareHandover.screenSet(order, 3)
+        assertEquals((0 until 10).toList() + listOf(12, 15, 18, 21, 24, 27), shown)
+        assertTrue(order.filter { it % 3 == 0 }.all { it in shown })
+    }
+
+    @Test fun withTheGridFirstTheScreenCountsTheGridOnly() {
+        val order = SeekGrid.latticeOrder(30, listOf(3, 1), anchorSlot = 0, beforeSlots = 0, afterSlots = 9, gridFirst = 3)
+        assertEquals((0 until 30 step 3).toList(), PrepareHandover.screenSet(order, 3))
+        assertEquals(emptyList<Int>(), PrepareHandover.screenSet(emptyList(), 3))
+    }
+
+    @Test fun theRememberedSpeedIsBlendedAndKeptInRange() {
+        assertEquals(0.4, PrepareRateBook.blend(null, 0.4), 1e-9)
+        assertEquals(0.6, PrepareRateBook.blend(0.4, 0.8), 1e-9)
+        assertEquals(PrepareRateBook.MAX_SECONDS, PrepareRateBook.blend(null, 60.0), 1e-9)
+        assertEquals(PrepareRateBook.MIN_SECONDS, PrepareRateBook.blend(null, 0.0), 1e-9)
+        assertEquals("remux|hw", PrepareRateBook.key(fourK = true, remux = true, hardware = true))
+        assertEquals("4k|sw", PrepareRateBook.key(fourK = true, remux = false, hardware = false))
+        assertEquals("hd|hw", PrepareRateBook.key(fourK = false, remux = true, hardware = true))
+    }
 }

@@ -545,4 +545,23 @@ class ConnectionLedgerTest {
         assertFalse(ConnectionLedger.sourceTrouble(4001))
         assertFalse(ConnectionLedger.sourceTrouble(null))
     }
+
+    @Test fun aCappedServerNeverCarriesMoreThumbnailRequestsWhoeverAsks() {
+        val l = ledger()
+        val away = "https://silo.friend.example.com/api/v2/stream/abc"
+        val other = "https://silo.friend.example.com/Videos/2/stream?static=true"
+        assertTrue(l.thumbnailCap(away) > 1)
+        l.capThumbnails(away, 1)
+        assertEquals(1, l.thumbnailCap(away))
+        assertEquals(1, l.thumbnailRoom(other))
+        val seekSpot = l.acquire(away, maxWaitMs = 0)
+        assertTrue(noSlot(l, other))
+        seekSpot.close()
+        val copyRead = l.acquire(other, maxWaitMs = 0)
+        assertTrue(noSlot(l, away))
+        copyRead.close()
+        l.capThumbnails(away, 4)
+        assertEquals(1, l.thumbnailCap(away))
+        assertTrue(l.thumbnailCap(cdn) > 1)
+    }
 }
