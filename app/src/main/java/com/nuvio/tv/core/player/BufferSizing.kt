@@ -30,10 +30,9 @@ object BufferSizing {
     // Kept free when the buffer is sized at the start: Android closes idle apps to hold its own line, and the
     // memory keeper trims the buffer if the box really runs short later.
     const val SIZING_MARGIN_MB = 28
-    // Still to come once the player is built: video surface and decoder (about 140 MB of graphics for 4K video
-    // output on 2 GB boxes) and the native allocator's 32 MB arena. Pictures are already in memory by then.
+    // Still to come once the player is built: the video decoder and its pictures, about 140 MB for 4K on 2 GB boxes.
+    // The native allocator's 32 MB arena is not reserved: it holds the first 32 MB of the buffer itself.
     const val VIDEO_OUTPUT_RESERVE_MB = 140
-    const val NATIVE_ARENA_RESERVE_MB = 32
     /** About 5 s of a 4K remux at 80 Mbit/s. */
     const val MIN_SIZED_BUFFER_MB = 50
 
@@ -82,8 +81,7 @@ object BufferSizing {
      * [heldByPlayerMb] is buffer memory already held that the new player takes over or frees.
      */
     fun spareMb(free: FreeMemory, outsideBudgetMb: Int, heldByPlayerMb: Int): Long =
-        free.availMb - free.thresholdMb - SIZING_MARGIN_MB - VIDEO_OUTPUT_RESERVE_MB -
-            NATIVE_ARENA_RESERVE_MB - outsideBudgetMb + heldByPlayerMb
+        free.availMb - free.thresholdMb - SIZING_MARGIN_MB - VIDEO_OUTPUT_RESERVE_MB - outsideBudgetMb + heldByPlayerMb
 
     /** The box's size, lowered to what is free now, never below [MIN_SIZED_BUFFER_MB] (or the box's size if smaller). */
     fun sizedBudgetMb(boxMb: Int, free: FreeMemory?, outsideBudgetMb: Int, heldByPlayerMb: Int): Int {

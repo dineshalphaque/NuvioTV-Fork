@@ -72,8 +72,10 @@ class BufferMemoryKeeperTest {
         it.onTracksSelected(params(0), TrackGroupArray.EMPTY, arrayOf<ExoTrackSelection?>())
     }
 
-    private fun keeper(control: BufferBudgetControl, budgetManaged: Boolean = true) =
-        BufferMemoryKeeper(control, { free }, { now }, worker, budgetManaged)
+    private var swapFree = -1L
+
+    private fun keeper(control: BufferBudgetControl, budgetManaged: Boolean = true, ceilingMb: Long = 0L) =
+        BufferMemoryKeeper(control, { free }, { now }, worker, budgetManaged, ceilingMb * mb) { swapFree }
 
     private fun take(megabytes: Long): List<Allocation> =
         List((megabytes * mb / segment).toInt()) { allocator.allocate() }
@@ -426,5 +428,96 @@ class BufferMemoryKeeperTest {
         assertTrue(BufferMemoryKeeper.budgetManaged(customBuffers = true, budgetManaged = true))
         assertTrue(BufferMemoryKeeper.budgetManaged(customBuffers = false, budgetManaged = false))
         assertTrue(BufferMemoryKeeper.budgetManaged(customBuffers = false, budgetManaged = true))
+    }
+
+    @Test
+    fun `a start-sized budget grows back a step at a time while the box has room, and loading follows`() {
+        val lc = performanceControl(budgetMb = 100)
+        val k = keeper(lc, ceilingMb = 200)
+        take(105)
+        assertFalse(lc.shouldContinueLoading(params(bufferedMs = 6_000)))
+        k.check()
+        assertEquals(132 * mb, lc.uncappedBudgetBytes)
+        assertEquals(32 * mb, k.grownBytes)
+        assertTrue(lc.shouldContinueLoading(params(bufferedMs = 6_000)))
+        k.check(); k.check()
+        assertEquals(196 * mb, lc.uncappedBudgetBytes)
+        k.check()
+        assertEquals(200 * mb, lc.uncappedBudgetBytes)
+        k.check()
+        assertEquals(200 * mb, lc.uncappedBudgetBytes)
+    }
+
+    @Test
+    fun `no growth while the start squeeze is still on, or beside a nearly full swap`() {
+        val lc = customControl(budgetMb = 90)
+        val k = keeper(lc, ceilingMb = 200)
+        // First frame on a Fire TV Stick: 283 MB available against a 144 MB line.
+        free = BufferSizing.FreeMemory(283 * mb, 144 * mb, false)
+        k.check()
+        assertEquals(90 * mb, lc.uncappedBudgetBytes)
+        free = BufferSizing.FreeMemory(520 * mb, 144 * mb, false)
+        swapFree = 50
+        k.check()
+        assertEquals(90 * mb, lc.uncappedBudgetBytes)
+        swapFree = 200
+        k.check()
+        assertEquals(122 * mb, lc.uncappedBudgetBytes)
+        // A Google TV box keeps swap nearly full while plenty of RAM is free.
+        swapFree = 60
+        free = BufferSizing.FreeMemory(658 * mb, 144 * mb, false)
+        k.check()
+        assertEquals(154 * mb, lc.uncappedBudgetBytes)
+    }
+
+    @Test
+    fun `memory pressure gives the growth back first and caps the built size`() {
+        val lc = customControl(budgetMb = 100)
+        val k = keeper(lc, ceilingMb = 200)
+        k.check(); k.check()
+        assertEquals(164 * mb, lc.uncappedBudgetBytes)
+        k.onTrimMemory(ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW)
+        assertEquals(0L, k.grownBytes)
+        assertEquals(100 * mb, lc.uncappedBudgetBytes)
+        assertEquals(60 * mb, k.capBytes(BufferMemoryKeeper.LEVEL_LOW))
+        // Growth waits for the quiet minute after pressure has eased.
+        now += BufferMemoryKeeper.RESTORE_QUIET_MS
+        k.check()
+        assertEquals(BufferMemoryKeeper.LEVEL_NONE, k.pressureLevel)
+        assertEquals(100 * mb, lc.uncappedBudgetBytes)
+        now += BufferMemoryKeeper.RESTORE_QUIET_MS
+        k.check()
+        assertEquals(132 * mb, lc.uncappedBudgetBytes)
+    }
+
+    @Test
+    fun `room gone without pressure takes a step back, never below the built size`() {
+        val lc = customControl(budgetMb = 100)
+        val k = keeper(lc, ceilingMb = 200)
+        k.check()
+        assertEquals(132 * mb, lc.uncappedBudgetBytes)
+        giveBack(take(40))
+        free = BufferSizing.FreeMemory(220 * mb, 144 * mb, false)
+        k.check()
+        assertEquals(100 * mb, lc.uncappedBudgetBytes)
+        assertTrue(allocator.availableBytes <= BufferMemoryKeeper.KEEP_IDLE_BYTES)
+        k.check()
+        assertEquals(100 * mb, lc.uncappedBudgetBytes)
+    }
+
+    @Test
+    fun `a hand-set size and a lowered DV7 budget do not grow`() {
+        val k = keeper(customControl(budgetMb = 100), budgetManaged = false, ceilingMb = 200)
+        k.check()
+        assertEquals(0L, k.grownBytes)
+        val lc = customControl(budgetMb = 100)
+        val g = keeper(lc, ceilingMb = 200)
+        g.check()
+        assertEquals(132 * mb, lc.uncappedBudgetBytes)
+        lc.setBudgetBytesOverride(70 * mb)
+        g.onBudgetLowered()
+        assertEquals(70 * mb, lc.uncappedBudgetBytes)
+        g.check()
+        assertEquals(70 * mb, lc.uncappedBudgetBytes)
     }
 }

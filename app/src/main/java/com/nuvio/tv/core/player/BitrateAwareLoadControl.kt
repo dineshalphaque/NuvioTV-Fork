@@ -44,9 +44,11 @@ class BitrateAwareLoadControl(
     prioritizeTimeOverSizeThresholds,
     backBufferDurationMs,
     retainBackBufferFromKeyframe
-), PlaybackBufferReserve, BufferBudgetControl {
+), PlaybackBufferReserve, BufferBudgetControl, StartCushionControl {
 
     override val bufferAllocator: DefaultAllocator = allocator
+
+    override val startCushion: StartCushion = StartCushion(bufferForPlaybackMs, maxBufferMs)
 
     override val maxBufferMs: Int = maxBufferMs
 
@@ -78,11 +80,19 @@ class BitrateAwareLoadControl(
     @Volatile
     private var pressureCapBytes: Long = -1L
 
+    @Volatile
+    private var growthBytes: Long = 0L
+
     override val uncappedBudgetBytes: Long
-        get() = if (budgetBytesOverride >= 0L) budgetBytesOverride else budgetBytes
+        get() = ((if (budgetBytesOverride >= 0L) budgetBytesOverride else budgetBytes) + growthBytes)
+            .coerceAtMost(MAX_BUDGET_BYTES)
 
     override fun setPressureCapBytes(bytes: Long) {
         pressureCapBytes = if (bytes < 0L) -1L else bytes
+    }
+
+    override fun setGrowthBytes(bytes: Long) {
+        growthBytes = bytes.coerceAtLeast(0L)
     }
 
     override fun allocatorTargetBytes(): Int =
@@ -128,8 +138,13 @@ class BitrateAwareLoadControl(
             parameters.bufferedDurationUs, bufferAllocator.totalBytesAllocated.toLong(), allocatorTargetBytes().toLong()
         )
 
-    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean =
-        super.shouldStartPlayback(parameters) || overCeiling(parameters)
+    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean = startCushion.shouldStart(
+        base = super.shouldStartPlayback(parameters) || overCeiling(parameters),
+        rebuffering = parameters.rebuffering,
+        bufferedDurationUs = parameters.bufferedDurationUs,
+        allocatedBytes = bufferAllocator.totalBytesAllocated.toLong(),
+        targetBytes = allocatorTargetBytes().toLong(),
+    )
 
     companion object {
         // The allocator counts its bytes in an int, which wraps at 2 GiB and then reads as "not full".

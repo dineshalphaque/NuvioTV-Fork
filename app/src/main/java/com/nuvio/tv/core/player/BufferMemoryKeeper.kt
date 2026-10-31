@@ -9,7 +9,9 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 
 /**
- * Gives idle buffer memory back to the box and lowers the buffer budget while the box is short of memory.
+ * Gives idle buffer memory back to the box and lowers the buffer budget while the box is short of memory. A budget
+ * that was sized down to the memory free at the start grows back towards [ceilingBytes], a step at a time, once the
+ * box has room again. Growth only changes how far ahead the player may read; nothing buffered is dropped.
  * All work runs on its own thread, never on the playback thread.
  */
 @UnstableApi
@@ -19,6 +21,9 @@ class BufferMemoryKeeper(
     private val clock: () -> Long = SystemClock::elapsedRealtime,
     private val worker: Worker = SharedWorker,
     budgetManaged: Boolean = true,
+    /** The box's own size for this budget; 0 or no more than the built budget means no growth. */
+    ceilingBytes: Long = 0L,
+    private val swapFreeMb: () -> Long = { -1L },
 ) {
     interface Worker {
         fun run(task: () -> Unit)
@@ -36,6 +41,11 @@ class BufferMemoryKeeper(
         private set
     /** Off: a size the user set is only cut when memory is critical; idle memory is still given back. */
     @Volatile var budgetManaged: Boolean = budgetManaged
+        private set
+    @Volatile var ceilingBytes: Long = ceilingBytes.coerceAtLeast(0L)
+        private set
+    /** Budget added above the built size so far. */
+    @Volatile var grownBytes: Long = 0L
         private set
 
     private val trimListener: (Int) -> Unit = ::onTrimMemory
@@ -93,10 +103,18 @@ class BufferMemoryKeeper(
         trimIdle("seek")
     }
 
-    /** The budget went down (for example DV7 conversion): the allocator's pool follows. */
+    /** The budget went down (for example DV7 conversion): the allocator's pool follows and growth stops there. */
     fun onBudgetLowered() {
         if (detached) return
-        worker.run { applyTarget(); trimIdle("budget") }
+        worker.run {
+            if (grownBytes > 0L) {
+                grownBytes = 0L
+                control.setGrowthBytes(0L)
+            }
+            ceilingBytes = minOf(ceilingBytes, control.uncappedBudgetBytes)
+            applyTarget()
+            trimIdle("budget")
+        }
     }
 
     /** Memory the extra downloads of the Automatic speed-up hold; the buffer gives the same amount up. */
@@ -129,8 +147,12 @@ class BufferMemoryKeeper(
             raise(level, "lowMemory availMb=${free.availMb} thresholdMb=${free.thresholdMb}")
             return
         }
-        if (pressureLevel == LEVEL_NONE || now - lastPressureAtMs < RESTORE_QUIET_MS) {
-            if (pressureLevel > LEVEL_NONE) trimIdle("pressure")
+        if (pressureLevel == LEVEL_NONE) {
+            if (now - lastPressureAtMs >= RESTORE_QUIET_MS) tendGrowth(free)
+            return
+        }
+        if (now - lastPressureAtMs < RESTORE_QUIET_MS) {
+            trimIdle("pressure")
             return
         }
         val next = if (budgetManaged) pressureLevel - 1 else LEVEL_NONE
@@ -147,9 +169,42 @@ class BufferMemoryKeeper(
         Log.i(TAG, "BUFFER_MEMORY: pressure eased level=$next capMb=${capOrBudgetMb()} availMb=${free.availMb}")
     }
 
+    /**
+     * No pressure for a quiet minute: the budget grows a step towards the ceiling while the box keeps
+     * [GROW_RESERVE_MB] beyond its margin, and gives a step back when the room is gone.
+     */
+    private fun tendGrowth(free: BufferSizing.FreeMemory?) {
+        if (free == null || !budgetManaged) return
+        val base = control.uncappedBudgetBytes - grownBytes
+        val gap = ceilingBytes - base - grownBytes
+        val roomMb = free.availMb - free.thresholdMb - BufferSizing.SYSTEM_MARGIN_MB
+        if (grownBytes > 0L && roomMb < 0L) {
+            grownBytes = (grownBytes - GROW_STEP_MB * MB).coerceAtLeast(0L)
+            control.setGrowthBytes(grownBytes)
+            applyTarget()
+            val freed = trimIdle(null)
+            Log.i(TAG, "BUFFER_MEMORY: budget back a step: room gone availMb=${free.availMb} thresholdMb=${free.thresholdMb} " +
+                "budgetMb=${control.uncappedBudgetBytes / MB} freedMb=${freed / MB}")
+            return
+        }
+        if (gap <= 0L || roomMb - GROW_RESERVE_MB < GROW_STEP_MB) return
+        val swap = swapFreeMb()
+        if (swap in 0 until GROW_MIN_SWAP_MB && roomMb < GROW_ROOM_BESIDE_SWAP_MB) return
+        grownBytes += minOf(GROW_STEP_MB * MB, gap)
+        control.setGrowthBytes(grownBytes)
+        applyTarget()
+        Log.i(TAG, "BUFFER_MEMORY: budget grew to ${control.uncappedBudgetBytes / MB} MB (built ${base / MB}, box ${ceilingBytes / MB}) " +
+            "availMb=${free.availMb} thresholdMb=${free.thresholdMb} swapFreeMb=$swap")
+    }
+
     private fun raise(level: Int, reason: String) {
         if (detached) return
         lastPressureAtMs = clock()
+        if (grownBytes > 0L) {
+            grownBytes = 0L
+            control.setGrowthBytes(0L)
+            Log.i(TAG, "BUFFER_MEMORY: growth given back reason=$reason budgetMb=${control.uncappedBudgetBytes / MB}")
+        }
         val changed = level > pressureLevel && (budgetManaged || level == LEVEL_CRITICAL)
         if (changed) {
             pressureLevel = level
@@ -249,6 +304,13 @@ class BufferMemoryKeeper(
         const val RESTORE_QUIET_MS = 60_000L
         /** Still short of memory this long after the first cut: cut further. */
         const val ESCALATE_AFTER_MS = 30_000L
+        /** One growth step per check (about every 10 s while playing). */
+        const val GROW_STEP_MB = 32L
+        /** Room the box keeps above its margin after a step, so a software thumbnail decode (25-35 MB) still fits. */
+        const val GROW_RESERVE_MB = 64L
+        /** No growth beside a nearly full swap unless RAM is plentiful: the box's memory killer watches swap too. */
+        const val GROW_MIN_SWAP_MB = 96L
+        const val GROW_ROOM_BESIDE_SWAP_MB = 300L
         const val KEEP_IDLE_BYTES = 2 * 1024 * 1024
         /** 256 allocations of 64 KB per step. */
         const val TRIM_STEP_BYTES = 16 * 1024 * 1024

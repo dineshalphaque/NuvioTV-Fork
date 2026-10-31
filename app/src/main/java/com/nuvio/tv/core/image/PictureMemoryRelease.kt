@@ -19,8 +19,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 object PictureMemoryRelease {
     private const val TAG = "PictureMemory"
     private const val MB = 1024L * 1024L
-    /** The longest the player build waits for the release; it carries on in the background after that. */
-    private const val WAIT_MS = 100L
+    /** The longest the player build waits for the release, so the buffer is sized with the pictures gone; it carries on in the background after that. */
+    private const val WAIT_MS = 500L
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 

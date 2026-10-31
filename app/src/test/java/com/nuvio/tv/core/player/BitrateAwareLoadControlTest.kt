@@ -19,9 +19,9 @@ class BitrateAwareLoadControlTest {
     private val playerId = PlayerId("test")
     private val allocator = DefaultAllocator(true, C.DEFAULT_BUFFER_SEGMENT_SIZE)
 
-    private fun params(bufferedMs: Long, speed: Float = 1f) = LoadControl.Parameters(
+    private fun params(bufferedMs: Long, speed: Float = 1f, rebuffering: Boolean = false) = LoadControl.Parameters(
         playerId, Timeline.EMPTY, MediaPeriodId(Any()), 0L, bufferedMs * 1000L, speed,
-        true, false, C.TIME_UNSET, C.TIME_UNSET
+        true, rebuffering, C.TIME_UNSET, C.TIME_UNSET
     )
 
     private fun loadControl(budgetMb: Long = 20) = BitrateAwareLoadControl(
@@ -41,6 +41,30 @@ class BitrateAwareLoadControlTest {
 
     private fun fillMb(count: Long) =
         repeat((count * mb / C.DEFAULT_BUFFER_SEGMENT_SIZE).toInt()) { allocator.allocate() }
+
+    @Test
+    fun `a heavy film's first start waits for six seconds, later starts do not`() {
+        val lc = loadControl()
+        lc.startCushion.arm(heavy = true)
+        assertFalse(lc.shouldStartPlayback(params(bufferedMs = 5_500)))
+        assertTrue(lc.shouldStartPlayback(params(bufferedMs = 6_000)))
+        assertTrue(lc.shouldStartPlayback(params(bufferedMs = 5_000)))
+    }
+
+    @Test
+    fun `a heavy film starts on a full budget before six seconds`() {
+        val lc = loadControl()
+        lc.startCushion.arm(heavy = true)
+        fillMb(20)
+        assertTrue(lc.shouldStartPlayback(params(bufferedMs = 5_500)))
+    }
+
+    @Test
+    fun `a rebuffer before the first start keeps the user's setting`() {
+        val lc = loadControl()
+        lc.startCushion.arm(heavy = true)
+        assertTrue(lc.shouldStartPlayback(params(bufferedMs = 3_000, rebuffering = true)))
+    }
 
     @Test
     fun `time comes first a little past the budget`() {

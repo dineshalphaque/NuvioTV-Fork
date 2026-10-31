@@ -159,16 +159,18 @@ class ReservableLoadControl(
     prioritizeTimeOverSizeThresholds,
     backBufferDurationMs,
     retainBackBufferFromKeyframe
-), PlaybackBufferReserve, BufferBudgetControl {
+), PlaybackBufferReserve, BufferBudgetControl, StartCushionControl {
     /** 0 until the first track selection. */
     @Volatile private var computedTargetBytes = 0
     @Volatile private var pressureCapBytes = -1L
+    @Volatile private var growthBytes = 0L
 
     override val bufferAllocator: DefaultAllocator = allocator
 
     override val maxBufferMs: Int = maxBufferMs
 
     override val topUp: BufferTopUp = BufferTopUp(maxBufferMs, minBufferMs, topUpPieceBytes)
+    override val startCushion: StartCushion = StartCushion(bufferForPlaybackMs, maxBufferMs)
 
     @Volatile override var backBufferBytes: Long = 0L
 
@@ -176,10 +178,14 @@ class ReservableLoadControl(
         super.calculateTargetBufferBytes(trackSelectionArray).also { computedTargetBytes = it }
 
     override val uncappedBudgetBytes: Long
-        get() = (if (targetBufferBytes != C.LENGTH_UNSET) targetBufferBytes else computedTargetBytes).toLong()
+        get() = (if (targetBufferBytes != C.LENGTH_UNSET) targetBufferBytes else computedTargetBytes).toLong() + growthBytes
 
     override fun setPressureCapBytes(bytes: Long) {
         pressureCapBytes = if (bytes < 0L) -1L else bytes
+    }
+
+    override fun setGrowthBytes(bytes: Long) {
+        growthBytes = bytes.coerceAtLeast(0L)
     }
 
     override fun allocatorTargetBytes(): Int =
@@ -222,8 +228,13 @@ class ReservableLoadControl(
             topUp.wantsLoading(parameters.bufferedDurationUs, bufferAllocator.totalBytesAllocated.toLong(),
                 allocatorTargetBytes().toLong())
 
-    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean =
-        super.shouldStartPlayback(parameters) || overPressureCap(parameters)
+    override fun shouldStartPlayback(parameters: LoadControl.Parameters): Boolean = startCushion.shouldStart(
+        base = super.shouldStartPlayback(parameters) || overPressureCap(parameters),
+        rebuffering = parameters.rebuffering,
+        bufferedDurationUs = parameters.bufferedDurationUs,
+        allocatedBytes = bufferAllocator.totalBytesAllocated.toLong(),
+        targetBytes = allocatorTargetBytes().toLong(),
+    )
 
     companion object {
         /** Same as DefaultLoadControl.Builder().setBackBuffer(backBufferMs, true).build(). */

@@ -44,21 +44,21 @@ class BufferSizingTest {
             // Fire TV Stick 4K Max, other apps stopped: room for the whole 2 GB size.
             Row(200, 740, 130, 96, 0, 200),
             // A little less free: what is spare.
-            Row(200, 588, 130, 96, 0, 162),
+            Row(200, 588, 130, 96, 0, 194),
             // Same box with apps in the background (MemAvailable 425 MB measured idle): the floor.
             Row(200, 425, 130, 96, 0, 50),
             // Somewhere between: what is spare.
-            Row(200, 488, 130, 96, 0, 62),
+            Row(200, 488, 130, 96, 0, 94),
             // Previous player still holds 80 MB that comes back.
-            Row(200, 488, 130, 96, 80, 142),
-            // A Fire Stick with 500 MB free and no chunk window: 156 MB with the 200 MB start-up reserve.
-            Row(200, 500, 144, 0, 0, 156),
+            Row(200, 488, 130, 96, 80, 174),
+            // A Fire Stick with 500 MB free and no chunk window: 188 MB with the 168 MB start-up reserve.
+            Row(200, 500, 144, 0, 0, 188),
             // AM9 Pro with plenty free: the 4 GB size.
             Row(1000, 2400, 220, 192, 0, 1000),
             // AM9 Pro with 1.3 GB free.
-            Row(1000, 1288, 220, 192, 0, 676),
+            Row(1000, 1288, 220, 192, 0, 708),
             // Custom buffers keep the chunks inside the budget, so no window outside it.
-            Row(200, 408, 130, 0, 0, 78),
+            Row(200, 408, 130, 0, 0, 110),
         )
         for (r in rows) {
             val sized = BufferSizing.sizedBudgetMb(r.boxMb, free(r.availMb, r.thresholdMb), r.windowMb, r.heldMb)
