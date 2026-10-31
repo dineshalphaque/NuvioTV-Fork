@@ -159,6 +159,7 @@ class WatchProgressRepositoryImpl @Inject constructor(
 ) : WatchProgressRepository {
     companion object {
         private const val TAG = "WatchProgressRepo"
+        private const val METADATA_MAX_ATTEMPTS = 3
     }
 
     private data class EpisodeMetadata(
@@ -204,7 +205,8 @@ class WatchProgressRepositoryImpl @Inject constructor(
         val scope = CoroutineScope(job + Dispatchers.IO)
         val metadata = MutableStateFlow<Map<ProgressMetadataKey, ContentMetadata>>(emptyMap())
         private val lock = Any()
-        private val attempts = mutableSetOf<HydrationWorkKey>()
+        private val attempts = mutableMapOf<HydrationWorkKey, MetadataAttempt>()
+        private val finished = mutableSetOf<HydrationWorkKey>()
         private val jobs = mutableMapOf<HydrationWorkKey, Job>()
         private var visible = emptySet<HydrationWorkKey>()
         private val localAdmission = Semaphore(1)
@@ -231,13 +233,19 @@ class WatchProgressRepositoryImpl @Inject constructor(
             synchronized(lock) {
                 visible = keys
                 jobs.keys.filter { it !in keys }.forEach { key -> jobs.remove(key)?.cancel() }
-                attempts.retainAll(keys)
+                attempts.keys.retainAll(keys)
+                finished.retainAll(keys)
                 metadata.update { old -> old.filterKeys { it in contentKeys } }
                 for (progress in candidates) {
                     val key = hydrationKey(progress, provider)
                     val missing = if (provider != null) progress.poster == null || progress.backdrop == null ||
                         progress.episodeTitle == null else progress.poster == null && progress.backdrop == null
-                    if (!missing || progress.contentId.isBlank() || !attempts.add(key)) continue
+                    if (!missing || progress.contentId.isBlank() || key in finished || key in jobs) continue
+                    val now = metadataClock()
+                    val attempt = attempts[key]
+                    if (attempt != null && (attempt.count >= METADATA_MAX_ATTEMPTS ||
+                            now - attempt.lastAttemptEpochMs < metadataRetryWindowMs * attempt.count)) continue
+                    attempts[key] = MetadataAttempt((attempt?.count ?: 0) + 1, now)
                     val operation = scope.launch(start = CoroutineStart.LAZY) {
                         try {
                             val operationContext = currentCoroutineContext()
@@ -246,9 +254,14 @@ class WatchProgressRepositoryImpl @Inject constructor(
                                 if (!admitted()) return@launch
                                 val result = fetchContentMetadata(progress.contentId, progress.contentType, admitted)
                                     ?: return@launch
-                                if (admitted()) metadata.update { it + (key.metadata to result) }
+                                if (admitted()) {
+                                    metadata.update { it + (key.metadata to result) }
+                                    synchronized(lock) { finished.add(key) }
+                                }
                             } else localAdmission.withPermit {
-                                if (admitted()) hydrateProgressArtwork(progress, identity.profileId, admitted)
+                                if (admitted() && hydrateProgressArtwork(progress, identity.profileId, admitted)) {
+                                    synchronized(lock) { finished.add(key) }
+                                }
                             }
                         } catch (error: Exception) {
                             if (error is CancellationException) throw error
@@ -262,6 +275,10 @@ class WatchProgressRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    private data class MetadataAttempt(val count: Int, val lastAttemptEpochMs: Long)
+    internal var metadataRetryWindowMs = 2_000L
+    internal var metadataClock: () -> Long = System::currentTimeMillis
 
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val syncJobs = mutableMapOf<Int, Job>()
@@ -1300,22 +1317,22 @@ class WatchProgressRepositoryImpl @Inject constructor(
         progress: WatchProgress,
         profileId: Int,
         isCurrent: () -> Boolean
-    ) {
-        if (!isCurrent()) return
+    ): Boolean {
+        if (!isCurrent()) return false
         val storage = watchProgressPreferences.captureArtworkStorage(profileId)
-        val metadata = fetchContentMetadata(progress.contentId, progress.contentType, isCurrent) ?: return
+        val metadata = fetchContentMetadata(progress.contentId, progress.contentType, isCurrent) ?: return false
         currentCoroutineContext().ensureActive()
-        if (!isCurrent()) return
+        if (!isCurrent()) return false
         val episode = if (progress.season != null && progress.episode != null)
             metadata.episodes[progress.season to progress.episode] else null
         val duration = episode?.runtimeMs?.takeIf { it > 0 } ?: metadata.runtimeMs
         var backdrop = metadata.backdrop
         var poster = metadata.poster
         if (backdrop == null && poster == null) {
-            if (!isCurrent()) return
+            if (!isCurrent()) return false
             val images = tmdbService.fetchImdbImages(progress.contentId, progress.contentType)
             currentCoroutineContext().ensureActive()
-            if (!isCurrent()) return
+            if (!isCurrent()) return false
             backdrop = images?.backdropUrl
             poster = images?.posterUrl
         }
@@ -1326,6 +1343,7 @@ class WatchProgressRepositoryImpl @Inject constructor(
                     episodeTitle = episode?.title), storage, isCurrent
             )
         }
+        return true
     }
 
     private fun parseRuntimeToMs(raw: String?): Long {

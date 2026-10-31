@@ -50,6 +50,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -374,6 +376,7 @@ internal fun EpisodeOptionsOverlay(
                                         }
                                         .focusable()
                                         .onFocusChanged { descriptionFocused = it.isFocused }
+                                        .semantics { contentDescription = title }
                                         .onPreviewKeyEvent { event ->
                                             val step = episodeStepForKey(event.nativeKeyEvent.keyCode, isRtl)
                                             when {

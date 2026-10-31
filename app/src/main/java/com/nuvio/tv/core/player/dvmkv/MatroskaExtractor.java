@@ -670,6 +670,12 @@ public class MatroskaExtractor implements Extractor {
   private boolean chaptersDetourLanding;
   private boolean chaptersDetourTried;
   private long inputLength = C.LENGTH_UNSET;
+  // Tracks placed after the Clusters (the SeekHead points at them): read them before any Cluster.
+  private long tracksContentPosition = C.INDEX_UNSET;
+  private boolean seekForTracks;
+  private boolean seekedForTracks;
+  private boolean returnFromTracks;
+  private long seekPositionAfterReadingTracks = C.INDEX_UNSET;
   private long clusterTimecodeUs = C.TIME_UNSET;
 
   // Reading state.
@@ -1244,6 +1250,18 @@ public class MatroskaExtractor implements Extractor {
         }
         break;
       case ID_CLUSTER:
+        if (seekPositionAfterReadingTracks != C.INDEX_UNSET) {
+          // The SeekHead's Tracks position led to a Cluster instead; go back and carry on.
+          returnFromTracks = true;
+          break;
+        }
+        if (shouldSeekForTracksBeforeCluster(
+            tracks.size(), tracksContentPosition, contentPosition, seekedForTracks)) {
+          // Tracks come after the Clusters. Read them first, or the Cues step below would end
+          // tracks with none and the player would never start.
+          seekForTracks = true;
+          break;
+        }
         if (!sentSeekMap) {
           if (shouldSeekForChapters(
               seekForCuesEnabled,
@@ -1348,6 +1366,8 @@ public class MatroskaExtractor implements Extractor {
           cuesContentPosition = seekEntryPosition;
         } else if (seekEntryId == MatroskaChapterParser.ID_CHAPTERS) {
           chaptersContentPosition = seekEntryPosition;
+        } else if (seekEntryId == ID_TRACKS) {
+          tracksContentPosition = seekEntryPosition;
         } else if (seekEntryId == ID_SEEK_HEAD) {
           pendingSeekHeadPosition =
               nextNestedSeekHeadPosition(
@@ -1505,6 +1525,9 @@ public class MatroskaExtractor implements Extractor {
         // selector. Publishing here would lock the selector to the provisional audio/dts
         // mime and force a late passthrough reconfiguration.
         pendingFinishTracks = true;
+        if (seekPositionAfterReadingTracks != C.INDEX_UNSET) {
+          returnFromTracks = true;
+        }
         break;
       default:
         break;
@@ -2877,6 +2900,19 @@ public class MatroskaExtractor implements Extractor {
    * @return Whether the seek position was updated.
    */
   private boolean maybeSeekForCues(PositionHolder seekPosition, long currentPosition) {
+    if (seekForTracks) {
+      seekForTracks = false;
+      seekedForTracks = true;
+      seekPositionAfterReadingTracks = currentPosition;
+      seekPosition.position = tracksContentPosition;
+      return true;
+    }
+    if (returnFromTracks) {
+      returnFromTracks = false;
+      seekPosition.position = seekPositionAfterReadingTracks;
+      seekPositionAfterReadingTracks = C.INDEX_UNSET;
+      return true;
+    }
     if (seekForChapters) {
       seekForChapters = false;
       chaptersDetourTried = true;
@@ -2969,6 +3005,18 @@ public class MatroskaExtractor implements Extractor {
         && chaptersPosition != C.INDEX_UNSET
         && chaptersPosition > firstClusterContentPosition
         && (inputLength == C.LENGTH_UNSET || chaptersPosition < inputLength);
+  }
+
+  /**
+   * Whether to jump to a Tracks element the SeekHead placed after this Cluster before parsing it.
+   * Only once, and only when no tracks are known yet.
+   */
+  static boolean shouldSeekForTracksBeforeCluster(
+      int trackCount, long tracksContentPosition, long clusterContentPosition, boolean alreadySought) {
+    return trackCount == 0
+        && !alreadySought
+        && tracksContentPosition != C.INDEX_UNSET
+        && tracksContentPosition > clusterContentPosition;
   }
 
   private void maybeFollowPendingIndexAfterSeekHead() {

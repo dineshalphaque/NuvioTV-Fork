@@ -276,7 +276,8 @@ private fun CatalogChip(
         modifier = modifier,
         label = catalogInfo.name,
         selected = isSelected,
-        onClick = onClick
+        onClick = onClick,
+        multiSelect = true
     )
 }
 

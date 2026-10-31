@@ -250,7 +250,7 @@ fun GridContentCard(
                     builder.build()
                 }
                 if (effectiveImageUrl.isNullOrBlank()) {
-                    MonochromePosterPlaceholder()
+                    MonochromePosterPlaceholder(contentDescription = item.name)
                 } else {
                     val watchedDim = watchedPosterDim(isWatched, isFocused)
                     AsyncImage(

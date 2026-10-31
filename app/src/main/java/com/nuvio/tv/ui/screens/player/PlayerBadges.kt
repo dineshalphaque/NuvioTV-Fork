@@ -1,5 +1,6 @@
 package com.nuvio.tv.ui.screens.player
 
+import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.height
@@ -73,9 +74,18 @@ internal fun rememberPlayerBadges(viewModel: PlayerViewModel, uiState: PlayerUiS
         }
     }
     val language = mediaInfo.audioLanguage ?: playingAudio?.language
-    val text = playerBadgeMatchText(mediaInfo, playbackLanguageTokens(language), releaseText, fileName, audioFromRelease)
-    return remember(text, filters) {
-        StreamBadgeMatcher.matchedBadges(listOfNotNull(text.takeIf { it.isNotBlank() }), filters)
+    val languageTokens = playbackLanguageTokens(language)
+    val playing = playerBadgePlayingText(mediaInfo, languageTokens, releaseText, fileName, audioFromRelease)
+    val text = playerBadgeMatchText(mediaInfo, languageTokens, releaseText, fileName, audioFromRelease)
+    LaunchedEffect(text) {
+        Log.d(TAG, "BADGE_MATCH: \"$text\"")
+    }
+    return remember(playing, text, filters) {
+        StreamBadgeMatcher.matchedPlayerBadges(
+            playing.takeIf { it.isNotBlank() },
+            listOfNotNull(text.takeIf { it.isNotBlank() }),
+            filters
+        )
             .filter { it.imageURL.isNotBlank() }
             .map { PlayerBadge.Pack(it) }
     }
@@ -126,6 +136,7 @@ internal fun PlayerBadges(
     }
 }
 
+private const val TAG = "PlayerBadges"
 private val PLAYER_BADGE_HEIGHT = 20.dp
 private const val BADGE_REFRESH_MS = 1_000L
 private const val QUICK_REFRESH_MS = 250L

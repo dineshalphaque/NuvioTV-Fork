@@ -5,6 +5,11 @@
 
 package com.nuvio.tv.ui.screens.player
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+
 import android.view.KeyEvent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -66,6 +71,8 @@ import com.nuvio.tv.ui.theme.NuvioTheme
 import com.nuvio.tv.ui.components.FocusScrollingText
 import com.nuvio.tv.ui.components.LoadingIndicator
 import com.nuvio.tv.ui.components.SourceChipStatus
+import com.nuvio.tv.ui.screens.detail.EpisodeOptionsOverlay
+import com.nuvio.tv.ui.screens.detail.adjacentEpisode
 import com.nuvio.tv.ui.screens.detail.formatReleaseDate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -99,6 +106,7 @@ internal fun EpisodesSidePanel(
     onSeasonSelected: (Int) -> Unit,
     onAddonFilterSelected: (String?) -> Unit,
     onEpisodeSelected: (Video) -> Unit,
+    onEpisodeManualPlay: (Video) -> Unit,
     onStreamSelected: (Stream) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -156,7 +164,8 @@ internal fun EpisodesSidePanel(
                         uiState = uiState,
                         episodesFocusRequester = episodesFocusRequester,
                         onSeasonSelected = onSeasonSelected,
-                        onEpisodeSelected = onEpisodeSelected
+                        onEpisodeSelected = onEpisodeSelected,
+                        onEpisodeManualPlay = onEpisodeManualPlay
                     )
                 }
             }
@@ -505,11 +514,13 @@ private fun EpisodesListView(
     uiState: PlayerUiState,
     episodesFocusRequester: FocusRequester,
     onSeasonSelected: (Int) -> Unit,
-    onEpisodeSelected: (Video) -> Unit
+    onEpisodeSelected: (Video) -> Unit,
+    onEpisodeManualPlay: (Video) -> Unit
 ) {
     val seasonTabFocusRequester = remember { FocusRequester() }
     val episodesListState = rememberLazyListState()
     var seasonTabsFocused by remember { mutableStateOf(false) }
+    var detailsEpisode by remember { mutableStateOf<Video?>(null) }
     val isEpisodeWatched: (Video) -> Boolean = { episode ->
         val episodeKey = episode.season?.let { s -> episode.episode?.let { e -> s to e } }
         episodeKey != null && (
@@ -627,12 +638,41 @@ private fun EpisodesListView(
                             onPreviousFromFirstSeason = {
                                 runCatching { seasonTabFocusRequester.requestFocus() }.isSuccess
                             },
-                            onClick = { onEpisodeSelected(episode) }
+                            onClick = { onEpisodeSelected(episode) },
+                            onLongClick = { detailsEpisode = episode }
                         )
                     }
                 }
             }
         }
+    }
+
+    detailsEpisode?.let { episode ->
+        EpisodeOptionsOverlay(
+            episode = episode,
+            isWatched = isEpisodeWatched(episode),
+            blurUnwatchedEpisodes = uiState.blurUnwatchedEpisodes,
+            style = uiState.episodeOptionsOverlayStyle,
+            isPending = false,
+            showWatchedActions = false,
+            isCurrentlyPlaying = episode.season == uiState.currentSeason &&
+                episode.episode == uiState.currentEpisode,
+            showPlayManually = episode.season != uiState.currentSeason ||
+                episode.episode != uiState.currentEpisode,
+            onDismiss = { detailsEpisode = null },
+            onNavigateEpisode = { step ->
+                adjacentEpisode(uiState.episodes, episode, step)?.let { detailsEpisode = it }
+            },
+            onPlay = {
+                detailsEpisode = null
+                onEpisodeSelected(episode)
+            },
+            onPlayManually = {
+                detailsEpisode = null
+                onEpisodeManualPlay(episode)
+            },
+            onToggleWatched = {}
+        )
     }
 }
 
@@ -689,6 +729,10 @@ private fun EpisodesSeasonTabs(
                 onClick = { onSeasonSelected(season) },
                 modifier = Modifier
                     .then(if (index == focusEntryIndex) Modifier.focusRequester(selectedTabFocusRequester) else Modifier)
+                    .semantics {
+                        role = Role.Tab
+                        this.selected = isSelected
+                    }
                     .onFocusChanged {
                         isFocused = it.isFocused
                         if (it.isFocused && season != selectedSeason) pendingSeason = season
@@ -739,7 +783,8 @@ private fun EpisodeItem(
     currentSeason: Int? = null,
     onSeasonNavigate: (Int) -> Unit = {},
     onPreviousFromFirstSeason: () -> Boolean = { false },
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
 ) {
     val shouldBlur = blurUnwatched && !isWatched
     var isFocused by remember { mutableStateOf(false) }
@@ -761,6 +806,7 @@ private fun EpisodeItem(
 
     Card(
         onClick = onClick,
+        onLongClick = onLongClick,
         modifier = Modifier
             .fillMaxWidth()
             .nuvioControlSurface(RoundedCornerShape(NuvioTheme.radii.xl))

@@ -26,6 +26,7 @@ import com.nuvio.tv.core.sync.androidtv.AndroidTvChannelSyncService
 import com.nuvio.tv.core.network.IPv4FirstDns
 import com.nuvio.tv.core.network.NoDelaySocketFactory
 import com.nuvio.tv.core.network.ServerTrust
+import com.nuvio.tv.core.network.imageNetworkFetcherFactory
 import com.nuvio.tv.core.network.withServerTrust
 import com.nuvio.tv.data.mediaserver.ServerUserStateProjection
 import com.nuvio.tv.data.simkl.SimklAnimeIdPreferenceHolder
@@ -253,7 +254,7 @@ class NuvioApplication : Application(), SingletonImageLoader.Factory {
                 }
                 add(SvgDecoder.Factory())
                 add(
-                    com.nuvio.tv.core.image.SavedCopyOnErrorFetcher.Factory(coil3.network.okhttp.OkHttpNetworkFetcherFactory(
+                    com.nuvio.tv.core.image.SavedCopyOnErrorFetcher.Factory(imageNetworkFetcherFactory(
                         callFactory = { imageOkHttpClient },
                         // Upstream's StaleWhileRevalidateCacheStrategy is deliberately not used:
                         // its background revalidation client has no cache, so a

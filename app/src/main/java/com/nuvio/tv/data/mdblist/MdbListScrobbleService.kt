@@ -13,7 +13,8 @@ class MdbListScrobbleService @Inject constructor(
     suspend fun scrobble(scope: MdbListAuthScope, action: TrackingScrobbleAction, event: TrackingScrobbleEvent) {
         if (!event.progressPercent.isFinite() || event.media.ids.toMdbListIds() == null) return
         sync.write(scope, setOf(MdbListSyncBucket.WATCHED, MdbListSyncBucket.PLAYBACK)) { snapshot ->
-            val target = snapshot.mutationTarget(event.media) ?: return@write snapshot to Unit
+            val projection = sync.currentProjection().takeIf { it !== MdbListProgressProjection.Empty }
+            val target = snapshot.mutationTarget(event.media, projection) ?: return@write snapshot to Unit
             if (target.type == MdbListItemType.SHOW || !target.scrobbleCoordinatesResolved) return@write snapshot to Unit
             val response = api.post(
                 "/scrobble/${action.wireValue}",
@@ -22,7 +23,7 @@ class MdbListScrobbleService @Inject constructor(
                 retrySafe = action != TrackingScrobbleAction.START
             )
             val receipt = decodeMdbListScrobbleReceipt(response, target, action, System.currentTimeMillis())
-            snapshot.applyScrobble(receipt) to Unit
+            snapshot.applyScrobble(receipt, projection?.mediaIndex) to Unit
         }
     }
 

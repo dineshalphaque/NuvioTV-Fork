@@ -15,6 +15,9 @@ internal fun PlayerRuntimeController.applyChaptersEnabled(enabled: Boolean) {
 
 /** The file's own chapters, else the media server's named chapters for the title. */
 internal fun PlayerRuntimeController.chaptersFor(tracks: Tracks?): List<PlayerChapter> {
+    if (tracks != null && !isUsingMpvEngine()) {
+        PlayerChapters.namedFileChapters(tracks)?.let(::updateSkipDetectionChapters)
+    }
     if (!chaptersEnabled) return emptyList()
     val (source, chapters) = when {
         isUsingMpvEngine() -> "mpv" to (if (mpvChaptersStreamUrl == currentStreamUrl) mpvChapters else emptyList())
@@ -33,14 +36,15 @@ internal fun PlayerRuntimeController.chaptersFor(tracks: Tracks?): List<PlayerCh
 
 /** mpv lists the chapters itself; they come with the file, so once read for a stream they are kept. */
 internal fun PlayerRuntimeController.refreshMpvChapters(view: NuvioMpvSurfaceView) {
-    if (!chaptersEnabled) return
-    if (mpvChaptersStreamUrl == currentStreamUrl && mpvChapters.isNotEmpty()) {
-        if (_uiState.value.chapters.isEmpty()) refreshChapters()
+    if (!chaptersEnabled && !skipIntroEnabled) return
+    if (mpvChaptersStreamUrl == currentStreamUrl && skipDetectionChapters.isNotEmpty()) {
+        if (mpvChapters.isNotEmpty() && _uiState.value.chapters.isEmpty()) refreshChapters()
         return
     }
-    val chapters = PlayerChapters.fromMpv(view.readChapters())
-    if (chapters.isEmpty()) return
-    mpvChapters = chapters
+    val named = view.readChapters()
+    if (named.isEmpty()) return
+    updateSkipDetectionChapters(named)
+    mpvChapters = PlayerChapters.fromMpv(named)
     mpvChaptersStreamUrl = currentStreamUrl
     refreshChapters()
 }
@@ -114,4 +118,47 @@ internal fun PlayerRuntimeController.jumpChapter(forward: Boolean) {
         delay(2000)
         _uiState.update { it.copy(showAspectRatioIndicator = false) }
     }
+}
+
+/**
+ * Every named chapter of the file, recaps and openings included (the chapter list drops those),
+ * kept apart from the list so "Skip intro" can use them with chapters switched off.
+ */
+private fun PlayerRuntimeController.updateSkipDetectionChapters(chapters: List<PlayerChapter>) {
+    if (chapters.isEmpty() || chapters == skipDetectionChapters) return
+    skipDetectionChapters = chapters
+    skipChaptersComputedForDuration = 0L
+    if (skipIntroEnabled) {
+        tryComputeChapterSkipIntervals()
+    }
+}
+
+/**
+ * Compute chapter skip intervals if the duration is known and we haven't already done so
+ * for this stream at this duration. Sets a flag to avoid re-running regexes on every tick.
+ */
+private fun PlayerRuntimeController.tryComputeChapterSkipIntervals(): Boolean {
+    val chapters = skipDetectionChapters.takeIf { it.size >= 2 } ?: return false
+    val durationMs = _playbackTimeline.value.duration.takeIf { it > 0L } ?: return false
+    if (skipChaptersComputedForDuration == durationMs) return false
+    skipChaptersComputedForDuration = durationMs
+    chapterSkipIntervals = ChapterSkipIntervals.fromChapters(chapters, durationMs)
+    recomputeMergedSkipIntervals()
+    return true
+}
+
+/**
+ * Called from the playback tick. Retries chapter interval computation once the duration
+ * becomes known, then stops. Guarded by skipIntroEnabled.
+ */
+internal fun PlayerRuntimeController.recomputeChapterSkipIntervalsIfNeeded() {
+    if (!skipIntroEnabled) return
+    if (skipChaptersComputedForDuration > 0L) return // already computed for this stream
+    tryComputeChapterSkipIntervals()
+}
+
+internal fun PlayerRuntimeController.clearChapterSkipState() {
+    skipDetectionChapters = emptyList()
+    chapterSkipIntervals = emptyList()
+    skipChaptersComputedForDuration = 0L
 }

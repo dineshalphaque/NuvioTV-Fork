@@ -3,6 +3,7 @@
 package com.nuvio.tv.ui.screens.player
 
 import com.nuvio.tv.ui.theme.NuvioTheme
+import com.nuvio.tv.ui.util.keepLtr
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -119,7 +120,7 @@ fun DisplayModeOverlay(
                             color = Color.White.copy(alpha = 0.4f),
                         )
                         Text(
-                            text = item.second,
+                            text = item.second.keepLtr(),
                             fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.6f),
                             textAlign = TextAlign.End

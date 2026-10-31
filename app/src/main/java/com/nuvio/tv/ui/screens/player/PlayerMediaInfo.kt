@@ -12,7 +12,7 @@ data class PlayerMediaInfo(
     val videoWidth: Int? = null,
     val videoHeight: Int? = null,
     val audioCodec: String? = null,
-    val audioProfile: String? = null,
+    val audioProfiles: List<String> = emptyList(),
     val audioChannels: Int? = null,
     /** The playing audio track, as [TrackInfo.trackId] names it, and its language. */
     val audioTrackId: String? = null,
@@ -70,7 +70,7 @@ internal fun mpvMediaInfo(property: (String) -> String?): PlayerMediaInfo {
         videoWidth = mpvInt(property, "video-params/w") ?: mpvInt(property, "current-tracks/video/demux-w"),
         videoHeight = mpvInt(property, "video-params/h") ?: mpvInt(property, "current-tracks/video/demux-h"),
         audioCodec = property("current-tracks/audio/codec")?.let(::mpvCodecLabel),
-        audioProfile = property("current-tracks/audio/codec-profile"),
+        audioProfiles = listOfNotNull(property("current-tracks/audio/codec-profile")),
         audioChannels = mpvInt(property, "audio-params/channel-count")
             ?: mpvInt(property, "current-tracks/audio/demux-channel-count"),
         audioTrackId = property("current-tracks/audio/id"),
@@ -96,6 +96,7 @@ private fun exoMediaInfo(video: Format?, audio: Format?): PlayerMediaInfo =
         videoWidth = video?.width?.takeIf { it > 0 },
         videoHeight = video?.height?.takeIf { it > 0 },
         audioCodec = audio?.sampleMimeType?.let(::exoCodecLabel),
+        audioProfiles = exoAudioProfiles(audio),
         audioChannels = audio?.channelCount?.takeIf { it > 0 },
         audioTrackId = audio?.id,
         audioLanguage = audio?.language,
@@ -142,6 +143,26 @@ internal fun codecsBitDepth(codecs: String): Int? {
     }
 }
 
+private val DTS_HD_MA_LABEL = Regex("""\b(ma|master audio)\b""")
+
+@OptIn(UnstableApi::class)
+internal fun exoAudioProfiles(audio: Format?): List<String> {
+    if (audio == null) return emptyList()
+    val mime = audio.sampleMimeType.orEmpty().lowercase()
+    val codecs = audio.codecs.orEmpty().lowercase()
+    val label = audio.label.orEmpty().lowercase()
+    val combined = "$codecs $label"
+    return buildList {
+        if (combined.contains("atmos")) add("Atmos")
+        if (combined.contains("dts:x") || combined.contains("dtsx")
+            || mime == MimeTypes.AUDIO_DTS_X) add("DTS:X")
+        val isDtsHd = combined.contains("dts-hd") || combined.contains("dtshd")
+            || codecs.startsWith("dtsh") || codecs.startsWith("dtsl")
+        if (codecs.startsWith("dtsl") || (isDtsHd && DTS_HD_MA_LABEL.containsMatchIn(combined))) add("DTS-HD MA")
+        else if (isDtsHd) add("DTS-HD")
+    }
+}
+
 /** Shared by the badges and the stats HDR row; the transfer falls back to the HEVC SPS. */
 internal fun Format.hdrFormats(): List<String> = buildList {
     if (sampleMimeType == MimeTypes.VIDEO_DOLBY_VISION) add("DV")
@@ -158,7 +179,7 @@ private fun mpvBitDepth(pixelFormat: String): Int? = when {
 }
 
 private fun mpvCodecLabel(codec: String): String? =
-    when (codec.trim().lowercase()) {
+    when (val c = codec.trim().lowercase()) {
         "" -> null
         "h264" -> "AVC"
         "ac3" -> "AC-3"
@@ -166,5 +187,9 @@ private fun mpvCodecLabel(codec: String): String? =
         "truehd" -> "TrueHD"
         "opus" -> "Opus"
         "vorbis" -> "Vorbis"
-        else -> codec.trim().uppercase()
+        "dts" -> "DTS"
+        else -> when {
+            c.startsWith("pcm") -> "PCM"
+            else -> codec.trim().uppercase()
+        }
     }

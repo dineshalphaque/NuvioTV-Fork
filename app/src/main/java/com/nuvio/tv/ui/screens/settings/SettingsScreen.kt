@@ -262,6 +262,7 @@ fun SettingsScreen(
     val integrationAnimeSkipFocusRequester = remember { FocusRequester() }
     var integrationSection by remember { mutableStateOf(IntegrationSettingsSection.Hub) }
     var qualityRulesTrip by remember { mutableStateOf(QualityRulesTrip.None) }
+    var integrationHubReturnSection by remember { mutableStateOf(IntegrationSettingsSection.Hub) }
     var pendingContentFocusCategory by remember { mutableStateOf<SettingsCategory?>(null) }
     var pendingContentFocusRequestId by remember { mutableLongStateOf(0L) }
     // A page opened from inside the pane replaces the row that had focus, and the rail then takes focus
@@ -420,7 +421,13 @@ fun SettingsScreen(
         while (!requested && System.nanoTime() < deadline) {
             val requester = if (category == SettingsCategory.INTEGRATION) {
                 when (integrationSection) {
-                    IntegrationSettingsSection.Hub -> contentFocusRequesters[category]
+                    IntegrationSettingsSection.Hub -> when (integrationHubReturnSection) {
+                        IntegrationSettingsSection.Hub -> contentFocusRequesters[category]
+                        IntegrationSettingsSection.Debrid -> integrationDebridFocusRequester
+                        IntegrationSettingsSection.Tmdb -> integrationTmdbFocusRequester
+                        IntegrationSettingsSection.MdbList -> integrationMdbListFocusRequester
+                        IntegrationSettingsSection.AnimeSkip -> integrationAnimeSkipFocusRequester
+                    }
                     IntegrationSettingsSection.Debrid -> integrationDebridFocusRequester
                     IntegrationSettingsSection.Tmdb -> integrationTmdbFocusRequester
                     IntegrationSettingsSection.MdbList -> integrationMdbListFocusRequester
@@ -464,6 +471,7 @@ fun SettingsScreen(
         handFocusToPane(SettingsCategory.INTEGRATION)
     }
     val onSelectIntegrationSection: (IntegrationSettingsSection) -> Unit = { section ->
+        if (section != IntegrationSettingsSection.Hub) integrationHubReturnSection = section
         integrationSection = section
         handFocusToPane(SettingsCategory.INTEGRATION)
     }
@@ -551,6 +559,7 @@ fun SettingsScreen(
                         selectedCategory != section.category) {
                         if (section.category == SettingsCategory.INTEGRATION) {
                             integrationSection = IntegrationSettingsSection.Hub
+                            integrationHubReturnSection = IntegrationSettingsSection.Hub
                         }
                         selectedCategory = section.category
                     }
@@ -572,6 +581,7 @@ fun SettingsScreen(
                 } else {
                     if (section.category == SettingsCategory.INTEGRATION) {
                         integrationSection = IntegrationSettingsSection.Hub
+                        integrationHubReturnSection = IntegrationSettingsSection.Hub
                     }
                     allowDetailAutofocus = true
                     selectedCategory = section.category
@@ -724,6 +734,7 @@ fun SettingsScreen(
                                 qualityRulesTrip = qualityRulesTrip,
                                 onOpenConnectedServices = openQualityRules,
                                 onCloseQualityRules = closeQualityRules,
+                                integrationHubReturnSection = integrationHubReturnSection,
                                 integrationHubFocusRequester = integrationHubFocusRequester,
                                 integrationDebridFocusRequester = integrationDebridFocusRequester,
                                 integrationTmdbFocusRequester = integrationTmdbFocusRequester,
@@ -859,6 +870,7 @@ fun SettingsScreen(
                         qualityRulesTrip = qualityRulesTrip,
                         onOpenConnectedServices = openQualityRules,
                         onCloseQualityRules = closeQualityRules,
+                        integrationHubReturnSection = integrationHubReturnSection,
                         integrationHubFocusRequester = integrationHubFocusRequester,
                         integrationDebridFocusRequester = integrationDebridFocusRequester,
                         integrationTmdbFocusRequester = integrationTmdbFocusRequester,
@@ -894,6 +906,7 @@ private fun SettingsDetailPane(
     qualityRulesTrip: QualityRulesTrip,
     onOpenConnectedServices: (() -> Unit)? = null,
     onCloseQualityRules: () -> Unit = {},
+    integrationHubReturnSection: IntegrationSettingsSection,
     integrationHubFocusRequester: FocusRequester,
     integrationDebridFocusRequester: FocusRequester,
     integrationTmdbFocusRequester: FocusRequester,
@@ -992,6 +1005,7 @@ private fun SettingsDetailPane(
             selectedSection = integrationSection,
             onSelectSection = onSelectIntegrationSection,
             onBackFromSection = onIntegrationSectionBack,
+            hubReturnSection = integrationHubReturnSection,
             initialFocusRequester = if (allowDetailAutofocus) {
                 contentFocusRequesters[SettingsCategory.INTEGRATION]
             } else {
@@ -1119,6 +1133,7 @@ private fun IntegrationSettingsContent(
     selectedSection: IntegrationSettingsSection,
     onSelectSection: (IntegrationSettingsSection) -> Unit,
     onBackFromSection: () -> Unit,
+    hubReturnSection: IntegrationSettingsSection,
     initialFocusRequester: FocusRequester?,
     hubFocusRequester: FocusRequester,
     debridFocusRequester: FocusRequester,
@@ -1131,7 +1146,17 @@ private fun IntegrationSettingsContent(
     BackHandler(enabled = backEnabled && selectedSection != IntegrationSettingsSection.Hub) {
         onBackFromSection()
     }
-    val hubEntryFocusRequester = initialFocusRequester ?: hubFocusRequester
+    val hubEntryFocusRequester = when (hubReturnSection) {
+        IntegrationSettingsSection.Hub ->
+            initialFocusRequester ?: hubFocusRequester
+        IntegrationSettingsSection.Debrid -> debridFocusRequester
+        IntegrationSettingsSection.Tmdb -> tmdbFocusRequester
+        IntegrationSettingsSection.MdbList -> mdbListFocusRequester
+        IntegrationSettingsSection.AnimeSkip -> animeSkipFocusRequester
+    }
+    val hubEntryTargetSection = hubReturnSection.takeIf {
+        it != IntegrationSettingsSection.Hub
+    } ?: IntegrationSettingsSection.Debrid
 
     LaunchedEffect(selectedSection, autoFocusEnabled) {
         if (!autoFocusEnabled) return@LaunchedEffect
@@ -1177,7 +1202,11 @@ private fun IntegrationSettingsContent(
                                     subtitle = stringResource(R.string.settings_debrid_subtitle),
                                     leadingIcon = Icons.Default.CloudDownload,
                                     onClick = { onSelectSection(IntegrationSettingsSection.Debrid) },
-                                    modifier = Modifier.focusRequester(hubEntryFocusRequester)
+                                    modifier = if (hubEntryTargetSection == IntegrationSettingsSection.Debrid) {
+                                        Modifier.focusRequester(hubEntryFocusRequester)
+                                    } else {
+                                        Modifier
+                                    }
                                 )
                             }
                             item(key = "integration_hub_tmdb") {
@@ -1185,7 +1214,12 @@ private fun IntegrationSettingsContent(
                                     title = "TMDB",
                                     subtitle = stringResource(R.string.settings_tmdb_subtitle),
                                     leadingRawIconRes = R.raw.mdblist_tmdb,
-                                    onClick = { onSelectSection(IntegrationSettingsSection.Tmdb) }
+                                    onClick = { onSelectSection(IntegrationSettingsSection.Tmdb) },
+                                    modifier = if (hubEntryTargetSection == IntegrationSettingsSection.Tmdb) {
+                                        Modifier.focusRequester(hubEntryFocusRequester)
+                                    } else {
+                                        Modifier
+                                    }
                                 )
                             }
                             item(key = "integration_hub_mdblist") {
@@ -1193,7 +1227,12 @@ private fun IntegrationSettingsContent(
                                     title = stringResource(R.string.mdblist_title),
                                     subtitle = stringResource(R.string.settings_mdblist_subtitle),
                                     leadingRawIconRes = R.raw.mdblist_logo,
-                                    onClick = { onSelectSection(IntegrationSettingsSection.MdbList) }
+                                    onClick = { onSelectSection(IntegrationSettingsSection.MdbList) },
+                                    modifier = if (hubEntryTargetSection == IntegrationSettingsSection.MdbList) {
+                                        Modifier.focusRequester(hubEntryFocusRequester)
+                                    } else {
+                                        Modifier
+                                    }
                                 )
                             }
                             item(key = "integration_hub_animeskip") {
@@ -1201,7 +1240,12 @@ private fun IntegrationSettingsContent(
                                     title = "Anime-Skip",
                                     subtitle = stringResource(R.string.settings_animeskip_subtitle),
                                     leadingIcon = Icons.Default.FastForward,
-                                    onClick = { onSelectSection(IntegrationSettingsSection.AnimeSkip) }
+                                    onClick = { onSelectSection(IntegrationSettingsSection.AnimeSkip) },
+                                    modifier = if (hubEntryTargetSection == IntegrationSettingsSection.AnimeSkip) {
+                                        Modifier.focusRequester(hubEntryFocusRequester)
+                                    } else {
+                                        Modifier
+                                    }
                                 )
                             }
                         }

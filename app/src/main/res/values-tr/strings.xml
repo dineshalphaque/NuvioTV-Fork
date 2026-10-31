@@ -1837,7 +1837,6 @@
     <string name="parental_severity_mild">Hafif</string>
     <string name="player_ends_at">Bitiş saati: %1$s</string>
     <string name="player_live_watched">CANLI  %1$s</string>
-    <string name="player_via">Sağlayıcı: %1$s</string>
     <!-- Season/episode code shown in player UI (e.g. S01E02). %1$d = season, %2$d = episode. -->
     <string name="season_episode_format">S%1$d B%2$d</string>
     <string name="player_subtitle_delay">Altyazı Gecikmesi</string>
@@ -2782,6 +2781,12 @@
     <string name="cd_remove">Kaldır</string>
     <string name="cd_preview">Önizle</string>
     <string name="cd_test">Test et</string>
+    <string name="cd_enable_scraper">%1$s sağlayıcısını etkinleştir</string>
+    <string name="cd_enable_addon">%1$s eklentisini etkinleştir</string>
+    <string name="cd_color_swatch">Renk %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Fragman kontrolleri</string>
+    <string name="cd_seek_bar">İlerleme çubuğu</string>
     <string name="cd_unlink">Bağlantıyı kes</string>
     <string name="cd_nuvio_logo">Nuvio Arc</string>
     <string name="cd_trakt_logo">Trakt logosu</string>
@@ -3414,9 +3419,9 @@
     <string name="appearance_app_icon_transparent_hint">Projectivy gibi kendi kartını çizen başlatıcılar için</string>
     <string name="appearance_app_icon_mint">Nane</string>
     <string name="about_update_auto_install_title">Güncellemeleri otomatik yükle</string>
-    <string name="about_update_auto_install_subtitle">Yeni sürümleri arka planda indir ve cihaz boştayken yükle</string>
-    <string name="about_update_auto_install_notice_title">Otomatik güncellemelerden sonra bildir</string>
-    <string name="about_update_auto_install_notice_subtitle">Uygulama kendini güncelledikten sonraki ilk açılışta bildirim göster</string>
+    <string name="about_update_auto_install_subtitle">Yeni sürümleri arka planda indirip cihaz boştayken yükle</string>
+    <string name="about_update_auto_install_notice_title">Otomatik güncellemeden sonra bildir</string>
+    <string name="about_update_auto_install_notice_subtitle">Uygulama kendini güncelledikten sonra bir sonraki açılışta bildirim göster</string>
     <string name="licenses_attributions_avatars_title">İzleme partisi avatarları</string>
     <string name="licenses_attributions_avatars_body">DiceBear ile yapıldı, şu tasarımlar uyarlandı: Davis Uche\'nin \"Fun Emoji\" ve Lisa Wischofsky\'nin \"Adventurer\" tasarımları, CC BY 4.0 lisanslı (creativecommons.org/licenses/by/4.0). Lisa Wischofsky\'nin \"Lorelei\", Zoish\'in \"Notionists\", DiceBear\'ın \"Pixel Art\" ve \"Thumbs\" tasarımları, CC0 1.0. Pablo Stanley\'nin \"Bottts\" tasarımı, kişisel ve ticari kullanım için ücretsiz. Hayvan yüzleri Twitter, Inc. ve diğer katkıda bulunanların Twemoji setinden, CC BY 4.0 lisanslı.</string>
     <string name="licenses_attributions_media_servers_title">Jellyfin, Emby ve Silo</string>
@@ -3530,12 +3535,19 @@
     <string name="sub_tertiary_lang">Üçüncü Tercih Edilen Dil</string>
     <string name="sub_addon_subtitles">Eklenti altyazıları</string>
     <string name="sub_addon_subtitles_desc">Oynatma sırasında yüklü eklentilerden altyazı getirir. Kapalıyken yalnızca dosyaya gömülü altyazılar kullanılabilir.</string>
-    <string name="sub_hdr_style">Ayrı HDR / Dolby Vision stili</string>
-    <string name="sub_hdr_style_sub">HDR ve Dolby Vision videolarda altyazılar için farklı metin rengi ve daha düşük parlaklık kullan</string>
+    <string name="sub_hdr_style">HDR / Dolby Vision için ayrı stil</string>
+    <string name="sub_hdr_style_sub">HDR ve Dolby Vision videolarda altyazı için ayrı bir metin rengi ve daha kısık bir parlaklık kullan</string>
     <string name="sub_hdr_text_color">HDR metin rengi</string>
     <string name="sub_hdr_brightness">HDR altyazı parlaklığı</string>
     <string name="sub_libass_render_scale">Altyazı işleme çözünürlüğü</string>
-    <string name="sub_libass_render_scale_sub">Düşük çözünürlük, yoğun efektli altyazılarda performansı artırır ancak netliği azaltır</string>
+    <string name="sub_libass_render_scale_sub">Düşük çözünürlük, yoğun altyazı düzenlerinde akıcılığı artırır; keskinlik azalır</string>
+    <string name="sub_libass_render_mode">ASS İşleme Modu</string>
+    <string name="sub_libass_render_mode_sub">ASS/SSA altyazılarının videoya nasıl çizileceği</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tünelli oynatma video efektleri hattını atlar. Üst katman kendiliğinden kullanılır.</string>
+    <string name="sub_libass_render_mode_video_effect">Video Efekti</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Altyazıyı doğrudan her video karesine çizer. Zamanlama her donanımda kareyle birebir gider. HDR içerik SDR\'ye ton eşlenir.</string>
+    <string name="sub_libass_render_mode_overlay">Üst Katman</string>
+    <string name="sub_libass_render_mode_overlay_sub">Altyazıyı ayrı bir yüzey katmanında çizer. HDR çıkışı korunur. Bazı cihazlarda zamanlama tam isabetli olmayabilir.</string>
     <string name="autoplay_quality_rules_title">Kalite kuralları</string>
     <string name="autoplay_quality_rules_subtitle">Bağlı Servisler\'deki filtreler, sıralama ve paylaşım grubu kademeleri.</string>
     <string name="stream_sort_sources">Kaynakları sırala</string>
@@ -3583,7 +3595,7 @@
     <string name="settings_stream_badges_in_player_description">Oynatılan video ve ses rozetlerini oynatıcıdaki başlığın altında gösterir. Arc rozetlerini veya düz metinle eşleşiyorsa (2160p ya da Atmos gibi) rozet paketinizi kullanır.</string>
     <string name="settings_stream_player_badges_title">Oynatıcı rozetleri</string>
     <string name="settings_stream_player_badges_description">Oynatıcının kullanacağı rozet paketini seçin.</string>
-    <string name="settings_stream_player_badges_same">Akış rozetleriyle aynı</string>
+    <string name="settings_stream_player_badges_same">Yayın rozetleriyle aynı</string>
     <string name="trakt_watch_progress_source_mdblist">MDBList</string>
     <string name="trakt_watch_progress_mdblist_selected">İzleme ilerlemesi kaynağı MDBList olarak ayarlandı</string>
     <string name="profile_avatar_category_local">Eğlenceli set · bu cihaz</string>
@@ -3614,7 +3626,7 @@
     <string name="audio_dialogue_boost_stereo">Bu iz stereo, bu yüzden yükseltilecek ayrı bir konuşma kanalı yok.</string>
     <string name="audio_dialogue_boost_mixed">Ses uygulamaya zaten stereoya karıştırılmış olarak ulaşıyor. Kullanmak için ses ayarlarında downmix\'i etkinleştir.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">MPV ile bu, ses stereoya karıştırıldığında çalışır, örneğin TV hoparlörlerinde.</string>
-    <string name="audio_night_mode_strong_desc">Gece geç saatler ve küçük odalar için. En dengeli ses. Her şey daha yüksek olur, bu yüzden TV\'nin sesini biraz kıs.</string>
+    <string name="audio_night_mode_strong_desc">Gece geç saatler ve küçük odalar için. En dengeli ses. Sessiz anlar epey yükselir, en yüksek olanlar biraz alçalır.</string>
     <string name="subtitle_panel_languages">Diller</string>
     <string name="subtitle_style_text_color_hdr">Metin Rengi (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">Metin Opaklığı (HDR)</string>
@@ -3639,7 +3651,7 @@
     <string name="library_transfer_copy">Kopyala</string>
     <string name="library_transfer_move">Taşı (kopyala, sonra kaynaktan kaldır)</string>
     <string name="library_transfer_none">Kopyalanacak bir şey yok</string>
-    <string name="update_installed_automatically">Cihaz boştayken otomatik olarak güncellendi</string>
+    <string name="update_installed_automatically">Cihaz boştayken otomatik güncellendi</string>
     <string name="cd_playback_stats">Oynatma istatistikleri</string>
     <string name="player_stats_unavailable_mpv">libmpv motorunda istatistikler kullanılamaz</string>
     <string name="player_dead_source_failover">Kaynak kullanılamıyor - sonraki kaynak deneniyor (%1$d/%2$d)</string>
@@ -4157,7 +4169,7 @@
     <string name="detail_episode_synopsis_none">Bu bölüm için henüz özet yok.</string>
     <string name="player_track_role_commentary">Yorum</string>
     <string name="player_track_role_audio_description">Sesli betimleme</string>
-    <string name="stream_resume_from_time">Devam et: %1$s</string>
-    <string name="stream_resume_from_percent">Devam et: %1$d%%</string>
+    <string name="stream_resume_from_time">%1$s konumundan devam et</string>
+    <string name="stream_resume_from_percent">%1$d%% konumundan devam et</string>
     <string name="tvdb_metadata_credit">Meta veriler %1$s tarafından sağlanmaktadır</string>
 </resources>

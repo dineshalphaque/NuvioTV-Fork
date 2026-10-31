@@ -306,7 +306,7 @@ private fun FolderCard(
                 var cropCover by remember(activeImageUrl, folder.tileShape) { mutableStateOf(false) }
                 AsyncImage(
                     model = activeImageUrl,
-                    contentDescription = folder.title,
+                    contentDescription = if (folder.hideTitle) folder.title else null,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(shape),

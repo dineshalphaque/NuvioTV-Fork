@@ -36,6 +36,8 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
@@ -434,6 +436,7 @@ fun ContentCard(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
+                            .semantics { this.contentDescription = item.name }
                             .placeholderCardShimmer(
                                 shimmerOffsetState = effectivePlaceholderShimmerOffsetState,
                                 backgroundColor = NuvioTheme.colors.BackgroundCard
@@ -470,7 +473,7 @@ fun ContentCard(
                         colorFilter = watchedPosterFilter(watchedDim.value)
                     )
                 } else {
-                    MonochromePosterPlaceholder()
+                    MonochromePosterPlaceholder(contentDescription = item.name)
                 }
 
                 val shouldPlayTrailerPreview = isBackdropExpanded &&

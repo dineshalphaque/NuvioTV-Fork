@@ -31,8 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -231,8 +229,8 @@ fun EssentialAddonSetupScreen(
             }
         }
 
-        if (uiState.isQrModeActive) {
-            Popup(properties = PopupProperties(focusable = true)) {
+        if (uiState.isQrModeActive || uiState.pendingChange != null) {
+            if (uiState.isQrModeActive) {
                 QrCodeOverlay(
                     qrBitmap = uiState.qrCodeBitmap,
                     serverUrl = uiState.serverUrl,
@@ -241,9 +239,7 @@ fun EssentialAddonSetupScreen(
                     hasPendingChange = uiState.pendingChange != null
                 )
             }
-        }
 
-        if (uiState.pendingChange != null) {
             uiState.pendingChange?.let { pending ->
                 ConfirmAddonChangesDialog(
                     pendingChange = pending,

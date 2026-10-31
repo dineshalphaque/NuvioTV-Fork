@@ -34,6 +34,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -112,6 +114,11 @@ fun P2pConsentDialog(
                                 } else false
                             }
                             .focusable()
+                            // Merge the body copy into this focusable scroll node so it is
+                            // announced once, instead of as an unnamed container.
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = bodyText
+                            }
                     ) {
                         Text(
                             text = bodyText,

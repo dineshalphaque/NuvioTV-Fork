@@ -158,7 +158,7 @@ private fun SidebarNavItem(
         ) {
             Icon(
                 imageVector = item.icon,
-                contentDescription = item.label,
+                contentDescription = null,
                 tint = if (isFocused) NuvioTheme.colors.OnSecondary else NuvioTheme.colors.TextPrimary,
                 modifier = Modifier.size(NuvioTheme.sizes.icons.sm)
             )

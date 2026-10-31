@@ -72,6 +72,12 @@ import coil3.imageLoader
 import coil3.memory.MemoryCache
 import com.nuvio.tv.core.image.titleLogoCacheKey
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import android.util.Log
 import com.nuvio.tv.R
 import com.nuvio.tv.domain.model.ContentType
@@ -351,6 +357,7 @@ fun HeroContentSection(
                                 onClick = onToggleMovieWatched,
                                 enabled = !isMovieWatchedPending,
                                 selected = isMovieWatched,
+                                toggleable = true,
                                 selectedContainerColor = NuvioTheme.colors.Secondary,
                                 selectedContentColor = NuvioTheme.colors.OnSecondary,
                                 onFocused = onHeroActionFocused
@@ -462,6 +469,7 @@ internal fun PlayButton(
         com.nuvio.tv.domain.model.VisualStyle.CINEMATIC_GLASS
     var longPressTriggered by remember { mutableStateOf(false) }
     val longPressKeyTracker = rememberLongPressKeyTracker()
+    val playFallbackLabel = stringResource(R.string.hero_play)
 
     LaunchedEffect(restoreFocusToken) {
         if (restoreFocusToken > 0 && focusRequester != null) {
@@ -520,7 +528,14 @@ internal fun PlayButton(
                 }
                 false
             }
-            .focusProperties { up = FocusRequester.Cancel },
+            .focusProperties { up = FocusRequester.Cancel }
+            .then(
+                if (text == null) {
+                    Modifier.semantics { this.contentDescription = playFallbackLabel }
+                } else {
+                    Modifier
+                }
+            ),
         scale = if (isV2) ButtonDefaults.scale(focusedScale = 1f) else ButtonDefaults.scale(),
         colors = ButtonDefaults.colors(
             containerColor = if (isV2) Color.Transparent else NuvioTheme.colors.Secondary,
@@ -633,6 +648,9 @@ private fun ActionIconButton(
     onLongPress: (() -> Unit)? = null,
     enabled: Boolean = true,
     selected: Boolean = false,
+    // When true this icon button is a state toggle (watched/unwatched) and announces itself as
+    // such; the library add/remove button is a plain action and leaves this off.
+    toggleable: Boolean = false,
     selectedContainerColor: Color = Color(0xFF7CFF9B),
     selectedContentColor: Color = Color.Black,
     busy: Boolean = false,
@@ -701,7 +719,13 @@ private fun ActionIconButton(
                 }
                 false
             }
-            .focusProperties { up = FocusRequester.Cancel },
+            .focusProperties { up = FocusRequester.Cancel }
+            .semantics {
+                if (toggleable) {
+                    role = Role.Checkbox
+                    toggleableState = if (selected) ToggleableState.On else ToggleableState.Off
+                }
+            },
         scale = if (isV2) IconButtonDefaults.scale(focusedScale = 1f) else IconButtonDefaults.scale(),
         colors = IconButtonDefaults.colors(
             containerColor = if (selected) selectedContainerColor else if (isV2) Color.Transparent else NuvioTheme.colors.BackgroundCard,

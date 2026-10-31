@@ -1792,7 +1792,6 @@
     <string name="parental_severity_mild">Enyhe</string>
     <string name="player_ends_at">Befejezés: %1$s</string>
     <string name="player_live_watched">ÉLŐ  %1$s</string>
-    <string name="player_via">forrás: %1$s</string>
     <string name="season_episode_format">S%1$d E%2$d</string>
     <string name="player_subtitle_delay">Felirat késleltetése</string>
     <string name="player_error_title">Lejátszási hiba</string>
@@ -3375,7 +3374,7 @@
     <string name="audio_dialogue_boost_stereo">Ez a sáv sztereó, ezért nincs külön beszédcsatorna, amit emelni lehetne.</string>
     <string name="audio_dialogue_boost_mixed">A hang már sztereóra keverve érkezik az alkalmazásba. A használatához kapcsold be a downmixet a hangbeállításokban.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">MPV-vel ez akkor működik, ha a hang sztereóra van keverve, például a TV hangszóróin.</string>
-    <string name="audio_night_mode_strong_desc">Késő éjszakára és kis szobákba. A legegyenletesebb hang. Minden hangosabb lesz, ezért halkítsd le kicsit a TV-t.</string>
+    <string name="audio_night_mode_strong_desc">Késő éjszakára és kis szobákba. A legegyenletesebb hang. A halk részek jelentősen felerősödnek, a leghangosabbak kissé halkulnak.</string>
     <string name="subtitle_panel_languages">Nyelvek</string>
     <string name="library_empty_mdblist_title">Nincs %1$s a várólistádon</string>
     <string name="library_empty_mdblist_subtitle">A részleteknél a + gombbal adhatsz elemeket az MDBList-várólistádhoz</string>
@@ -3913,7 +3912,20 @@
     <string name="audio_dtshd_tv_passthrough_tv">TV passthrough</string>
     <string name="sub_libass_render_scale">Feliratok megjelenítési felbontása</string>
     <string name="sub_libass_render_scale_sub">Az alacsonyabb felbontás gyorsítja a bonyolult, stílusos feliratokat, de csökken az élesség</string>
+    <string name="sub_libass_render_mode">ASS megjelenítési mód</string>
+    <string name="sub_libass_render_mode_sub">Hogyan kerülnek az ASS/SSA feliratok a videóra</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Az alagutazott lejátszás megkerüli a videoeffekt-láncot. Ilyenkor automatikusan az Átfedés módot használja.</string>
+    <string name="sub_libass_render_mode_video_effect">Videoeffekt</string>
+    <string name="sub_libass_render_mode_video_effect_sub">A feliratokat közvetlenül minden videóképkockára rajzolja. Képkockapontos időzítés minden hardveren. A HDR-tartalom tónusleképezéssel SDR-re alakul.</string>
+    <string name="sub_libass_render_mode_overlay">Átfedés</string>
+    <string name="sub_libass_render_mode_overlay_sub">A feliratokat külön felületi rétegen jeleníti meg. Megőrzi a HDR-kimenetet. A feliratok időzítése egyes eszközökön nem mindig teljesen pontos.</string>
     <string name="settings_stream_badges_in_player_description">Jelvények megjelenítése a lejátszott videóhoz és hanghoz a lejátszó címe alatt. Az Arc saját jelvényeit használja, vagy a jelvénycsomagodat, ha egyszerű szövegre illeszkedik, például 2160p vagy Atmos.</string>
+    <string name="cd_enable_scraper">%1$s engedélyezése</string>
+    <string name="cd_enable_addon">%1$s engedélyezése</string>
+    <string name="cd_color_swatch">Szín %1$s</string>
+    <string name="cd_emoji_option">Hangulatjel %1$s</string>
+    <string name="cd_trailer_controls">Előzetes vezérlői</string>
+    <string name="cd_seek_bar">Időcsúszka</string>
     <string name="assessment_value_on_auto">Be · Automatikus, legfeljebb ≈%1$s</string>
     <string name="assessment_value_connections_auto">Automatikus (az Automatikus gyorsítást követi)</string>
     <string name="assessment_grounds_connections_auto">Az Automatikus gyorsítás be van kapcsolva, és magától ad hozzá kapcsolatokat, ha egy filmnek szüksége van rá; egy rögzített szám kikapcsolná. Mért: egy kapcsolat %1$s, %3$d × %4$d MB elérte a(z) %2$s értéket.</string>

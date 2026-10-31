@@ -78,6 +78,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
@@ -89,8 +90,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -125,18 +124,16 @@ fun PluginScreen(
 
     BackHandler { onBackPress() }
 
-    Box(Modifier.fillMaxSize()) {
-        SettingsPageAtmosphere()
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = NuvioTheme.spacing.xxxl, vertical = NuvioTheme.spacing.xl)
+            .background(NuvioTheme.colors.Background)
     ) {
+        SettingsPageAtmosphere()
         PluginScreenContent(
             uiState = uiState,
             viewModel = viewModel
         )
-    }
     }
 }
 
@@ -168,11 +165,16 @@ fun PluginScreenContent(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
-            contentPadding = PaddingValues(bottom = NuvioTheme.spacing.xxl),
-            verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.lg),
-            modifier = Modifier.fillMaxSize()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = NuvioTheme.spacing.xxxl, vertical = NuvioTheme.spacing.xl)
         ) {
+            LazyColumn(
+                contentPadding = PaddingValues(bottom = NuvioTheme.spacing.xxl),
+                verticalArrangement = Arrangement.spacedBy(NuvioTheme.spacing.lg),
+                modifier = Modifier.fillMaxSize()
+            ) {
             if (viewModel.isReadOnly) {
                 item {
                     androidx.compose.material3.Card(
@@ -289,6 +291,7 @@ fun PluginScreenContent(
                     )
                 }
             }
+            }
         }
 
     // Success/Error Messages
@@ -297,9 +300,8 @@ fun PluginScreenContent(
         errorMessage = uiState.errorMessage
     )
 
-    // QR Code overlay — Popup renders above the entire screen
-    if (uiState.isQrModeActive) {
-        Popup(properties = PopupProperties(focusable = true)) {
+    if (uiState.isQrModeActive || uiState.pendingRepoChange != null || uiState.pendingScraperEnable != null) {
+        if (uiState.isQrModeActive) {
             QrCodeOverlay(
                 qrBitmap = uiState.qrCodeBitmap,
                 serverUrl = uiState.serverUrl,
@@ -307,10 +309,7 @@ fun PluginScreenContent(
                 hasPendingChange = uiState.pendingRepoChange != null
             )
         }
-    }
 
-    // Confirmation dialog overlay
-    if (uiState.pendingRepoChange != null) {
         uiState.pendingRepoChange?.let { pending ->
             ConfirmRepoChangesDialog(
                 pendingChange = pending,
@@ -318,9 +317,7 @@ fun PluginScreenContent(
                 onReject = { viewModel.onEvent(PluginUiEvent.RejectPendingRepoChange) }
             )
         }
-    }
 
-    if (uiState.pendingScraperEnable != null) {
         uiState.pendingScraperEnable?.let { pending ->
             ConfirmScraperEnableDialog(
                 scraperName = pending.scraperName,
@@ -1183,12 +1180,16 @@ private fun ScraperCard(
 
                     // Enable toggle
                     if (!isReadOnly) {
+                        // The card carries the name as visible text, but the toggle is its own
+                        // node, so without this a screen reader hears only "switch, on".
+                        val toggleLabel = stringResource(R.string.cd_enable_scraper, scraper.name)
                         Surface(
                             onClick = { onToggle(!scraper.enabled) },
                             modifier = Modifier
                                 .onFocusChanged { isToggleFocused = it.isFocused }
                                 .semantics {
                                     role = Role.Switch
+                                    contentDescription = toggleLabel
                                     toggleableState = if (scraper.enabled) ToggleableState.On else ToggleableState.Off
                                 },
                             colors = ClickableSurfaceDefaults.colors(

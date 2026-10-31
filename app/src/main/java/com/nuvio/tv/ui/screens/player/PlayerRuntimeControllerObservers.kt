@@ -3,6 +3,7 @@ package com.nuvio.tv.ui.screens.player
 import android.util.Log
 import com.nuvio.tv.core.build.IssueReports
 import com.nuvio.tv.core.player.OpenSubtitlesHasher
+import com.nuvio.tv.core.player.thumbnail.SeekThumbnails
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -10,6 +11,7 @@ import com.nuvio.tv.data.local.playbackSettingsChanges
 import com.nuvio.tv.data.mediaserver.mergeServerSkipIntervals
 import com.nuvio.tv.data.local.FrameRateMatchingMode
 import com.nuvio.tv.data.local.InternalPlayerEngine
+import com.nuvio.tv.data.repository.SkipInterval
 import com.nuvio.tv.domain.model.Subtitle
 import com.nuvio.tv.domain.model.WatchProgress
 import com.nuvio.tv.domain.model.enabledAddons
@@ -197,18 +199,25 @@ internal fun PlayerRuntimeController.fetchAddonSubtitles() {
     }
 }
 
-// Attaching an addon subtitle that was NOT pre-attached at startup runs a
-// full setMediaSource+prepare at the current position (see selectAddonSubtitle)
-// - a mid-playback transition that latches bad frame pacing on some vendor HALs
-// (the Prism+ class).
-// Auto-restore must never trigger that while the user is actively watching:
-// seamless cases apply immediately, reload cases park the pick and attach at
-// the next user pause. Explicit user picks are untouched - someone choosing a
-// subtitle accepts the hiccup.
+// An addon subtitle that can neither be drawn on top of the video nor switched to
+// in place needs a full setMediaSource+prepare at the current position (see
+// selectAddonSubtitle), which latches bad frame pacing on some vendor HALs (the
+// Prism+ class). Auto-restore never triggers that while the user is watching:
+// such a pick waits for the next pause. Explicit user picks are untouched.
+internal fun addonSubtitleAttachIsSeamless(
+    usingMpv: Boolean,
+    preAttached: Boolean,
+    drawnOnTop: Boolean,
+    playing: Boolean
+): Boolean = usingMpv || preAttached || drawnOnTop || !playing
+
 internal fun PlayerRuntimeController.autoSelectAddonSubtitleDeferringReload(subtitle: Subtitle) {
-    val seamless = isUsingMpvEngine() ||
-        attachedAddonSubtitleKeys.contains(addonSubtitleKey(subtitle)) ||
-        !isPlaybackCurrentlyPlaying()
+    val seamless = addonSubtitleAttachIsSeamless(
+        usingMpv = isUsingMpvEngine(),
+        preAttached = attachedAddonSubtitleKeys.contains(addonSubtitleKey(subtitle)),
+        drawnOnTop = canAttachAddonSubtitleViaSidecar(subtitle),
+        playing = isPlaybackCurrentlyPlaying()
+    )
     if (seamless) {
         autoSubtitleSelected = true
         selectAddonSubtitle(subtitle)
@@ -423,9 +432,11 @@ internal fun PlayerRuntimeController.observeSubtitleSettings() {
                     },
                     pauseOverlayEnabled = settings.pauseOverlayEnabled,
                     osdClockEnabled = settings.osdClockEnabled,
+                    nightModeLastOn = settings.nightModeLastOn,
                     internalPlayerEngine = resolvedInternalPlayerEngine,
                     frameRateMatchingMode = settings.frameRateMatchingMode,
                     tunnelingEnabled = settings.effectiveTunnelingEnabled &&
+                            !tunnelingBlockedByUsbAudio &&
                             resolvedInternalPlayerEngine != InternalPlayerEngine.MVP_PLAYER,
                     persistAudioAmplification = settings.persistAudioAmplification,
                     audioAmplificationDb = resolvedAudioAmplificationDb,
@@ -567,6 +578,8 @@ internal fun PlayerRuntimeController.observeSubtitleSettings() {
             if (!skipIntroEnabled) {
                 if (skipIntervals.isNotEmpty() || _uiState.value.activeSkipInterval != null) {
                     skipIntervals = emptyList()
+                    chapterSkipIntervals = emptyList()
+                    skipChaptersComputedForDuration = 0L
                     skipIntroFetchedKey = null
                     serverSkipIntervals = emptyList()
                     providerSkipIntervals = emptyList()
@@ -743,7 +756,7 @@ internal fun PlayerRuntimeController.fetchSkipIntervals(id: String?, season: Int
             } ?: emptyList()
             if (skipIntroEnabled && skipIntroFetchedKey == key && currentVideoId == requestedVideoId && contentId == id) {
                 providerSkipIntervals = fetchedIntervals
-                skipIntervals = mergeServerSkipIntervals(serverSkipIntervals, fetchedIntervals)
+                recomputeMergedSkipIntervals()
             }
         }
         return
@@ -769,7 +782,7 @@ internal fun PlayerRuntimeController.fetchSkipIntervals(id: String?, season: Int
             } ?: emptyList()
             if (skipIntroEnabled && skipIntroFetchedKey == key && currentVideoId == requestedVideoId) {
                 providerSkipIntervals = fetchedIntervals
-                skipIntervals = mergeServerSkipIntervals(serverSkipIntervals, fetchedIntervals)
+                recomputeMergedSkipIntervals()
             }
         }
         return
@@ -790,7 +803,7 @@ internal fun PlayerRuntimeController.fetchSkipIntervals(id: String?, season: Int
             } ?: emptyList()
             if (skipIntroEnabled && skipIntroFetchedKey == key && currentVideoId == requestedVideoId) {
                 providerSkipIntervals = fetchedIntervals
-                skipIntervals = mergeServerSkipIntervals(serverSkipIntervals, fetchedIntervals)
+                recomputeMergedSkipIntervals()
             }
         }
         return
@@ -810,7 +823,7 @@ internal fun PlayerRuntimeController.fetchSkipIntervals(id: String?, season: Int
         } ?: emptyList()
         if (!skipIntroEnabled || skipIntroFetchedKey != key || currentVideoId != requestedVideoId) return@launch
         providerSkipIntervals = fetchedIntervals
-        skipIntervals = mergeServerSkipIntervals(serverSkipIntervals, fetchedIntervals)
+        recomputeMergedSkipIntervals()
         // SkipIntroRepository logs only its no-data path, and at DEBUG, so
         // without this line a late next-episode card cannot be told apart:
         // intervals returned but no outro among them, no data at all, or the
@@ -831,6 +844,13 @@ internal fun PlayerRuntimeController.fetchSkipIntervals(id: String?, season: Int
                 "ms=${android.os.SystemClock.elapsedRealtime() - fetchT0} key=$key"
         )
     }
+}
+
+/** Server markers first, then chapter titles and the skip providers per segment. */
+internal fun PlayerRuntimeController.recomputeMergedSkipIntervals() {
+    val isMovie = contentType.equals("movie", ignoreCase = true)
+    val others = mergeSkipIntervals(providerSkipIntervals, chapterSkipIntervals, isMovie = isMovie)
+    skipIntervals = mergeServerSkipIntervals(serverSkipIntervals, others)
 }
 
 internal fun PlayerRuntimeController.tryApplyPendingResumeProgress(player: Player) {
@@ -968,14 +988,25 @@ internal fun PlayerRuntimeController.scheduleStartupWatchdog() {
         // (the analytics layer already treats it as buffered-ahead). If it
         // grew since the last check and another full interval fits inside the
         // ceiling, re-arm instead of firing.
-        val armedAtMs = System.currentTimeMillis()
+        var armedAtMs = System.currentTimeMillis()
         var lastBufferedAheadMs = 0L
         var lastPositionMs = _exoPlayer?.currentPosition ?: 0L
         var videoRestarted = false
-        val slowStart = SlowStartServer.matches(currentStreamUrl)
+        var slowStart = SlowStartServer.matches(currentStreamUrl)
         while (isActive) {
             delay(PlayerRuntimeController.STARTUP_WATCHDOG_TIMEOUT_MS)
             if (hasRenderedFirstFrame) return@launch
+            // The film waits on purpose while thumbnails are made before play; time it from when that screen closes.
+            // A film let go for the screen opens again from scratch, so it gets the slow-server allowance.
+            if (SeekThumbnails.prepareUi.value !is SeekThumbnails.PrepareUi.Hidden) {
+                Log.i(PlayerRuntimeController.TAG, "STARTUP_WATCHDOG: waiting for the thumbnails screen")
+                while (isActive && SeekThumbnails.prepareUi.value !is SeekThumbnails.PrepareUi.Hidden) delay(500)
+                slowStart = true
+                armedAtMs = System.currentTimeMillis()
+                lastBufferedAheadMs = 0L
+                lastPositionMs = _exoPlayer?.currentPosition ?: 0L
+                continue
+            }
             val livePlayer = _exoPlayer ?: return@launch
             val elapsedMs = System.currentTimeMillis() - armedAtMs
             val bufferedAheadMs = livePlayer.totalBufferedDuration.coerceAtLeast(0L)

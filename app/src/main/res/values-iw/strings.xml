@@ -1780,9 +1780,9 @@
     <string name="settings_p2p_cache_size_title">גודל מטמון טורנט</string>
     <string name="settings_p2p_cache_size_description">נתוני טורנט שהורדו נשמרים במכשיר זה להפעלה חוזרת מהירה יותר</string>
     <string name="settings_p2p_cache_none">ללא מטמון קבוע</string>
-    <string name="settings_p2p_cache_2_gb">2 GB</string>
-    <string name="settings_p2p_cache_5_gb">5 GB</string>
-    <string name="settings_p2p_cache_10_gb">10 GB</string>
+    <string name="settings_p2p_cache_2_gb">‎2 GB</string>
+    <string name="settings_p2p_cache_5_gb">‎5 GB</string>
+    <string name="settings_p2p_cache_10_gb">‎10 GB</string>
     <string name="settings_p2p_clear_cache_title">ניקוי מטמון טורנט</string>
     <string name="settings_p2p_clear_cache_usage">%1$s בשימוש כרגע</string>
     <string name="settings_p2p_clear_cache_usage_pending">השימוש נמדד לאחר הפעלת P2P; ניתן לבחור כדי לנקות נתוני טורנט שמורים במטמון</string>
@@ -1840,7 +1840,6 @@
     <string name="parental_severity_mild">קל</string>
     <string name="player_ends_at">מסתיים ב-%1$s</string>
     <string name="player_live_watched">LIVE  %1$s</string>
-    <string name="player_via">דרך %1$s</string>
     <!-- Season/episode code shown in player UI (e.g. S01E02). %1$d = season, %2$d = episode. -->
     <string name="season_episode_format">S%1$d E%2$d</string>
     <string name="player_subtitle_delay">עיכוב כתוביות</string>
@@ -2534,6 +2533,12 @@
     <string name="cd_remove">הסרה</string>
     <string name="cd_preview">תצוגה מקדימה</string>
     <string name="cd_test">בדיקה</string>
+    <string name="cd_enable_scraper">הפעלת %1$s</string>
+    <string name="cd_enable_addon">הפעלת %1$s</string>
+    <string name="cd_color_swatch">צבע %1$s</string>
+    <string name="cd_emoji_option">אימוג׳י %1$s</string>
+    <string name="cd_trailer_controls">פקדי טריילר</string>
+    <string name="cd_seek_bar">סרגל הדילוג</string>
     <string name="cd_unlink">ביטול קישור</string>
     <string name="cd_nuvio_logo">Nuvio Arc</string>
     <string name="cd_trakt_logo">לוגו Trakt</string>
@@ -3042,8 +3047,8 @@
     <string name="sponsors_error_api_http">שגיאת API של נותני חסות: %1$d</string>
 
     <!-- Contributor role badges -->
-    <string name="contributor_role_translator">מתרגם/ת</string>
-    <string name="contributor_role_maintainer">מתחזק/ת</string>
+    <string name="contributor_role_translator">תרגום</string>
+    <string name="contributor_role_maintainer">תחזוקה</string>
 
     <!-- Network / safe API errors -->
     <string name="network_error_empty_response_body">גוף תגובה ריק</string>
@@ -3314,7 +3319,7 @@
     <string name="unit_speed_mb_s">%1$s MB/s</string>
 
     <!-- Misc fallbacks -->
-    <string name="playback_estimated_memory_usage">שימוש משוער בזיכרון: %1$d / %2$d MB</string>
+    <string name="playback_estimated_memory_usage">שימוש משוער בזיכרון: ‎%1$d / %2$d MB</string>
     <string name="profile_default_name">פרופיל %1$d</string>
     <string name="detail_tmdb_fallback_title">TMDB %1$d</string>
     <string name="collections_editor_tmdb_collection_fallback">אוסף TMDB %1$d</string>
@@ -3333,10 +3338,10 @@
     <string name="stream_test_btn_run_again">הרצה חוזרת</string>
     <string name="stream_test_btn_running">פועל…</string>
     <string name="stream_test_label_baseline">חיבור בודד סטנדרטי (קו בסיס)</string>
-    <string name="stream_test_label_parallel1">חיבור מקבילי (מקטעי 1 MB)</string>
-    <string name="stream_test_label_parallel4">חיבור מקבילי (מקטעי 4 MB)</string>
-    <string name="stream_test_label_parallel8">חיבור מקבילי (מקטעי 8 MB)</string>
-    <string name="stream_test_label_parallel16">חיבור מקבילי (מקטעי 16MB)</string>
+    <string name="stream_test_label_parallel1">חיבור מקבילי (מקטעי ‎1 MB)</string>
+    <string name="stream_test_label_parallel4">חיבור מקבילי (מקטעי ‎4 MB)</string>
+    <string name="stream_test_label_parallel8">חיבור מקבילי (מקטעי ‎8 MB)</string>
+    <string name="stream_test_label_parallel16">חיבור מקבילי (מקטעי ‎16 MB)</string>
     <string name="stream_test_error_prefix">שגיאה: %1$s</string>
     <string name="stream_test_video_bitrate">קצב סיביות וידאו ממוצע: %1$s</string>
     <string name="stream_test_error_connection">החיבור נכשל. ייתכן שקישור הסטרים האחרון שהופעל פג תוקף או שאינו נגיש. כדאי להפעיל את הווידאו שוב ולנסות שוב.</string>
@@ -3404,9 +3409,9 @@
     <string name="appearance_app_icon_transparent_hint">למסכי בית שמציירים כרטיס משלהם, כמו Projectivy</string>
     <string name="appearance_app_icon_mint">מנטה</string>
     <string name="about_update_auto_install_title">התקנת עדכונים אוטומטית</string>
-    <string name="about_update_auto_install_subtitle">הורדת גרסאות חדשות ברקע והתקנתן כשהמכשיר אינו בשימוש</string>
+    <string name="about_update_auto_install_subtitle">הורדת גרסאות חדשות ברקע והתקנתן כשהמכשיר במצב סרק</string>
     <string name="about_update_auto_install_notice_title">הודעה לאחר עדכונים אוטומטיים</string>
-    <string name="about_update_auto_install_notice_subtitle">הצגת באנר בהפעלה הבאה לאחר שהאפליקציה עדכנה את עצמה</string>
+    <string name="about_update_auto_install_notice_subtitle">הצגת באנר בהפעלה הבאה לאחר שהאפליקציה מתעדכנת בעצמה</string>
     <string name="licenses_attributions_avatars_title">אווטארים של מסיבת צפייה</string>
     <string name="licenses_attributions_avatars_body">נוצרו עם DiceBear, בעיבוד של העיצובים הבאים: \"Fun Emoji\" מאת Davis Uche ו-\"Adventurer\" מאת Lisa Wischofsky, ברישיון CC BY 4.0 (creativecommons.org/licenses/by/4.0). \"Lorelei\" מאת Lisa Wischofsky, \"Notionists\" מאת Zoish, \"Pixel Art\" ו-\"Thumbs\" מאת DiceBear, CC0 1.0. \"Bottts\" מאת Pablo Stanley, חופשי לשימוש אישי ומסחרי. פרצופי חיות מתוך Twemoji מאת Twitter, Inc. ותורמים נוספים, ברישיון CC BY 4.0.</string>
     <string name="licenses_attributions_media_servers_title">Jellyfin, Emby ו-Silo</string>
@@ -3521,11 +3526,18 @@
     <string name="sub_addon_subtitles">כתוביות מתוספים</string>
     <string name="sub_addon_subtitles_desc">משיכת כתוביות מתוספים מותקנים במהלך ההפעלה. כשכבוי, זמינות רק הכתוביות המוטמעות בקובץ.</string>
     <string name="sub_hdr_style">סגנון נפרד ל-HDR / Dolby Vision</string>
-    <string name="sub_hdr_style_sub">שימוש בצבע טקסט אחר ובבהירות עמומה יותר לכתוביות בווידאו HDR ו-Dolby Vision</string>
+    <string name="sub_hdr_style_sub">שימוש בצבע טקסט שונה ובבהירות מעומעמת יותר לכתוביות בווידאו HDR ו-Dolby Vision</string>
     <string name="sub_hdr_text_color">צבע טקסט HDR</string>
     <string name="sub_hdr_brightness">בהירות כתוביות HDR</string>
     <string name="sub_libass_render_scale">רזולוציית רינדור כתוביות</string>
-    <string name="sub_libass_render_scale_sub">רזולוציה נמוכה יותר משפרת ביצועים בכתוביות מעוצבות כבדות, על חשבון החדות</string>
+    <string name="sub_libass_render_scale_sub">רזולוציה נמוכה יותר משפרת ביצועים בכתוביות מורכבות, במחיר של חדות נמוכה יותר</string>
+    <string name="sub_libass_render_mode">מצב רינדור ASS</string>
+    <string name="sub_libass_render_mode_sub">איך כתוביות ASS/SSA מצוירות על הווידאו</string>
+    <string name="sub_libass_render_mode_tunneled_sub">הפעלה במנהור עוקפת את שרשרת אפקטי הווידאו. נעשה שימוש אוטומטי בשכבת-על.</string>
+    <string name="sub_libass_render_mode_video_effect">אפקט וידאו</string>
+    <string name="sub_libass_render_mode_video_effect_sub">מצייר את הכתוביות ישירות על כל פריים של הווידאו. תזמון מדויק לפריים בכל חומרה. תוכן HDR עובר מיפוי גוונים ל-SDR.</string>
+    <string name="sub_libass_render_mode_overlay">שכבת-על</string>
+    <string name="sub_libass_render_mode_overlay_sub">מרנדר את הכתוביות על שכבה נפרדת. שומר על פלט HDR. ייתכן שתזמון הכתוביות לא יהיה מדויק לגמרי בחלק מהמכשירים.</string>
     <string name="autoplay_quality_rules_title">כללי איכות</string>
     <string name="autoplay_quality_rules_subtitle">מסננים, מיון ודרגות קבוצות שחרור בשירותים מחוברים.</string>
     <string name="stream_sort_sources">מיון מקורות</string>
@@ -3570,15 +3582,15 @@
     <string name="debrid_stream_release_groups_preferred">קבוצות שחרור מועדפות</string>
     <string name="settings_stream_badges_in_player_title">הצגה בנגן</string>
     <string name="settings_stream_badges_in_player_description">הצגת תגים לווידאו ולשמע המתנגנים מתחת לכותרת בנגן. משתמש בתגים של Arc, או בחבילת התגים שלך אם היא תואמת טקסט רגיל, כמו 2160p או Atmos.</string>
-    <string name="settings_stream_player_badges_title">תגי הנגן</string>
-    <string name="settings_stream_player_badges_description">בחירת חבילת התגים שהנגן משתמש בה.</string>
-    <string name="settings_stream_player_badges_same">כמו תגי המקור</string>
+    <string name="settings_stream_player_badges_title">תגי נגן</string>
+    <string name="settings_stream_player_badges_description">בחירת חבילת התגים שבה הנגן משתמש.</string>
+    <string name="settings_stream_player_badges_same">זהה לתגי המקור</string>
     <string name="trakt_watch_progress_source_mdblist">MDBList</string>
     <string name="trakt_watch_progress_mdblist_selected">מקור התקדמות צפייה הוגדר ל-MDBList</string>
     <string name="profile_avatar_category_local">סט משעשע · המכשיר הזה</string>
     <string name="profile_local_avatar_note">מוצג במכשיר הזה בלבד. במכשירים אחרים נשאר האווטאר של Nuvio.</string>
     <string name="player_engine_switch_title">לעבור ל-%1$s?</string>
-    <string name="player_engine_switch_message">הווידאו ייטען מחדש מהמקום שבו עצרת.</string>
+    <string name="player_engine_switch_message">הווידאו ייטען מחדש מהנקודה שאליה הגעת.</string>
     <string name="player_more_short">עוד</string>
     <string name="player_layout_more_fixed">קבוע בקצה הימני</string>
     <string name="player_layout_more_hidden_help">כפתור עוד ופעולות התפריט שלו מוסתרים. יש להציג את כפתור עוד כדי לשחזר את החלון הקופץ שלו, או להוציא פעולה ממנו כדי להציג אותה ישירות.</string>
@@ -3603,7 +3615,7 @@
     <string name="audio_dialogue_boost_stereo">הרצועה הזו בסטריאו, ולכן אין ערוץ דיבור נפרד להגברה.</string>
     <string name="audio_dialogue_boost_mixed">השמע מגיע לאפליקציה כשהוא כבר מעורבב לסטריאו. כדי להשתמש בזה, הפעל downmix בהגדרות השמע.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">עם MPV זה עובד כשהשמע מעורבב לסטריאו, למשל ברמקולי הטלוויזיה.</string>
-    <string name="audio_night_mode_strong_desc">ללילות מאוחרים ולחדרים קטנים. השמע האחיד ביותר. הכול נשמע חזק יותר, אז כדאי להנמיך מעט את הטלוויזיה.</string>
+    <string name="audio_night_mode_strong_desc">ללילות מאוחרים ולחדרים קטנים. השמע האחיד ביותר. רגעים שקטים עולים הרבה, והחזקים ביותר יורדים מעט.</string>
     <string name="subtitle_panel_languages">שפות</string>
     <string name="subtitle_style_text_color_hdr">צבע הטקסט (HDR)</string>
     <string name="subtitle_style_text_opacity_hdr">שקיפות טקסט (HDR)</string>
@@ -3628,7 +3640,7 @@
     <string name="library_transfer_copy">העתקה</string>
     <string name="library_transfer_move">העברה (העתקה ואז הסרה מהמקור)</string>
     <string name="library_transfer_none">אין מה להעתיק</string>
-    <string name="update_installed_automatically">עודכן אוטומטית כשהמכשיר לא היה בשימוש</string>
+    <string name="update_installed_automatically">עודכן אוטומטית כשהמכשיר היה במצב סרק</string>
     <string name="cd_playback_stats">נתוני הפעלה</string>
     <string name="player_stats_unavailable_mpv">הנתונים אינם זמינים במנוע libmpv</string>
     <string name="player_dead_source_failover">המקור אינו זמין - מנסה את המקור הבא (%1$d/%2$d)</string>

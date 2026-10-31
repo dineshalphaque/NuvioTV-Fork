@@ -1074,6 +1074,13 @@
     <string name="sub_libass_sub">Experimental: advanced ASS/SSA rendering (styles, positioning, animations)</string>
     <string name="sub_libass_render_scale">Subtitle render resolution</string>
     <string name="sub_libass_render_scale_sub">Lower resolution improves performance on heavy typesetting at the cost of sharpness</string>
+    <string name="sub_libass_render_mode">ASS render mode</string>
+    <string name="sub_libass_render_mode_sub">How ASS/SSA subtitles are drawn onto the video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Tunneled playback bypasses the video effects pipeline. Overlay is used automatically.</string>
+    <string name="sub_libass_render_mode_video_effect">Video effect</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Draws subtitles directly onto each video frame. Frame-accurate timing on all hardware. HDR content is tone-mapped to SDR.</string>
+    <string name="sub_libass_render_mode_overlay">Overlay</string>
+    <string name="sub_libass_render_mode_overlay_sub">Renders subtitles on a separate surface layer. Preserves HDR output. Subtitle timing may not be perfectly accurate on some devices.</string>
     <string name="sub_org_none">None (default order)</string>
     <string name="sub_org_by_lang">By language</string>
     <string name="sub_org_by_addon">By addon</string>
@@ -2053,7 +2060,6 @@
     <string name="parental_severity_mild">Mild</string>
     <string name="player_ends_at">Ends at %1$s</string>
     <string name="player_live_watched">LIVE  %1$s</string>
-    <string name="player_via">via %1$s</string>
     <!-- Season/episode code shown in player UI (e.g. S01E02). %1$d = season, %2$d = episode. -->
     <string name="season_episode_format">S%1$d E%2$d</string>
     <string name="player_subtitle_delay">Subtitles Delay</string>
@@ -2164,7 +2170,7 @@
     <string name="audio_dialogue_boost_stereo">This track is stereo, so there is no separate speech channel to raise.</string>
     <string name="audio_dialogue_boost_mixed">The sound reaches the app already mixed to stereo. Turn on downmix in the audio settings to use this.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">With MPV this works when the sound is mixed to stereo, for example on TV speakers.</string>
-    <string name="audio_night_mode_strong_desc">Late nights and small rooms. The most even sound. Everything gets louder, so turn the TV down a little.</string>
+    <string name="audio_night_mode_strong_desc">Late nights and small rooms. The most even sound. Quiet moments come up a lot, the loudest ones come down a little.</string>
     <string name="audio_maintain_original_audio_on_downmix_title">Maintain original audio on downmix</string>
     <string name="audio_maintain_original_audio_on_downmix_subtitle">When disabled, downmix normalization can reduce overall volume.</string>
 
@@ -2798,6 +2804,12 @@
     <string name="cd_remove">Remove</string>
     <string name="cd_preview">Preview</string>
     <string name="cd_test">Test</string>
+    <string name="cd_enable_scraper">Enable %1$s</string>
+    <string name="cd_enable_addon">Enable %1$s</string>
+    <string name="cd_color_swatch">Colour %1$s</string>
+    <string name="cd_emoji_option">Emoji %1$s</string>
+    <string name="cd_trailer_controls">Trailer controls</string>
+    <string name="cd_seek_bar">Seek bar</string>
     <string name="cd_unlink">Unlink</string>
     <string name="cd_nuvio_logo">Nuvio Arc</string>
     <string name="cd_trakt_logo">Trakt logo</string>

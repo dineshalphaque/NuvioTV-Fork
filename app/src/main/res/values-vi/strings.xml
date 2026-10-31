@@ -487,7 +487,7 @@
     <string name="tracking_trakt_features_title">Tính năng Trakt</string>
     <string name="tracking_trakt_features_subtitle">Lịch sử, đánh giá và đề xuất riêng của Trakt</string>
     <string name="tracking_simkl_features_title">Tính năng Simkl</string>
-    <string name="tracking_simkl_features_subtitle">Cài đặt riêng của Simkl</string>
+    <string name="tracking_simkl_features_subtitle">Cài đặt riêng cho Simkl</string>
     <string name="tracking_simkl_anime_id_title">Tùy chọn anime ID</string>
     <string name="tracking_simkl_anime_id_subtitle">Kiểm soát cách nhận diện các mùa anime. Chọn MAL hoặc Kitsu để hiển thị mỗi mùa dưới dạng một mục riêng thay vì gộp chúng theo một IMDb ID.</string>
     <string name="tracking_simkl_anime_id_imdb">Ưu tiên IMDb</string>
@@ -729,7 +729,7 @@
     <string name="playback_section_stream_selection">Lựa chọn luồng</string>
     <string name="playback_section_stream_selection_desc">Cách chọn luồng khi bạn nhấn phát.</string>
     <string name="playback_section_up_next">Tiếp theo</string>
-    <string name="playback_section_up_next_desc">Tự động phát tập kế tiếp và gợi ý sau khi phát xong.</string>
+    <string name="playback_section_up_next_desc">Tự động phát tập tiếp theo và gợi ý sau khi phát xong.</string>
     <string name="playback_section_skip">Bỏ qua phân đoạn</string>
     <string name="playback_section_skip_desc">Bỏ qua giới thiệu, tóm tắt và danh đề.</string>
     <string name="playback_section_interface">Giao diện trình phát</string>
@@ -1850,7 +1850,6 @@
     <string name="parental_severity_mild">Nhẹ</string>
     <string name="player_ends_at">Kết thúc lúc %1$s</string>
     <string name="player_live_watched">TRỰC TIẾP  %1$s</string>
-    <string name="player_via">qua %1$s</string>
     <!-- Season/episode code shown in player UI (e.g. S01E02). %1$d = season, %2$d = episode. -->
     <string name="season_episode_format">M%1$d T%2$d</string>
     <string name="player_subtitle_delay">Độ trễ phụ đề</string>
@@ -2547,6 +2546,12 @@
     <string name="cd_remove">Xóa</string>
     <string name="cd_preview">Xem trước</string>
     <string name="cd_test">Kiểm tra</string>
+    <string name="cd_enable_scraper">Bật %1$s</string>
+    <string name="cd_enable_addon">Bật %1$s</string>
+    <string name="cd_color_swatch">Màu %1$s</string>
+    <string name="cd_emoji_option">Biểu tượng cảm xúc %1$s</string>
+    <string name="cd_trailer_controls">Nút điều khiển trailer</string>
+    <string name="cd_seek_bar">Thanh tua</string>
     <string name="cd_unlink">Hủy liên kết</string>
     <string name="cd_nuvio_logo">Nuvio Arc</string>
     <string name="cd_trakt_logo">Logo Trakt</string>
@@ -3595,7 +3600,7 @@
     <string name="audio_dialogue_boost_stereo">Bản âm thanh này là stereo nên không có kênh lời thoại riêng để nâng.</string>
     <string name="audio_dialogue_boost_mixed">Âm thanh đến ứng dụng đã được trộn sang stereo. Để dùng, hãy bật hạ kênh trong cài đặt âm thanh.</string>
     <string name="audio_dialogue_boost_mpv_multichannel">Với MPV, tính năng này hoạt động khi âm thanh được trộn sang stereo, ví dụ trên loa TV.</string>
-    <string name="audio_night_mode_strong_desc">Dành cho đêm khuya và phòng nhỏ. Âm thanh đều nhất. Mọi thứ to hơn, nên hãy giảm âm lượng TV một chút.</string>
+    <string name="audio_night_mode_strong_desc">Dành cho đêm khuya và phòng nhỏ. Âm thanh đều nhất. Những đoạn nhỏ được nâng lên nhiều, những đoạn to nhất giảm đi một chút.</string>
     <string name="subtitle_panel_languages">Ngôn ngữ</string>
     <string name="library_empty_mdblist_title">Chưa có %1$s trong danh sách theo dõi</string>
     <string name="library_empty_mdblist_subtitle">Dùng + trong chi tiết để thêm vào danh sách theo dõi MDBList</string>
@@ -4132,7 +4137,14 @@
     <string name="audio_dtshd_tv_passthrough_standard">Tiêu chuẩn</string>
     <string name="audio_dtshd_tv_passthrough_tv">Truyền thẳng qua TV</string>
     <string name="sub_libass_render_scale">Độ phân giải kết xuất phụ đề</string>
-    <string name="sub_libass_render_scale_sub">Độ phân giải thấp hơn giúp mượt hơn với phụ đề nhiều hiệu ứng nhưng kém sắc nét hơn</string>
+    <string name="sub_libass_render_scale_sub">Độ phân giải thấp hơn giúp tăng hiệu năng khi xử lý hiệu ứng phụ đề phức tạp nhưng làm giảm độ sắc nét</string>
+    <string name="sub_libass_render_mode">Chế độ kết xuất ASS</string>
+    <string name="sub_libass_render_mode_sub">Cách phụ đề ASS/SSA được kết xuất lên video</string>
+    <string name="sub_libass_render_mode_tunneled_sub">Phát lại qua đường hầm sẽ bỏ qua quy trình hiệu ứng video. Lớp phủ sẽ được tự động sử dụng.</string>
+    <string name="sub_libass_render_mode_video_effect">Hiệu ứng video</string>
+    <string name="sub_libass_render_mode_video_effect_sub">Kết xuất phụ đề trực tiếp lên từng khung hình video. Định thời gian chính xác theo từng khung hình trên mọi phần cứng. Nội dung HDR được ánh xạ tông màu sang SDR</string>
+    <string name="sub_libass_render_mode_overlay">Lớp phủ</string>
+    <string name="sub_libass_render_mode_overlay_sub">Kết xuất phụ đề trên một lớp riêng biệt. Giữ nguyên đầu ra HDR. Thời gian hiển thị phụ đề có thể không chính xác hoàn toàn trên một số thiết bị.</string>
     <string name="settings_stream_badges_in_player_description">Hiển thị nhãn cho video và âm thanh đang phát dưới tiêu đề trình phát. Dùng nhãn riêng của Arc, hoặc bộ nhãn của bạn nếu khớp với văn bản thường, như 2160p hoặc Atmos.</string>
     <string name="assessment_value_on_auto">Bật · Tự động, tối đa ≈%1$s</string>
     <string name="assessment_value_connections_auto">Tự động (theo Tăng tốc tự động)</string>

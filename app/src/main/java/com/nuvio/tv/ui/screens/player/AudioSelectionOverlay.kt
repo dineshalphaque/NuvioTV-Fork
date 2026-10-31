@@ -52,6 +52,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -323,7 +329,12 @@ private fun AudioTrackCard(
         onClick = onClick,
         onFocused = onFocused,
         focusRequester = focusRequester,
-        modifier = Modifier.focusProperties { right = rightFocusRequester }
+        modifier = Modifier
+            .semantics {
+                role = Role.RadioButton
+                this.selected = isSelected
+            }
+            .focusProperties { right = rightFocusRequester }
     )
 }
 
@@ -624,6 +635,14 @@ private fun AudioControlsContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(persistFocusRequester)
+                    .semantics {
+                        role = Role.Switch
+                        toggleableState = if (persistAmplification) {
+                            ToggleableState.On
+                        } else {
+                            ToggleableState.Off
+                        }
+                    }
                     .focusProperties {
                         left = persistLeftFocusRequester
                         up = persistUpFocusRequester
@@ -701,6 +720,7 @@ private fun AdjustmentSection(
         ) {
             StepCard(
                 icon = Icons.Default.Remove,
+                contentDescription = stringResource(R.string.cd_decrease),
                 enabled = canDecrease,
                 focusRequester = minusFocusRequester,
                 leftFocusRequester = minusLeftFocusRequester,
@@ -712,6 +732,7 @@ private fun AdjustmentSection(
             )
             StepCard(
                 icon = Icons.Default.Add,
+                contentDescription = stringResource(R.string.cd_increase),
                 enabled = canIncrease,
                 focusRequester = plusFocusRequester,
                 leftFocusRequester = plusLeftFocusRequester,
@@ -733,6 +754,7 @@ private fun AdjustmentSection(
 @Composable
 private fun StepCard(
     icon: ImageVector,
+    contentDescription: String,
     enabled: Boolean,
     focusRequester: FocusRequester,
     leftFocusRequester: FocusRequester,
@@ -811,7 +833,7 @@ private fun StepCard(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null,
+                contentDescription = contentDescription,
                 tint = if (enabled) Color.White else Color.White.copy(alpha = 0.35f)
             )
         }

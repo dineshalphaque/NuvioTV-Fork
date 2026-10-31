@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyListState
@@ -1113,16 +1114,15 @@ fun ModernHomeContent(
             val heroTrailerRenderedLambda = remember { { heroTrailerFirstFrameRenderedUpdated } }
 
             val foregroundModifier = Modifier.sidebarPageContent()
-            val heroMetadataModifier = remember(rowHorizontalPadding, rowsViewportHeight, foregroundModifier) {
+            val heroMetadataModifier = remember(rowHorizontalPadding, rowsViewportHeight, screenHeight, foregroundModifier) {
                 foregroundModifier
                     .align(Alignment.BottomStart)
-                    // The top inset keeps a tall block (big cards, few lines to spare) off the screen edge.
                     .padding(
                         start = rowHorizontalPadding,
-                        top = NuvioTheme.spacing.screen.vertical,
                         end = NuvioTheme.spacing.xxxl,
                         bottom = NuvioTheme.spacing.none + rowsViewportHeight + NuvioTheme.spacing.lg
                     )
+                    .heightIn(max = modernHeroTextMaxHeight(screenHeight, rowsViewportHeight))
                     .fillMaxWidth(MODERN_HERO_TEXT_WIDTH_FRACTION)
             }
 

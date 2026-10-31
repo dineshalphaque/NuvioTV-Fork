@@ -63,7 +63,6 @@ import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.ExtractorsFactory
 import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
 import androidx.media3.extractor.ts.TsExtractor
-import androidx.media3.session.MediaSession
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.nuvio.tv.R
@@ -77,6 +76,7 @@ import com.nuvio.tv.core.player.BufferSizing
 import com.nuvio.tv.core.player.BufferTopUp
 import com.nuvio.tv.core.player.DolbyVisionConversionConfig
 import com.nuvio.tv.core.player.DolbyVisionConversionStats
+import com.nuvio.tv.core.player.DrawingMemory
 import com.nuvio.tv.core.player.AviTrackFormatExtractorsFactory
 import com.nuvio.tv.core.player.DolbyVisionExtractorsFactory
 import com.nuvio.tv.core.player.DoviBridge
@@ -90,6 +90,7 @@ import com.nuvio.tv.data.local.Dv7HandlingMode
 import com.nuvio.tv.data.local.FrameRateMatchingMode
 import com.nuvio.tv.data.local.SUBTITLE_LANGUAGE_FORCED
 import com.nuvio.tv.data.local.InternalPlayerEngine
+import com.nuvio.tv.data.local.LibassRenderMode
 import com.nuvio.tv.data.local.PlayerSettings
 import com.nuvio.tv.data.repository.PlaybackIssueErrorInput
 import com.nuvio.tv.domain.model.Subtitle
@@ -212,7 +213,7 @@ internal data class ExoConstructionFingerprint(
  * The film's bitrate as far as it is known before the player is built: the server's size when this stream played
  * before (a rebuild) else the add-on's, over the length the last player saw or the title's runtime. 0 when unknown.
  */
-private fun PlayerRuntimeController.fileBitrateBeforeBuild(url: String): Long {
+internal fun PlayerRuntimeController.fileBitrateBeforeBuild(url: String): Long {
     val serverBytes = PlaybackByteCounter.contentLengthFor(url)
     val seenMs = if (serverBytes != null) playbackTimeline.value.duration.takeIf { it > 0L } else null
     val durationMs = seenMs ?: expectedRuntimeMinutes?.takeIf { it > 0 }?.let { it * 60_000L } ?: 0L
@@ -263,11 +264,7 @@ internal fun PlayerRuntimeController.applyMediaSourceFactorySettings(playerSetti
  */
 private fun PlayerRuntimeController.disposeExoPlayerBeforeRebuild(): Boolean {
     notifyAudioSessionUpdate(false)
-    try {
-        currentMediaSession?.release()
-        currentMediaSession = null
-    } catch (_: Exception) {
-    }
+    releaseMediaSession()
     _exoPlayer?.let { player ->
         // No pause()/clearMediaItems(): each is a
         // redundant player-thread round trip immediately before release()
@@ -468,6 +465,15 @@ internal fun PlayerRuntimeController.initializePlayer(
             rearmOutputChecksForNewPlayer()
             registerAudioDelayRouteCallback()
             currentAudioOutputRoute = AudioOutputRouteDetector.detect(context)
+            tunnelingBlockedByUsbAudio = playerSettings.effectiveTunnelingEnabled &&
+                AudioOutputRouteDetector.isUsbMediaOutput(context, currentAudioOutputRoute)
+            if (tunnelingBlockedByUsbAudio) {
+                Log.i(
+                    PlayerRuntimeController.TAG,
+                    "Tunneled playback skipped: media audio goes to USB (route=${currentAudioOutputRoute?.key})"
+                )
+            }
+            val tunnelingActive = playerSettings.effectiveTunnelingEnabled && !tunnelingBlockedByUsbAudio
             if (rememberAudioDelayPerDeviceEnabled) {
                 applyStoredAudioDelayForCurrentRouteIfEnabled()
             }
@@ -524,7 +530,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                     aspectMode = deviceAspectMode,
                     tunneledSurfaceFill = tunneledSurfaceFill,
                     playbackIssueReportsEnabled = IssueReports.available && playerSettings.playbackIssueReportsEnabled,
-                    tunnelingEnabled = playerSettings.effectiveTunnelingEnabled &&
+                    tunnelingEnabled = tunnelingActive &&
                             effectiveInternalPlayerEngine != InternalPlayerEngine.MVP_PLAYER
                 )
             }
@@ -795,7 +801,8 @@ internal fun PlayerRuntimeController.initializePlayer(
                 result = "Pending"
             )
 
-            // Home's decoded pictures go before the buffer is sized to what is free.
+            // Home's decoded pictures and spare drawing surfaces go before the buffer is sized to what is free.
+            DrawingMemory.releaseForFilm(context, NuvioExoPlayerPerformanceHelper.getDevicePhysicalRamBytes(context), "start")
             com.nuvio.tv.core.image.PictureMemoryRelease.releaseBeforePlayback(
                 context, NuvioExoPlayerPerformanceHelper.getDevicePhysicalRamBytes(context)
             )
@@ -833,6 +840,8 @@ internal fun PlayerRuntimeController.initializePlayer(
                 playerSettings.useParallelConnections && !isTorrentStream
             val chunkMbForSizing = Math.ceil(MemoryBudget.customChunkKb(context, playerSettings) / 1024.0).toInt()
             var builtBudgetControl: BufferBudgetControl? = null
+            // The box's own budget, which a start-sized buffer may grow back to once the box has room again.
+            var builtCeilingMb = 0
             // The back buffer is read once when the player is built, before this stream's size arrives from the server.
             val fileBitrateAtBuild = fileBitrateBeforeBuild(url)
             val topUpPieceBytes = if (parallelForSizing) chunkMbForSizing * 1024L * 1024L else BufferTopUp.DEFAULT_PIECE_BYTES
@@ -863,6 +872,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                 )
                     .also {
                         builtBudgetControl = it as? BufferBudgetControl
+                        builtCeilingMb = NuvioExoPlayerPerformanceHelper.unsizedTargetBufferSizeMb
                         effectiveBackBufferDurationMs = NuvioExoPlayerPerformanceHelper.builtBackBufferMs
                     }
             } else if (playerSettings.bufferEngineEnabled) {
@@ -955,6 +965,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                     it.backBufferBytes = BufferSizing.backBufferBytes(backBufferMsAtBuild, backBufferBytesPerSecond)
                     currentBitrateAwareLoadControl = it
                     builtBudgetControl = it
+                    builtCeilingMb = unsizedBudgetMb
                 }
             } else {
                 // Stock LoadControl: DefaultLoadControl configured with 1.5s back buffer so 1s rewind doesn't clear buffer.
@@ -1027,9 +1038,11 @@ internal fun PlayerRuntimeController.initializePlayer(
             _uiState.update {
                 it.copy(
                     useLibass = useLibass,
-                    libassRenderType = playerSettings.libassRenderType
+                    libassRenderType = playerSettings.libassRenderType,
+                    libassRenderMode = LibassRenderMode.OVERLAY
                 )
             }
+            requestedLibassRenderMode = playerSettings.effectiveLibassRenderMode
             // ── Track Selector Setup ──
             val adaptiveTrackSelectionFactory = AdaptiveTrackSelection.Factory(
                 ADAPTIVE_QUALITY_INCREASE_MIN_DURATION_MS,
@@ -1150,7 +1163,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                 }
             }.apply {
                 setParameters(buildUponParameters().setAllowInvalidateSelectionsOnRendererCapabilitiesChange(true))
-                isTunnelingActiveForCurrentPlayback = playerSettings.effectiveTunnelingEnabled &&
+                isTunnelingActiveForCurrentPlayback = tunnelingActive &&
                     !safeAudioModeEnabled && !tunnelingDisabledStreamUrls.contains(url)
                 if (isTunnelingActiveForCurrentPlayback) {
                     setParameters(buildUponParameters().setTunnelingEnabled(true))
@@ -1551,12 +1564,12 @@ internal fun PlayerRuntimeController.initializePlayer(
                 mapDv7ToHevc = mapDv7ToHevcEnabled,
                 // Record the effective flag (raw toggle gated by
                 // prefer-app decoder): construction uses it, so reuse must too.
-                tunnelingEnabled = playerSettings.effectiveTunnelingEnabled,
+                tunnelingEnabled = tunnelingActive,
                 nativeFelActive = nativeFelActive
             )
             val reuseCandidatePlayer = _exoPlayer
             // Native renderers bind stats and decoder ownership to one playback session.
-            val reuseLivePlayer = !nativeFelActive && reuseCandidatePlayer != null &&
+            val reuseLivePlayer = !nativeFelActive && !isInBackground && reuseCandidatePlayer != null &&
                 !useLibass && !activePlayerUsesLibass &&
                 previousTrackSelectorForReuse != null &&
                 constructionFingerprint == lastExoConstructionFingerprint
@@ -1614,6 +1627,12 @@ internal fun PlayerRuntimeController.initializePlayer(
             }
 
             if (initializationGeneration != playbackRecoveryGate.generation) return@launch
+            // Left the foreground while preparing: build on return instead of claiming a decoder
+            // the foreground app may need. The resume rebuild uses currentStreamUrl.
+            if (isInBackground && url == currentStreamUrl) {
+                pendingBackgroundCrashRecovery = true
+                return@launch
+            }
             nativeVideoSelection.activate(nativeSelectionOwner)
             _exoPlayer = if (useLibass) {
                 com.nuvio.tv.libass.media.AssHandler.setRenderScale(playerSettings.libassRenderScale.scale)
@@ -1633,8 +1652,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                         renderersFactory = renderersFactory,
                         autoSyncSourceKey = url.takeIf {
                             com.nuvio.tv.ui.screens.player.autosync.AutoSyncPreferences.isEnabled(context)
-                        },
-                        subtitleTimeShiftUs = { audioDelayUs.get() - subtitleDelayUs.get() - streamSubtitleDelayUs.get() }
+                        }
                     )
             } else {
                 buildDefaultPlayer()
@@ -1646,13 +1664,46 @@ internal fun PlayerRuntimeController.initializePlayer(
                 BufferMemoryKeeper.budgetManaged(
                     customBuffers = playerSettings.bufferEngineEnabled,
                     budgetManaged = playerSettings.bufferBudgetManaged
-                )
+                ),
+                ceilingMb = builtCeilingMb,
             )
             (_loadControl as? BufferBudgetControl)?.let {
                 Log.i(PlayerRuntimeController.TAG, "BUFFER_TOPUP: ${it.topUp.describe()} reused=$reuseLivePlayer")
             }
             activePlayerUsesLibass = useLibass
             libassPipelineSwitchInFlight = false
+
+            if (useLibass) {
+                _exoPlayer?.getAssHandlerCompat()?.let { handler ->
+                    // The effect is added on the rebuild that follows an ASS track; it re-renders
+                    // every frame, which Dolby Vision, the native FEL plane and tunnelling cannot take.
+                    val shouldApplyEffects = hasDetectedAssSsaTrackForCurrentStream &&
+                        requestedLibassRenderMode == LibassRenderMode.VIDEO_EFFECT &&
+                        !hasDetectedDolbyVisionForCurrentStream &&
+                        !nativeFelActive &&
+                        !isTunnelingActiveForCurrentPlayback
+                    if (shouldApplyEffects) {
+                        val effect = com.nuvio.tv.libass.media.effect.AssVideoEffectAsync(handler)
+                        activeAssVideoEffect = effect
+                        _exoPlayer?.setVideoEffects(listOf(effect))
+                    } else {
+                        activeAssVideoEffect = null
+                    }
+                    handler.subtitleDelayUs = subtitleDelayUs.get() + streamSubtitleDelayUs.get()
+                    handler.audioDelayUs = audioDelayUs.get()
+                }
+            } else {
+                activeAssVideoEffect = null
+            }
+            _uiState.update {
+                it.copy(
+                    libassRenderMode = if (activeAssVideoEffect != null) {
+                        LibassRenderMode.VIDEO_EFFECT
+                    } else {
+                        LibassRenderMode.OVERLAY
+                    }
+                )
+            }
 
             _exoPlayer?.apply {
                 val audioAttributes = AudioAttributes.Builder()
@@ -1676,15 +1727,8 @@ internal fun PlayerRuntimeController.initializePlayer(
                 if (playerSettings.skipSilence) skipSilenceEnabled = true
                 setHandleAudioBecomingNoisy(true)
 
-                try {
-                    currentMediaSession?.release()
-                    if (canAdvertiseSession()) {
-                        currentMediaSession = MediaSession.Builder(context, SafeMediaSessionPlayer(this, onSessionPlayPause)).build()
-                    }
-                    updateMediaSessionMetadata()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                runCatching { installExoMediaSession(this) }
+                    .onFailure { it.printStackTrace() }
 
                 applyAudioAmplification(_uiState.value.audioAmplificationDb)
                 applyCenterMixLevel(_uiState.value.centerMixLevelDb)
@@ -1715,10 +1759,11 @@ internal fun PlayerRuntimeController.initializePlayer(
                         "playbackSpeed=${_uiState.value.playbackSpeed} " +
                         "resumePositionMs=$initialResumePosition mime=${currentStreamMimeType ?: "unknown"} " +
                         "bufferEngine=${playerSettings.bufferEngineEnabled} parallel=${mediaSourceFactory.playbackConnections(url) > 1} " +
-                        "vodCache=${mediaSourceFactory.vodCacheEnabled} tunneling=${playerSettings.effectiveTunnelingEnabled}"
+                        "vodCache=${mediaSourceFactory.vodCacheEnabled} tunneling=$isTunnelingActiveForCurrentPlayback"
                 playbackAnalyticsDiagnostics.recordRawEventLine(playerInitLine)
                 TtffTrace.mirror(playerInitLine)
                 noteSpeedupHint(url)
+                armStartCushion(url)
                 val initialMediaSource = mediaSourceFactory.createMediaSource(
                     context = context,
                     url = url,
@@ -1946,6 +1991,7 @@ internal fun PlayerRuntimeController.initializePlayer(
                             }
                             when (val action = readyTransition.action) {
                                 is PlayerStartupPlaybackPolicy.ReadyAction.TunneledFirstReady -> {
+                                    playerSession.firstFrame()
                                     mediaSourceFactory.unlockStartupPrefetch()
                                     playbackAnalyticsDiagnostics.onSyntheticFirstFrame(this@apply)
                                     if (_uiState.value.postPlayDismissedForCurrentEpisode) {
@@ -2129,22 +2175,24 @@ internal fun PlayerRuntimeController.initializePlayer(
                     override fun onRenderedFirstFrame() {
                         val isFirstFrame = !hasRenderedFirstFrame  // capture BEFORE flipping
                         hasRenderedFirstFrame = true
+                        if (isFirstFrame) playerSession.firstFrame()
                         logSeekReady("first_frame")
+                        if (isFirstFrame) {
+                            DrawingMemory.releaseForFilm(
+                                context, NuvioExoPlayerPerformanceHelper.getDevicePhysicalRamBytes(context), "first_frame"
+                            )
+                        }
                         cancelStartupWatchdog()
                         retractStartupTimeoutErrorAfterFirstFrame()
                         mediaSourceFactory.unlockStartupPrefetch()
                         // NuvioTV fork: pre-populate the source list in the
-                        // background once playback is healthy, so a mid-play failover
+                        // background once playback has settled in, so a mid-play failover
                         // (an unrecoverable malformed hole, or an HTTP dead source) has
                         // alternatives to switch to without the user having opened the
                         // sources panel first. Cheap - the details screen already
                         // fetched these, so it is a cache hit. Guarded on empty so it
                         // runs once and never re-fires on a failover re-prepare.
-                        if (_uiState.value.sourceAllStreams.isEmpty() ||
-                            sourceStreamsCacheRequestKey != currentSourceRequestKey()
-                        ) {
-                            loadSourceStreams(forceRefresh = false)
-                        }
+                        prefetchSourceStreamsWhenSettled()
                         if (isFirstFrame && _uiState.value.postPlayDismissedForCurrentEpisode) {
                             _uiState.update { it.copy(postPlayDismissedForCurrentEpisode = false) }
                         }
@@ -3108,6 +3156,7 @@ internal suspend fun PlayerRuntimeController.prepareStreamStartSubtitles(
         libassPipelineOverrideForCurrentStream = null
         libassPipelineSwitchInFlight = false
         hasDetectedAssSsaTrackForCurrentStream = false
+        hasDetectedDolbyVisionForCurrentStream = false
     }
     resetAddonSubtitleStateForNewStream()
     return prepareStartupSubtitles()
@@ -3139,6 +3188,7 @@ internal fun PlayerRuntimeController.resetLoadingOverlayForNewStream() {
         progress = null
     )
     hasRenderedFirstFrame = false
+    playerSession.streamStarting()
     endDetectionArmed = false
     mpvEofSeenClear = false
     hasMarkedCurrentEpisodeCompleted = false
@@ -3407,7 +3457,8 @@ private class SubtitleOffsetRenderersFactory(
             onIecFailed = onIecFailed,
             onDiagnosticEvent = onAudioDiagnosticEvent,
             audioOutputReady = { PassthroughOutputReturn.outputReadyNow(context) },
-            dtsHdIecEnabled = !dtsHdTvPassthrough
+            dtsHdIecEnabled = !dtsHdTvPassthrough,
+            outputRouteKey = { AudioOutputRouteDetector.detect(context)?.key }
         )
         val playbackSpeedAwareAudioSink = PlaybackSpeedAwareAudioSink(
             sink = iecAudioSink,

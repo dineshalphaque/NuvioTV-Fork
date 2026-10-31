@@ -62,6 +62,7 @@ fun TrailerPlayer(
     isPlaying: Boolean,
     isPaused: Boolean = false,
     onEnded: () -> Unit,
+    onError: () -> Unit = {},
     onFirstFrameRendered: () -> Unit = {},
     muted: Boolean = false,
     seekRequestToken: Int = 0,
@@ -85,6 +86,7 @@ fun TrailerPlayer(
     val currentIsPaused by rememberUpdatedState(isPaused)
     val currentOnEnded by rememberUpdatedState(onEnded)
     val currentIsPlaying by rememberUpdatedState(isPlaying)
+    val currentOnError by rememberUpdatedState(onError)
     val currentOnFirstFrameRendered by rememberUpdatedState(onFirstFrameRendered)
     val currentOnProgressChanged by rememberUpdatedState(onProgressChanged)
     val currentOnRemoteKey by rememberUpdatedState(onRemoteKey)
@@ -242,9 +244,10 @@ fun TrailerPlayer(
 
             override fun onPlayerError(error: PlaybackException) {
                 if (resolvedPool?.isOwner(playerOwner) != true) return
-                val failedUrl = loadedTrailerUrl ?: return
+                val failedUrl = loadedTrailerUrl
                 loadedTrailerUrl = null
-                TrailerPlaybackFailures.report(failedUrl)
+                failedUrl?.let(TrailerPlaybackFailures::report)
+                if (currentIsPlaying) currentOnError()
             }
 
             override fun onRenderedFirstFrame() {

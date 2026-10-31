@@ -23,6 +23,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
@@ -99,10 +103,15 @@ internal fun ManageListsDialog(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 items(personalTabs, key = { it.key }) { tab ->
+                    val selected = tab.key == selectedKey
                     PlayerPanelRow(
                         title = tab.localizedTitle(),
-                        selected = tab.key == selectedKey,
+                        selected = selected,
                         onClick = { if (!pending) onSelect(tab.key) },
+                        modifier = Modifier.semantics {
+                            role = Role.Tab
+                            this.selected = selected
+                        },
                         focusRequester = if (tab.key == personalTabs.firstOrNull()?.key) firstFocusRequester else null
                     )
                 }
@@ -292,6 +301,12 @@ internal fun ListEditorDialog(
                 Button(
                     onClick = { onPrivacyChanged(privacy) },
                     enabled = !pending,
+                    modifier = Modifier.semantics {
+                        role = Role.RadioButton
+                        // `selected` is also a local val here, so compare explicitly
+                        // instead of reading the write-only semantics property.
+                        this.selected = privacy == state.privacy
+                    },
                     colors = ButtonDefaults.colors(
                         containerColor = if (selected) NuvioTheme.colors.FocusBackground else NuvioTheme.colors.BackgroundCard,
                         contentColor = NuvioTheme.colors.TextPrimary

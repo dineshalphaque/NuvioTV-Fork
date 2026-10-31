@@ -13,6 +13,8 @@ import androidx.compose.material.icons.filled.ImageNotSupported
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -26,11 +28,17 @@ import com.nuvio.tv.ui.theme.NuvioTheme
 // muted photo-off glyph with a "No artwork" label.
 @Composable
 fun MonochromePosterPlaceholder(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null
 ) {
     Box(
         modifier = modifier
             .fillMaxSize()
+            .then(
+                contentDescription?.let { description ->
+                    Modifier.semantics { this.contentDescription = description }
+                } ?: Modifier
+            )
             .background(Color(0xFF14141A))
             .border(NuvioTheme.spacing.hairline, Color.White.copy(alpha = 0.08f)),
         contentAlignment = Alignment.Center

@@ -17,18 +17,19 @@ internal fun playbackMatchText(info: PlayerMediaInfo, languages: List<String>, r
         addAll(dynamicRangeTokens(info))
         (info.bitDepth ?: 10.takeIf { info.hdr.isNotEmpty() })?.takeIf { it > 8 }?.let { addAll(listOf("${it}bit", "$it-bit")) }
         addAll(videoCodecTokens(info.videoCodec))
-        audioFacts(info.audioCodec, info.audioProfile, releaseText.lowercase())?.let { addAll(audioTokens(it, channels)) }
+        audioFacts(info.audioCodec, info.audioProfiles, releaseText.lowercase())?.let { addAll(audioTokens(it, channels)) }
         channels?.let { addAll(channelTokens(info.audioChannels, it)) }
         addAll(languages)
     }.distinct().joinToString(" ")
 }
 
 /**
- * What a badge pack is matched against on the player: what is playing, then the file name the
- * stats HUD shows, as one text like the stream list joins a stream's texts. The pack's own
- * patterns then meet the spellings they were written for. Words in the file name that the player
- * contradicts are taken out first, so a Dolby Vision file playing as HDR10 still reads HDR only
- * and a switch to another audio track drops the file name's audio.
+ * What a badge pack is matched against on the player: the file name the stats HUD shows comes first,
+ * then what is playing. File name first because AIOStreams-style packs gate rules on a video
+ * extension followed by more text (e.g. `\.mkv\s+\S`), and with the extension last those rules
+ * (5.1, 7.1) never match. Words in the file name that the player contradicts are taken out first,
+ * so a Dolby Vision file playing as HDR10 still reads HDR only and a switch to another audio track
+ * drops the file name's audio.
  */
 internal fun playerBadgeMatchText(
     info: PlayerMediaInfo,
@@ -37,9 +38,25 @@ internal fun playerBadgeMatchText(
     fileName: String,
     audioFromRelease: Boolean
 ): String {
-    val playing = playbackMatchText(info, languages, releaseText.takeIf { audioFromRelease }.orEmpty())
+    val playing = playerBadgePlayingText(info, languages, releaseText, fileName, audioFromRelease)
     val file = playbackFileName(fileName, info, releaseText, audioFromRelease)
-    return "$playing $file".trim()
+    return "$file $playing".trim()
+}
+
+/**
+ * What is playing without the file name, matched first: a badge group it hits (a language, a
+ * resolution) takes nothing more from the file name. HDR10+ comes from the name, as no player reports it.
+ */
+internal fun playerBadgePlayingText(
+    info: PlayerMediaInfo,
+    languages: List<String>,
+    releaseText: String,
+    fileName: String,
+    audioFromRelease: Boolean
+): String {
+    val playing = playbackMatchText(info, languages, releaseText.takeIf { audioFromRelease }.orEmpty())
+    val hdr10Plus = "HDR10" in info.hdr && (FILE_HDR10_PLUS.containsMatchIn(releaseText) || FILE_HDR10_PLUS.containsMatchIn(fileName))
+    return if (hdr10Plus) "$playing HDR10+ HDR10Plus" else playing
 }
 
 /**
@@ -60,9 +77,9 @@ internal fun playbackFileName(
     val videoFamily = info.videoCodec?.let(::videoFamily)
     val audioKey = info.audioCodec?.let(::codecKey)
     val playingAudio = audioKey?.let(::audioWordFamily)
-    val atmos = audioFacts(info.audioCodec, info.audioProfile, releaseText.lowercase())?.atmos
+    val atmos = audioFacts(info.audioCodec, info.audioProfiles, releaseText.lowercase())?.atmos
     val channels = channelLabel(info.audioChannels)
-    val dtsCore = audioKey == "DTS" && info.audioProfile.orEmpty().uppercase().let { "HD" !in it && "MA" !in it && ":X" !in it }
+    val dtsCore = audioKey == "DTS" && info.audioProfiles.joinToString(" ").uppercase().let { "HD" !in it && "MA" !in it && ":X" !in it }
     fun audioWordFits(word: String): Boolean {
         if (!audioFromRelease) return false
         if (playingAudio == null) return true
@@ -153,7 +170,7 @@ internal fun PlayerMediaInfo.keepingAudioOf(previous: PlayerMediaInfo, audioSele
     !audioSelected -> this
     audioCodec == null && previous.audioCodec != null -> copy(
         audioCodec = previous.audioCodec,
-        audioProfile = previous.audioProfile,
+        audioProfiles = previous.audioProfiles,
         audioChannels = previous.audioChannels,
         audioTrackId = previous.audioTrackId,
         audioLanguage = previous.audioLanguage
@@ -188,6 +205,7 @@ private const val WORD_START = "(?<![A-Za-z0-9])"
 private const val WORD_END = "(?![A-Za-z0-9])"
 private val FILE_DV = Regex("""$WORD_START(?:dolby[ ._-]?vision|dovi|dv)$WORD_END""", RegexOption.IGNORE_CASE)
 private val FILE_HDR = Regex("""$WORD_START(?:hdr[ ._-]?10(?:\+|[ ._-]?plus|p)?|hdr|hlg)(?![A-Za-z0-9+])""", RegexOption.IGNORE_CASE)
+private val FILE_HDR10_PLUS = Regex("""$WORD_START(?:hdr[ ._-]?10(?:\+|[ ._-]?plus|p))(?![A-Za-z0-9+])""", RegexOption.IGNORE_CASE)
 private val FILE_SDR = Regex("""${WORD_START}sdr$WORD_END""", RegexOption.IGNORE_CASE)
 private val FILE_RESOLUTION = Regex(
     """$WORD_START(?:\d{3,4}[pi]|[248]k|uhd|qhd|fhd|full[ ._-]?hd|ultra[ ._-]?hd)$WORD_END""",
@@ -231,7 +249,9 @@ private fun dynamicRangeTokens(info: PlayerMediaInfo): List<String> {
     val hdr10 = "HDR10" in info.hdr
     val hlg = "HLG" in info.hdr
     return buildList {
-        if (dv) addAll(listOf("DV", "DoVi", "Dolby Vision"))
+        // A space-separated "Vision" reads as the release group ViSiON in packs' media-source tier
+        // lists; packs match dolby[-_. ]?vision, so DolbyVision still reads as Dolby Vision.
+        if (dv) addAll(listOf("DV", "DoVi", "DolbyVision"))
         if (hdr10) addAll(listOf("HDR", "HDR10"))
         if (hlg) addAll(listOf("HDR", "HLG"))
         // Before mpv decodes a frame it knows DV from the file but not yet HDR10 under it, so
@@ -266,11 +286,11 @@ private fun videoCodecTokens(codec: String?): List<String> {
 private class AudioFacts(val labels: List<String>, val forms: List<String>, val atmos: Boolean)
 
 /** mpv names codecs as ffmpeg does (pcm_s24le, eac3), ExoPlayer as [CustomDefaultTrackNameProvider] does (E-AC-3). */
-private fun audioFacts(codec: String?, profile: String?, release: String): AudioFacts? {
+private fun audioFacts(codec: String?, profiles: List<String>, release: String): AudioFacts? {
     if (codec.isNullOrBlank()) return null
     val label = codec.uppercase()
     val key = codecKey(codec)
-    val profileLabel = profile.orEmpty().uppercase()
+    val profileLabel = profiles.joinToString(" ").uppercase()
     val atmos = key.endsWith("JOC") || profileLabel.contains("ATMOS") || releaseSaysAtmos(label, release)
     return when {
         key.startsWith("EAC3") -> AudioFacts(listOf("DD+", "DDP", "EAC3", "E-AC-3"), listOf("DDP", "DD+", "EAC3"), atmos)
