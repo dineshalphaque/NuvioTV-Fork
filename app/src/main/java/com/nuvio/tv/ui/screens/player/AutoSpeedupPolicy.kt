@@ -233,7 +233,7 @@ internal class AutoSpeedupPolicy(
     fun restartStart(start: Int): Boolean {
         val stillFirst = presetPending || (trialHeavy && trialStartMs >= 0L && peakKept <= 1)
         if (!stillFirst) return false
-        val to = start.coerceIn(1, minOf(maxDownloads, roomCap))
+        val to = start.coerceIn(1, minOf(maxDownloads, roomCap, requestLimit))
         if (to == downloads) return false
         downloads = to
         presetPending = true
@@ -248,7 +248,7 @@ internal class AutoSpeedupPolicy(
      */
     fun preset(start: Int, guessedBps: Long = 0L) {
         if (start <= 1) return
-        downloads = start.coerceAtMost(maxDownloads)
+        downloads = start.coerceAtMost(minOf(maxDownloads, requestLimit))
         presetPending = true
         triedAny = true
         startGuessBps = guessedBps
@@ -264,7 +264,7 @@ internal class AutoSpeedupPolicy(
         if (guess <= 0L || s.fileBitrate <= 0L) return
         startGuessBps = 0L
         if (s.fileBitrate <= guess || s.swapLow) return
-        var to = minOf(startFor(s.fileBitrate), roomCap)
+        var to = minOf(startFor(s.fileBitrate), roomCap, requestLimit)
         while (!s.userBudget && to > downloads && s.roomBytes < lentBytes(to, pieceBytes)) to--
         if (to <= downloads) return
         if (trialStartMs >= 0L) {
@@ -301,12 +301,17 @@ internal class AutoSpeedupPolicy(
     private var refillFromMs = -1L
     private var refillWhy = ""
     private var refillRequestMs = -1L
+    private var refillCheckAtMs = -1L
 
     /** Downloads beyond what the film ran on are only lent for a refill: the count it goes back to, 0 while none. */
     val boostedFrom: Int get() = boostBase
 
     /** The last refill finished (or given up) at this sample, for the log; null otherwise. */
     var lastRefill: String? = null
+        private set
+
+    /** A refill boost left out at this sample and why, for the log; null otherwise. */
+    var lastBoostNote: String? = null
         private set
 
     fun onSample(s: Sample): Int {
@@ -589,6 +594,7 @@ internal class AutoSpeedupPolicy(
      */
     private fun refill(s: Sample, previous: Sample?, dropped: Boolean): Boolean {
         lastRefill = null
+        lastBoostNote = null
         val target = s.bufferTargetMs
         if (target <= 0L) return false
         val low = lowMarkMs(target)
@@ -612,6 +618,7 @@ internal class AutoSpeedupPolicy(
             refillFromMs = s.nowMs
             refillWhy = why ?: "short seek"
             refillRequestMs = s.requestMs
+            refillCheckAtMs = s.nowMs + REFILL_CHECK_MS
         }
         if (refillFromMs >= 0L && refillFromMs != s.nowMs) {
             val took = s.nowMs - refillFromMs
@@ -651,9 +658,34 @@ internal class AutoSpeedupPolicy(
             }
         }
 
+        // The rate per request a boost is sized from can be stale (a quick server answering slowly after a seek):
+        // still under the low mark a few seconds into the refill, the boost goes ahead whatever it said.
+        if (refillCheckAtMs in 0L..s.nowMs) {
+            refillCheckAtMs = -1L
+            if (boostBase == 0 && !backingOff && s.aheadMs < low && !s.swapLow && s.nowMs >= boostBlockedUntilMs) {
+                val most = boostCount(s, goal, sized = false)
+                if (most > downloads) return startBoost(s, "check", most, low, goal)
+            }
+        }
         if (why == null || s.swapLow || s.nowMs < boostBlockedUntilMs) return false
         val most = boostCount(s, goal)
-        if (most <= downloads) return false
+        if (most <= downloads) {
+            lastBoostNote = boostSkipped(s, why, goal)
+            return false
+        }
+        return startBoost(s, why, most, low, goal)
+    }
+
+    private fun boostSkipped(s: Sample, why: String, goalMs: Long): String {
+        val film = maxOf(s.fileBitrate, recentFilmBps) / 8
+        val raw = rawRateNow()
+        val carry = raw?.let { effectiveBps(downloads, pieceBytes, waitMs(), it) * 8 / 1000 } ?: -1L
+        return "boost $why not needed downloads=$downloads carryKbps=$carry " +
+            "wantedKbps=${refillRate(film, s.aheadMs, goalMs) * 8 / 1000} waitMs=${waitMs()} aheadMs=${s.aheadMs}"
+    }
+
+    private fun startBoost(s: Sample, why: String, most: Int, low: Long, goal: Long): Boolean {
+        refillCheckAtMs = -1L
         boostTo = most
         boostStepAtMs = s.nowMs
         boostStepAheadMs = s.aheadMs
@@ -690,7 +722,7 @@ internal class AutoSpeedupPolicy(
      * piece budget and free memory allow, fewer when the rate one request carries already regains [goalMs] of buffer
      * within [REFILL_WANTED_MS]; never fewer than now.
      */
-    private fun boostCount(s: Sample, goalMs: Long): Int {
+    private fun boostCount(s: Sample, goalMs: Long, sized: Boolean = true): Int {
         var n = minOf(maxDownloads, roomCap, AutoSpeedup.MAX_IN_FLIGHT, requestLimit)
         if (pieceBudgetBytes > 0L && pieceBytes > 0L) {
             while (n > downloads && lentBytes(n, pieceBytes) > pieceBudgetBytes) n--
@@ -702,7 +734,7 @@ internal class AutoSpeedupPolicy(
         }
         val film = maxOf(s.fileBitrate, recentFilmBps) / 8
         val raw = rawRateNow()
-        if (raw != null && film > 0L && n > downloads) {
+        if (sized && raw != null && film > 0L && n > downloads) {
             val wanted = refillRate(film, s.aheadMs, goalMs)
             val need = (downloads..n).firstOrNull { effectiveBps(it, pieceBytes, waitMs(), raw) >= wanted } ?: n
             n = minOf(n, need)
@@ -1016,6 +1048,8 @@ internal class AutoSpeedupPolicy(
         const val REFILL_WANTED_MS = 10_000L
         const val REFILL_GIVE_UP_MS = 60_000L
         const val BOOST_JUDGE_MS = 15_000L
+        /** A refill still under the low mark this long after it began boosts even when the rate said no need. */
+        const val REFILL_CHECK_MS = 5_000L
         /** A refill on a server with no history climbs this many requests every [BOOST_STEP_MS] while the buffer falls. */
         const val BOOST_STEP = 2
         const val BOOST_STEP_MS = 2_000L

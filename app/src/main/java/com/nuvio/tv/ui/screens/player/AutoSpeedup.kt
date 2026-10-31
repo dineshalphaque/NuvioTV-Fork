@@ -88,7 +88,33 @@ internal object AutoSpeedup {
     )
 
     /** Requests playback would like at once, before the server's shared budget ([ConnectionLedger.playbackRoom]). */
-    private fun wantedDepth(): Int = minOf(downloads + if (downloads > 1) readAhead else 0, maxOf(downloads, MAX_IN_FLIGHT))
+    private fun wantedDepth(extra: Boolean = true): Int = minOf(
+        downloads + if (downloads > 1) readAhead + if (extra) lazyExtra() else 0 else 0,
+        maxOf(downloads, MAX_IN_FLIGHT)
+    )
+
+    /**
+     * Pieces take memory only as their bytes arrive (the chunk session caps what they hold at [heldLimitBytes]), so a
+     * request still waiting for its first byte costs nothing: one more runs in the same memory. Never the one that
+     * would reach [MAX_IN_FLIGHT]: the start's side requests (link look-up, the resume point) still need a place.
+     */
+    @Volatile
+    var lazyMemory: Boolean = false
+
+    private fun lazyExtra(): Int = extraRequest(lazyMemory, downloads, readAhead)
+
+    /** Boxes of 3 GB or more; 2 GB boxes keep whole pieces until their memory warnings are understood. */
+    internal fun lazyMemoryFor(limits: Limits): Boolean = !limits.smallBox && limits.pieceBudgetBytes > 0L
+
+    internal fun extraRequest(on: Boolean, downloads: Int, readAhead: Int): Int =
+        if (on && downloads > 1 && downloads + readAhead + 1 < MAX_IN_FLIGHT) 1 else 0
+
+    /** What the pieces may hold together when memory follows the bytes: what they could hold before, extra request aside. */
+    fun heldLimitBytes(): Long =
+        heldLimitFor(wantedDepth(extra = false), policy?.requestLimit ?: Int.MAX_VALUE, maxOf(pieceBytes, activePieceBytes))
+
+    internal fun heldLimitFor(depth: Int, requestLimit: Int, pieceBytes: Long): Long =
+        (minOf(depth, requestLimit) + 1).toLong() * pieceBytes
 
     private fun noteRequests() = ConnectionLedger.app.notePlaybackDownloads(url, wantedDepth())
 
@@ -462,6 +488,7 @@ internal object AutoSpeedup {
         }
         if (wasOn) PlaybackConnectionEvents.trackPieces = false
         policy = null
+        lazyMemory = false
         activePieceBytes = 0L
         url = null
         hostKey = null
@@ -550,6 +577,22 @@ internal object AutoSpeedup {
         Log.i(TAG, "AUTO_SPEEDUP: too many requests inFlight=$inFlight limit=$limit server=${HostSpeeds.keyOf(url)}")
     }
 
+    private val extraStrikes = ExtraDownloadStrikes()
+
+    /**
+     * A server refused an extra download while another kept delivering, with [running] requests running there: held
+     * to one fewer, or to one at a second strike, here and for its next films. May go below the usual start.
+     */
+    fun onExtraDownloadRefused(url: String?, running: Int) {
+        val p = policy ?: return
+        val keys = listOfNotNull(HostSpeeds.keyOf(url), serverKey, hostKey).distinct()
+        val key = keys.firstOrNull() ?: return
+        val limit = minOf(extraStrikes.limitAfter(key, running, System.currentTimeMillis()), p.requestLimit)
+        p.onRateLimited(limit)
+        keys.forEach { HostSpeeds.noteLimit(it, limit) }
+        Log.i(TAG, "AUTO_SPEEDUP: extra download refused running=$running limit=$limit server=$key")
+    }
+
     /** What thumbnails may use next to the film ([PlaybackLine]). */
     private fun publishLine(p: AutoSpeedupPolicy, sample: AutoSpeedupPolicy.Sample) {
         val running = requestsNow()
@@ -599,6 +642,7 @@ internal object AutoSpeedup {
                 p.measureTag())
         }
         p.lastRefill?.let { Log.i(TAG, "AUTO_SPEEDUP: $it") }
+        p.lastBoostNote?.let { Log.i(TAG, "AUTO_SPEEDUP: $it") }
         publishLine(p, sample)
         if (p.pieceBytes != pieceBytes) synchronized(pieceLock) { pieceBytes = p.pieceBytes }
         p.lastPieceChange?.let { Log.i(TAG, "AUTO_SPEEDUP: $it aheadMs=${sample.aheadMs} ${p.measureTag()}") }

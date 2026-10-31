@@ -23,6 +23,7 @@ import java.util.concurrent.SynchronousQueue
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import com.nuvio.tv.core.player.thumbnail.ConnectionLedger
+import com.nuvio.tv.core.player.thumbnail.LedgerKey
 import com.nuvio.tv.data.local.PlayerSettings
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,7 +77,11 @@ internal class ParallelRangeDataSource(
     // Closes idle pooled connections the server may have dropped during a long pause.
     private val dropStaleConnections: (() -> Unit)? = null,
     // A piece request answered "too many requests": the server and the requests running there with it.
-    private val onRateLimited: ((Uri?, Int) -> Unit)? = null
+    private val onRateLimited: ((Uri?, Int) -> Unit)? = null,
+    // A server refused an extra download while another kept delivering: the server and the requests running there.
+    private val onExtraRefused: ((Uri?, Int) -> Unit)? = null,
+    // Set: piece memory is taken in parts as bytes arrive, and what the pieces hold together stays under this.
+    private val heldLimit: (() -> Long)? = null
 ) : DataSource, androidx.media3.common.ByteBufferDataReader {
 
     companion object {
@@ -147,6 +152,8 @@ internal class ParallelRangeDataSource(
         // session's rate gate holds every piece while the server refuses, and the
         // prefetch depth adapts multiplicatively down / additively up (AIMD).
         private const val RATE_LIMIT_SLEEP_SLICE_MS = 100L
+        /** TorBox refuses past a number running at once and takes the next request once one ends: try again soon. */
+        internal const val TORBOX_REFUSAL_RETRY_MS = 500L
 
         // Additive-recovery probe cadence: +1 depth per quiet
         // interval; the interval doubles on every re-trip during the climb
@@ -155,6 +162,11 @@ internal class ParallelRangeDataSource(
         private const val RATE_LIMIT_DEPTH_STEP_BASE_MS = 10_000L
         private const val RATE_LIMIT_DEPTH_STEP_MAX_MS = 60_000L
         private const val RATE_LIMIT_ESCALATION_MAX = 5
+
+        internal const val SEGMENT_BYTES = 1024 * 1024
+        private const val SEGMENT_POOL_MIN = 8
+        private const val HELD_POLL_MS = 20L
+        private val EMPTY_BUFFER: ByteBuffer = ByteBuffer.allocate(0)
 
 
         private val playbackResources = Resources()
@@ -377,6 +389,14 @@ internal class ParallelRangeDataSource(
             @Volatile var resolvedUri: Uri? = null
             @Volatile var totalLength: Long = -1L
 
+            /** When each piece last received bytes, for telling a refused extra download from an outage. */
+            val deliveredAtMs = ConcurrentHashMap<Long, Long>()
+
+            fun noteDelivered(chunkIndex: Long, nowMs: Long) {
+                deliveredAtMs[chunkIndex] = nowMs
+                if (deliveredAtMs.size > 64) deliveredAtMs.entries.removeIf { nowMs - it.value > 10_000L }
+            }
+
             fun requestTarget(): Uri = resolvedUri ?: requestUri
 
             /**
@@ -455,6 +475,8 @@ internal class ParallelRangeDataSource(
             // flight, keyed like futures. Entries are owned by the
             // download attempt that registered them (two-arg remove).
             val inFlight = ConcurrentHashMap<Long, InFlightChunk>()
+            // Piece memory taken in parts ([SegmentedBuffer]) that this session's pieces hold now.
+            val heldBytes = java.util.concurrent.atomic.AtomicLong(0L)
             @Volatile var lastUsedAtMs: Long = SystemClock.uptimeMillis()
 
             fun touch(chunkIndex: Long) {
@@ -578,6 +600,10 @@ internal class ParallelRangeDataSource(
         }
 
         @Synchronized private fun recycleBuffer(buffer: PooledBuffer, chunkSz: Long, poolCap: Int) {
+            if (buffer is SegmentedBuffer) {
+                buffer.freeSegments()
+                return
+            }
             if (poolCap > 0 && !released && chunkSz !in retiredChunkSizes) {
                 val pool = globalBufferPool.computeIfAbsent(chunkSz) { ConcurrentLinkedDeque() }
                 if (pool.size < poolCap) {
@@ -589,7 +615,9 @@ internal class ParallelRangeDataSource(
         }
 
         private fun freeBuffer(buffer: PooledBuffer) {
-            if (buffer.allocation != null) {
+            if (buffer is SegmentedBuffer) {
+                buffer.freeSegments()
+            } else if (buffer.allocation != null) {
                 freeChunk(buffer.allocation)
             } else if (buffer.byteBuffer.isDirect) {
                 freeDirectBuffer(buffer.byteBuffer)
@@ -811,10 +839,28 @@ internal class ParallelRangeDataSource(
          * owned by their session's futures and are torn down by the session.
          */
         internal fun drainIdleBuffers(chunkSize: Long) {
-            val pool = globalBufferPool[chunkSize] ?: return
-            while (true) {
-                freeBuffer(pool.pollLast() ?: break)
+            for (size in listOf(chunkSize, SEGMENT_BYTES.toLong())) {
+                val pool = globalBufferPool[size] ?: continue
+                while (true) {
+                    freeBuffer(pool.pollLast() ?: break)
+                }
             }
+        }
+
+        fun takeSegment(): PooledBuffer {
+            globalBufferPool[SEGMENT_BYTES.toLong()]?.pollLast()?.let { idle ->
+                idle.byteBuffer.clear()
+                return PooledBuffer(idle.allocation, idle.byteBuffer)
+            }
+            val allocation = allocateChunk(SEGMENT_BYTES)
+            val allocBuffer = allocation?.buffer
+            return if (allocation != null && allocBuffer != null) PooledBuffer(allocation, allocBuffer)
+            else PooledBuffer(null, ByteBuffer.allocate(SEGMENT_BYTES))
+        }
+
+        @Synchronized fun giveSegment(segment: PooledBuffer, cap: Int) {
+            val pool = globalBufferPool.computeIfAbsent(SEGMENT_BYTES.toLong()) { ConcurrentLinkedDeque() }
+            if (!released && pool.size < cap) pool.offerLast(segment) else freeBuffer(segment)
         }
 
         /**
@@ -898,7 +944,7 @@ internal class ParallelRangeDataSource(
     }
 
     /** Chunk memory; readers lease it per copy and it is recycled once, after release and the last lease. */
-    private class PooledBuffer(
+    private open class PooledBuffer(
         val allocation: Allocation?,
         val byteBuffer: ByteBuffer
     ) {
@@ -923,12 +969,89 @@ internal class ParallelRangeDataSource(
             if (refs.decrementAndGet() == 0) recycle(this)
         }
 
-        inline fun <T> leased(block: (ByteBuffer) -> T): T? {
+        inline fun <T> leased(block: (PooledBuffer) -> T): T? {
             if (!lease()) return null
             try {
-                return block(byteBuffer)
+                return block(this)
             } finally {
                 endLease()
+            }
+        }
+
+        open fun copyOut(offset: Int, dst: ByteArray, dstOffset: Int, length: Int) {
+            val view = byteBuffer.duplicate()
+            view.position(offset)
+            view.get(dst, dstOffset, length)
+        }
+
+        open fun copyOut(offset: Int, dst: ByteBuffer, length: Int) {
+            val src = byteBuffer.duplicate()
+            src.position(offset)
+            src.limit(offset + length)
+            dst.put(src)
+        }
+    }
+
+    /** Piece memory taken in [SEGMENT_BYTES] parts as its bytes arrive; [held] counts what the session's pieces hold. */
+    private class SegmentedBuffer(
+        val capacityBytes: Int,
+        private val take: () -> PooledBuffer,
+        private val give: (PooledBuffer) -> Unit,
+        private val held: java.util.concurrent.atomic.AtomicLong
+    ) : PooledBuffer(null, EMPTY_BUFFER) {
+        private val segments = java.util.concurrent.atomic.AtomicReferenceArray<PooledBuffer?>(
+            ((capacityBytes + SEGMENT_BYTES - 1) / SEGMENT_BYTES).coerceAtLeast(1)
+        )
+
+        fun hasSegment(offset: Int): Boolean = segments.get(offset / SEGMENT_BYTES) != null
+
+        /** Writer only: the part holding [offset], taken now when missing, positioned at [offset]. */
+        fun writeView(offset: Int): ByteBuffer {
+            val index = offset / SEGMENT_BYTES
+            val segment = segments.get(index) ?: take().also {
+                held.addAndGet(it.byteBuffer.capacity().toLong())
+                segments.set(index, it)
+            }
+            return segment.byteBuffer.also { it.position(offset - index * SEGMENT_BYTES) }
+        }
+
+        override fun copyOut(offset: Int, dst: ByteArray, dstOffset: Int, length: Int) {
+            var at = offset
+            var to = dstOffset
+            var left = length
+            while (left > 0) {
+                val inPart = at % SEGMENT_BYTES
+                val n = minOf(left, SEGMENT_BYTES - inPart)
+                val view = segments.get(at / SEGMENT_BYTES)!!.byteBuffer.duplicate()
+                view.limit(view.capacity())
+                view.position(inPart)
+                view.get(dst, to, n)
+                at += n
+                to += n
+                left -= n
+            }
+        }
+
+        override fun copyOut(offset: Int, dst: ByteBuffer, length: Int) {
+            var at = offset
+            var left = length
+            while (left > 0) {
+                val inPart = at % SEGMENT_BYTES
+                val n = minOf(left, SEGMENT_BYTES - inPart)
+                val view = segments.get(at / SEGMENT_BYTES)!!.byteBuffer.duplicate()
+                view.limit(inPart + n)
+                view.position(inPart)
+                dst.put(view)
+                at += n
+                left -= n
+            }
+        }
+
+        fun freeSegments() {
+            for (i in 0 until segments.length()) {
+                val segment = segments.getAndSet(i, null) ?: continue
+                held.addAndGet(-segment.byteBuffer.capacity().toLong())
+                give(segment)
             }
         }
     }
@@ -938,7 +1061,9 @@ internal class ParallelRangeDataSource(
         val size: Int,
         val firstByteAtMs: Long = -1L,
         val firstReadBytes: Int = 0,
-        val doneAtMs: Long = -1L
+        val doneAtMs: Long = -1L,
+        // Waited while the pieces held their share: its timing says nothing about the server.
+        val paused: Boolean = false
     )
 
     private class LookUpTurn(val result: CompletableFuture<Uri>, val asks: Boolean)
@@ -984,6 +1109,11 @@ internal class ParallelRangeDataSource(
 
     // Buffer pool limit. Idle-buffer recycling headroom above the in-flight window.
     private val maxPoolSize = effectivePrefetchDepth + 2
+
+    // Parts are kept for reuse up to what the pool keeps of whole pieces, so memory is not taken and given back
+    // 1 MB at a time while a film plays.
+    private val segmentPoolCap: Int =
+        (maxPoolSize.toLong() * chunkSize / SEGMENT_BYTES).toInt().coerceAtLeast(SEGMENT_POOL_MIN)
 
     // Current chunk being served to ExoPlayer
     private var currentChunk: DownloadedChunk? = null
@@ -1489,11 +1619,7 @@ internal class ParallelRangeDataSource(
         // Session chunks are shared across instances:
         // mutating the shared buffer's position races concurrent readers of
         // the same chunk. Read through a duplicate, as the ByteBuffer path does.
-        val copied = chunk.buffer.leased { bytes ->
-            val readBuf = bytes.duplicate()
-            readBuf.position(currentChunkReadOffset)
-            readBuf.get(buffer, offset, readSize)
-        }
+        val copied = chunk.buffer.leased { it.copyOut(currentChunkReadOffset, buffer, offset, readSize) }
         if (copied == null) {
             // Evicted since it was taken: fetch it again through the session.
             currentChunk = null
@@ -1666,11 +1792,7 @@ internal class ParallelRangeDataSource(
                 if (available > 0) {
                     val toCopy = minOf(maxLength, available)
                     val buf = inFlight.buffer ?: return 0
-                    buf.leased { bytes ->
-                        val view = bytes.duplicate()
-                        view.position(offsetInChunk)
-                        view.get(target, targetOffset, toCopy)
-                    } ?: return 0
+                    buf.leased { it.copyOut(offsetInChunk, target, targetOffset, toCopy) } ?: return 0
                     val waitedMs = SystemClock.elapsedRealtime() - waitT0
                     if (!inFlightServeLogged) {
                         inFlightServeLogged = true
@@ -1752,10 +1874,21 @@ internal class ParallelRangeDataSource(
             ?.coerceAtMost(earnedAhead)
             ?: earnedAhead).coerceAtMost(liveDepthLimit())
 
+        // A manual setting keeps its read-ahead, but servers with a known total (TorBox) never get more requests at
+        // once than it leaves, thumbnails' included. Automatic sizes its own requests against the same total.
+        val activeSession = session
+        var room = if (depthLimit == null && activeSession != null) {
+            val running = activeSession.futures.values.count { !it.isDone }
+            ConnectionLedger.app.playbackRoom(activeSession.requestTarget().toString(), Int.MAX_VALUE, running) - running
+        } else Int.MAX_VALUE
+
         for (i in 0 until maxAhead) {
             val ci = currentChunkIdx + i
             if (totalFileLength != C.LENGTH_UNSET.toLong() && ci * chunkSize >= totalFileLength) break
+            val scheduled = activeSession?.futures?.containsKey(ci) == true
+            if (!scheduled && room <= 0) break
             ensureChunkScheduled(ci)
+            if (!scheduled) room--
         }
     }
 
@@ -1856,6 +1989,7 @@ internal class ParallelRangeDataSource(
                 if (rlError != null) {
                     return downloadChunkWithRateLimitBackoff(activeSession, chunkIndex, future, rlError, startedAtMs)
                 }
+                noteExtraRefused(activeSession, chunkIndex, e)
                 if (attempt == 0) {
                     if (e.isTransientInterruption()) {
                         Log.d(TAG, "Chunk $chunkIndex interrupted during prefetch (attempt 1), retrying")
@@ -1935,7 +2069,7 @@ internal class ParallelRangeDataSource(
     private fun reportPiece(sent: Sent, chunk: DownloadedChunk, served: Uri?) {
         val report = onPiece ?: return
         val spec = sent.spec
-        if (chunk.firstByteAtMs < 0L || chunk.doneAtMs < chunk.firstByteAtMs) return
+        if (chunk.paused || chunk.firstByteAtMs < 0L || chunk.doneAtMs < chunk.firstByteAtMs) return
         val reused = runCatching {
             val url = spec.uri.toString().toHttpUrlOrNull()?.toString()
             val range = HttpUtil.buildRangeRequestHeader(spec.position, spec.length)
@@ -2110,6 +2244,16 @@ internal class ParallelRangeDataSource(
         return null
     }
 
+    /** A refused or cut-off piece counts only while another download to the server keeps delivering. */
+    private fun noteExtraRefused(activeSession: Resources.ChunkSession, chunkIndex: Long, error: Exception) {
+        val callback = onExtraRefused ?: return
+        val running = requestMeter?.running() ?: return
+        if (running < 1 || !ExtraDownloadRefusal.isRefusal(error)) return
+        if (!ExtraDownloadRefusal.othersDelivering(activeSession.deliveredAtMs, chunkIndex, SystemClock.elapsedRealtime())) return
+        Log.i(TAG, "EXTRA_REFUSED chunk=$chunkIndex running=${running + 1}: ${error.javaClass.simpleName}")
+        runCatching { callback(activeSession.requestTarget(), running + 1) }
+    }
+
     /** The refused request has ended already, so the requests running at the refusal are those left plus it. */
     private fun noteRateLimited(activeSession: Resources.ChunkSession) {
         val callback = onRateLimited ?: return
@@ -2135,11 +2279,15 @@ internal class ParallelRangeDataSource(
         var lastException: Exception = firstError
         if (future.isDone || activeSession.abandoned.get()) throw IOException("Chunk already retired")
         while (true) {
-            val refusal = gate.refused(chunkIndex, startedAtMs, retryAfterMs(rl))
+            // TorBox sends no Retry-After and lets the next request in once one of ours ends, so no long wait or
+            // halved read-ahead there; the cap on its requests at once keeps a refusal rare.
+            val torbox = LedgerKey.of(activeSession.requestTarget().toString()) == LedgerKey.TORBOX
+            val retryAfter = retryAfterMs(rl) ?: TORBOX_REFUSAL_RETRY_MS.takeIf { torbox }
+            val refusal = gate.refused(chunkIndex, startedAtMs, retryAfter)
             if (refusal > 0) {
                 noteRateLimited(activeSession)
                 // Only the burst that opened the spell says too many ran at once; a lone try refused later does not.
-                if (refusal == 1) activeSession.beginRateLimitEpisode(effectivePrefetchDepth)
+                if (refusal == 1 && !torbox) activeSession.beginRateLimitEpisode(effectivePrefetchDepth)
                 else activeSession.noteRateLimitHit()
                 Log.w(TAG, "RATE_GATE closed chunk=$chunkIndex HTTP ${rl.responseCode} refusals=$refusal " +
                     "waitMs=${gate.waitLeftMs()} waiting=${gate.waitingCount()} running=${requestMeter?.running() ?: -1}")
@@ -2210,7 +2358,9 @@ internal class ParallelRangeDataSource(
         expectedBytes: Long,
         allowStallRestart: Boolean = true
     ): DownloadedChunk {
-        val buffer = acquireBuffer()
+        val buffer = acquireBuffer(activeSession)
+        val segmented = buffer as? SegmentedBuffer
+        var paused = false
         // Progressive reads: publish this attempt. Registered
         // AFTER acquireBuffer so an allocation OOM never leaves a
         // dangling entry; a retry attempt overwrites its predecessor.
@@ -2253,17 +2403,25 @@ internal class ParallelRangeDataSource(
                 if (future.isCancelled) {
                     throw IOException("Chunk download cancelled")
                 }
-                val maxRead = minOf(buffer.byteBuffer.capacity() - totalRead, READ_BUFFER_SIZE)
+                var maxRead = minOf((segmented?.capacityBytes ?: buffer.byteBuffer.capacity()) - totalRead, READ_BUFFER_SIZE)
                 if (maxRead <= 0) break
+                if (segmented != null) {
+                    maxRead = minOf(maxRead, SEGMENT_BYTES - totalRead % SEGMENT_BYTES)
+                    if (!segmented.hasSegment(totalRead) && awaitHeldRoom(activeSession, chunkIndex, future)) {
+                        paused = true
+                        hedgeLastCheckT0 = SystemClock.elapsedRealtime()
+                        hedgeLastCheckBytes = totalRead
+                    }
+                }
 
                 val read = if (byteBufferReader != null) {
-                    buffer.byteBuffer.position(totalRead)
-                    byteBufferReader.read(buffer.byteBuffer, maxRead)
+                    val target = segmented?.writeView(totalRead) ?: buffer.byteBuffer.also { it.position(totalRead) }
+                    byteBufferReader.read(target, maxRead)
                 } else {
                     val r = ds.read(tempArray, 0, maxRead)
                     if (r != C.RESULT_END_OF_INPUT) {
-                        buffer.byteBuffer.position(totalRead)
-                        buffer.byteBuffer.put(tempArray, 0, r)
+                        val target = segmented?.writeView(totalRead) ?: buffer.byteBuffer.also { it.position(totalRead) }
+                        target.put(tempArray, 0, r)
                     }
                     r
                 }
@@ -2294,6 +2452,7 @@ internal class ParallelRangeDataSource(
                 // whether or not it trips, so the decision is always
                 // visible. Only chunks taking longer than the window emit.
                 val hedgeNowMs = SystemClock.elapsedRealtime()
+                activeSession.noteDelivered(chunkIndex, hedgeNowMs)
                 if (hedgeNowMs - hedgeChunkT0 >= HEDGE_MIN_OPEN_MS &&
                     hedgeNowMs - hedgeLastCheckT0 >= HEDGE_WINDOW_MS) {
                     val hedgeWindowMs = hedgeNowMs - hedgeLastCheckT0
@@ -2337,8 +2496,34 @@ internal class ParallelRangeDataSource(
         // Success: the buffer graduates into the completed chunk; only
         // the in-flight view is retired (ownership-gated).
         activeSession.inFlight.remove(chunkIndex, inFlight)
-        buffer.byteBuffer.flip()
-        return DownloadedChunk(buffer, totalRead, firstByteAtMs, firstReadBytes, SystemClock.elapsedRealtime())
+        if (segmented == null) buffer.byteBuffer.flip()
+        return DownloadedChunk(buffer, totalRead, firstByteAtMs, firstReadBytes, SystemClock.elapsedRealtime(), paused)
+    }
+
+    /**
+     * Waits while the session's pieces hold their whole share ([heldLimit]), unless this is the piece being read or
+     * the session has no reader yet. True when it waited.
+     */
+    private fun awaitHeldRoom(activeSession: Resources.ChunkSession, chunkIndex: Long, future: CompletableFuture<*>): Boolean {
+        val limit = heldLimit ?: return false
+        var waited = false
+        while (!activeSession.abandoned.get() &&
+            activeSession.lastReadChunkIndex in 0 until chunkIndex &&
+            activeSession.heldBytes.get() + SEGMENT_BYTES > limit()
+        ) {
+            if (future.isCancelled) throw IOException("Chunk download cancelled")
+            if (!waited) {
+                waited = true
+                Log.d(TAG, "HELD: chunk $chunkIndex waits, pieces hold ${activeSession.heldBytes.get() / SEGMENT_BYTES} MB " +
+                    "of ${limit() / SEGMENT_BYTES} MB")
+            }
+            try {
+                Thread.sleep(HELD_POLL_MS)
+            } catch (_: InterruptedException) {
+                throw InterruptedIOException("Interrupted while the pieces hold their share")
+            }
+        }
+        return waited
     }
 
     /** Read only a small startup window from an already-opened DataSource. */
@@ -2392,8 +2577,13 @@ internal class ParallelRangeDataSource(
     private val isEffectiveNative: Boolean
         get() = useNativeMemory || androidx.media3.common.NuvioEngineConfig.get().isNativeAllocationEnabled()
 
-    private fun acquireBuffer(): PooledBuffer {
+    private fun acquireBuffer(activeSession: Resources.ChunkSession): PooledBuffer {
         if (resources.released) throw IOException("Diagnostic session is closed")
+        if (heldLimit != null) {
+            return SegmentedBuffer(
+                chunkSize.toInt(), resources::takeSegment, { resources.giveSegment(it, segmentPoolCap) }, activeSession.heldBytes
+            )
+        }
         val pool = resources.globalBufferPool.computeIfAbsent(chunkSize) { ConcurrentLinkedDeque() }
         pool.pollLast()?.let { idle ->
             idle.byteBuffer.clear()
@@ -2605,12 +2795,7 @@ internal class ParallelRangeDataSource(
         }
 
         val readSize = minOf(toRead, available)
-        val copied = chunk.buffer.leased { bytes ->
-            val src = bytes.duplicate()
-            src.position(currentChunkReadOffset)
-            src.limit(currentChunkReadOffset + readSize)
-            buffer.put(src)
-        }
+        val copied = chunk.buffer.leased { it.copyOut(currentChunkReadOffset, buffer, readSize) }
         if (copied == null) {
             currentChunk = null
             currentChunkIndex = -1
@@ -2699,7 +2884,9 @@ internal class ParallelRangeDataSource(
         private val onPiece: ((PieceTiming) -> Unit)? = null,
         private val requestMeter: RequestMeter? = null,
         private val dropStaleConnections: (() -> Unit)? = null,
-        private val onRateLimited: ((Uri?, Int) -> Unit)? = null
+        private val onRateLimited: ((Uri?, Int) -> Unit)? = null,
+        private val onExtraRefused: ((Uri?, Int) -> Unit)? = null,
+        private val heldLimit: (() -> Long)? = null
     ) : DataSource.Factory {
         @Volatile
         private var startupBootstrapCache: BootstrapCacheEntry? = null
@@ -2733,6 +2920,8 @@ internal class ParallelRangeDataSource(
                 requestMeter = requestMeter,
                 dropStaleConnections = dropStaleConnections,
                 onRateLimited = onRateLimited,
+                onExtraRefused = onExtraRefused,
+                heldLimit = heldLimit,
                 consumeBootstrapCache = { dataSpec ->
                     val cached = startupBootstrapCache ?: return@ParallelRangeDataSource null
                     val isFresh = SystemClock.uptimeMillis() - cached.createdAtUptimeMs <= 15_000L

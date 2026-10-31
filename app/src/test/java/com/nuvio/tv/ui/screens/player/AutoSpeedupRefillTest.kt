@@ -19,6 +19,7 @@ class AutoSpeedupRefillTest {
     private val mb = 1024L * 1024L
     private val log = mutableListOf<String>()
     private val refills = mutableListOf<String>()
+    private val notes = mutableListOf<String>()
 
     /** [seconds] of half-second samples at [kbps] delivered; the buffer moves by [aheadPerSecondMs]. */
     private fun AutoSpeedupPolicy.play(
@@ -51,6 +52,7 @@ class AutoSpeedupRefillTest {
             )
             lastChange?.let { log += it }
             lastRefill?.let { refills += it }
+            lastBoostNote?.let { notes += it }
         }
         return downloads
     }
@@ -193,6 +195,33 @@ class AutoSpeedupRefillTest {
         seek()
         // 5 MB/s film, 27 s of buffer to regain in 10 s: 18.5 MB/s, five requests of 4 MB/s.
         assertEquals(5, p.play(1, 0, fileMbps = 40L))
+    }
+
+    @Test
+    fun `a seek boost left out by a stale rate per request goes ahead once the buffer stays low`() {
+        val p = AutoSpeedupPolicy(8)
+        p.knownPerDownloadBps = 10_000_000L
+        p.firstByteMs = 0L
+        p.preset(4)
+        ahead = 40_000L
+        p.play(12, 300_000, loading = false, fileMbps = 65L)
+        seek()
+        // 8.1 MB/s film, 30 s to regain in 10 s: 32.5 MB/s, which four requests of 10 MB/s seem to carry.
+        assertEquals(4, p.play(1, 0, fileMbps = 65L))
+        assertTrue(notes.joinToString(), notes.any { it.startsWith("boost seek not needed downloads=4") })
+        // The server answers slowly after the seek: the buffer barely grows.
+        p.play(6, 70_000, aheadPerSecondMs = 100, fileMbps = 65L)
+        assertEquals(8, p.downloads)
+        assertTrue(log.last(), log.last().startsWith("downloads 4->8 boost check base=4"))
+    }
+
+    @Test
+    fun `a short seek inside the buffer is not boosted by the check either`() {
+        val p = steady(2)
+        ahead = 30_000L
+        seekAt = now + 1L
+        assertEquals(2, p.play(8, 120_000, loading = false))
+        assertTrue(log.none { it.contains("boost") })
     }
 
     @Test
