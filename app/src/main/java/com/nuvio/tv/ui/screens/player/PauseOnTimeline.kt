@@ -16,9 +16,26 @@ internal object PauseOnTimeline {
     /** Only the first key-down of a press counts; a held key repeats and the repeats do nothing. */
     fun firstPress(action: Int, repeatCount: Int): Boolean = action == KeyEvent.ACTION_DOWN && repeatCount == 0
 
-    /** The timeline takes focus for a pause the viewer just made, when there is a timeline to take it. */
-    fun focusesTimeline(pauseRequest: Int, seenRequest: Int, hasTimeline: Boolean): Boolean =
-        pauseRequest != seenRequest && hasTimeline
+    enum class Settle { TIMELINE, USUAL, STAY }
+
+    /**
+     * Where focus goes once the controls settle. A pause the viewer just made lands on the timeline when there is one
+     * and thumbnails are on. A key pressed since that pause wins: focus stays on the control it reached, or takes the
+     * usual place when it is still on no control at all.
+     */
+    fun afterSettle(
+        pauseRequest: Int,
+        seenRequest: Int,
+        hasTimeline: Boolean,
+        thumbnailsOn: Boolean,
+        pressedSincePause: Boolean,
+        onControl: Boolean,
+    ): Settle = when {
+        pauseRequest == seenRequest -> Settle.USUAL
+        pressedSincePause -> if (onControl) Settle.STAY else Settle.USUAL
+        hasTimeline && thumbnailsOn -> Settle.TIMELINE
+        else -> Settle.USUAL
+    }
 
     enum class Release { PASS, SWALLOW, FORGET }
 

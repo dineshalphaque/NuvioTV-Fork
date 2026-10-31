@@ -9,7 +9,6 @@ import com.nuvio.tv.data.mediaserver.ServerPlayMethod
 import com.nuvio.tv.data.mediaserver.ServerPlaybackSession
 import com.nuvio.tv.data.mediaserver.ServerTrack
 import com.nuvio.tv.data.mediaserver.labelRes
-import com.nuvio.tv.data.mediaserver.mergeServerSkipIntervals
 import com.nuvio.tv.data.mediaserver.newerServerResume
 import com.nuvio.tv.data.mediaserver.readableTranscodeReason
 import com.nuvio.tv.data.mediaserver.serverPlaybackMessageRes
@@ -61,7 +60,7 @@ internal fun PlayerRuntimeController.fetchServerSkipIntervals() {
         val intervals = serverPlayback.segments(url).toSkipIntervals(isMovie)
         if (!skipIntroEnabled || serverSkipFetchedKey != key) return@launch
         serverSkipIntervals = intervals
-        skipIntervals = mergeServerSkipIntervals(intervals, providerSkipIntervals)
+        recomputeMergedSkipIntervals()
     }
 }
 
@@ -69,7 +68,7 @@ internal fun PlayerRuntimeController.clearServerSkipIntervals() {
     serverSkipFetchedKey = null
     if (serverSkipIntervals.isEmpty()) return
     serverSkipIntervals = emptyList()
-    skipIntervals = providerSkipIntervals
+    recomputeMergedSkipIntervals()
 }
 
 internal fun PlayerRuntimeController.stopServerPlayback() {

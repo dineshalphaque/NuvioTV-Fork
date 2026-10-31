@@ -113,6 +113,7 @@ data class PlayerUiState(
     val audioDelayMs: Int = 0,
     val audioAmplificationDb: Int = 0,
     val nightMode: com.nuvio.tv.data.local.NightModeLevel = com.nuvio.tv.data.local.NightModeLevel.OFF,
+    val nightModeLastOn: com.nuvio.tv.data.local.NightModeLevel = com.nuvio.tv.data.local.NightModeLevel.DEFAULT_ON,
     val dialogueBoostState: DialogueBoostState = DialogueBoostState.STEREO_TRACK,
     val isAudioAmplificationAvailable: Boolean = false,
     val persistAudioAmplification: Boolean = false,

@@ -13,13 +13,51 @@ class PauseOnTimelineTest {
     private val down = KeyEvent.ACTION_DOWN
     private val up = KeyEvent.ACTION_UP
 
+    private fun settle(
+        pauseRequest: Int = 1,
+        seenRequest: Int = 0,
+        hasTimeline: Boolean = true,
+        thumbnailsOn: Boolean = true,
+        pressed: Boolean = false,
+        onControl: Boolean = false,
+    ) = PauseOnTimeline.afterSettle(pauseRequest, seenRequest, hasTimeline, thumbnailsOn, pressed, onControl)
+
     @Test
     fun aNewPauseFocusesTheTimeline_onceAndOnlyWithATimeline() {
-        assertTrue(PauseOnTimeline.focusesTimeline(pauseRequest = 1, seenRequest = 0, hasTimeline = true))
-        assertFalse(PauseOnTimeline.focusesTimeline(pauseRequest = 1, seenRequest = 1, hasTimeline = true))
-        assertFalse(PauseOnTimeline.focusesTimeline(pauseRequest = 2, seenRequest = 1, hasTimeline = false))
-        assertFalse(PauseOnTimeline.focusesTimeline(pauseRequest = 0, seenRequest = 0, hasTimeline = true))
-        assertFalse(PauseOnTimeline.focusesTimeline(pauseRequest = 3, seenRequest = 3, hasTimeline = true))
+        assertEquals(PauseOnTimeline.Settle.TIMELINE, settle())
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(pauseRequest = 1, seenRequest = 1))
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(pauseRequest = 2, seenRequest = 1, hasTimeline = false))
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(pauseRequest = 0, seenRequest = 0))
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(pauseRequest = 3, seenRequest = 3))
+    }
+
+    @Test
+    fun withThumbnailsOff_aPauseStaysOnTheUsualControl() {
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(thumbnailsOn = false))
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(thumbnailsOn = false, hasTimeline = false))
+    }
+
+    @Test
+    fun aKeyPressedSinceThePauseWins() {
+        assertEquals(PauseOnTimeline.Settle.STAY, settle(pressed = true, onControl = true))
+        assertEquals(PauseOnTimeline.Settle.STAY, settle(pressed = true, onControl = true, thumbnailsOn = false))
+        assertEquals(PauseOnTimeline.Settle.STAY, settle(pressed = true, onControl = true, hasTimeline = false))
+    }
+
+    @Test
+    fun aKeyThatReachedNoControl_getsTheUsualPlaceNotTheTimeline() {
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(pressed = true, onControl = false))
+    }
+
+    @Test
+    fun withoutANewPause_keysChangeNothing() {
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(seenRequest = 1, pressed = true, onControl = true))
+        assertEquals(PauseOnTimeline.Settle.USUAL, settle(seenRequest = 1, onControl = true))
+    }
+
+    @Test
+    fun noKeyPressed_focusOnAControlStillMovesToTheTimeline() {
+        assertEquals(PauseOnTimeline.Settle.TIMELINE, settle(onControl = true))
     }
 
     @Test

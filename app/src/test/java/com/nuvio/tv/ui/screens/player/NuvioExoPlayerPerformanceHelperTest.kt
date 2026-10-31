@@ -257,7 +257,7 @@ class NuvioExoPlayerPerformanceHelperTest {
             helper.backBufferMs = 12_000
             helper.targetIsAutomatic = true
             helper.targetBufferSizeMb = 150
-            helper.sizeTargetFromFreeMemory(com.nuvio.tv.core.player.BufferSizing.FreeMemory(488 * mb, 130 * mb, false), 96, 0)
+            helper.sizeTargetFromFreeMemory(com.nuvio.tv.core.player.BufferSizing.FreeMemory(456 * mb, 130 * mb, false), 96, 0)
             assertEquals(62, helper.targetBufferSizeMb)
             assertEquals(0L, helper.buildLoadControl().getBackBufferDurationUs(playerId))
             assertEquals(0, helper.builtBackBufferMs)
@@ -313,7 +313,7 @@ class NuvioExoPlayerPerformanceHelperTest {
 
             // Lowered to 150 MB by the free memory: the official 20.5 s stay ahead, the back buffer gets the rest.
             helper.targetBufferSizeMb = 200
-            helper.sizeTargetFromFreeMemory(com.nuvio.tv.core.player.BufferSizing.FreeMemory(576 * mb, 130 * mb, false), 96, 0)
+            helper.sizeTargetFromFreeMemory(com.nuvio.tv.core.player.BufferSizing.FreeMemory(544 * mb, 130 * mb, false), 96, 0)
             assertEquals(150, helper.targetBufferSizeMb)
             assertEquals(200, helper.unsizedTargetBufferSizeMb)
             assertEquals(0L, helper.buildLoadControl(fileBitrateBps = 60_000_000L).getBackBufferDurationUs(playerId))

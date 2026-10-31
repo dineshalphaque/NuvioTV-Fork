@@ -12,6 +12,8 @@ import com.nuvio.tv.core.player.MemoryPressure
 internal fun PlayerRuntimeController.attachBufferMemoryKeeper(
     control: BufferBudgetControl?,
     budgetManaged: Boolean = true,
+    /** The box's own budget in MB when the built one was sized down to the memory free at the start. */
+    ceilingMb: Int = 0,
 ) {
     val current = bufferMemoryKeeper
     if (current != null && current.control === control) {
@@ -26,6 +28,8 @@ internal fun PlayerRuntimeController.attachBufferMemoryKeeper(
             budgetControl,
             { BufferSizing.read(appContext) },
             budgetManaged = budgetManaged,
+            ceilingBytes = ceilingMb.toLong() * 1024L * 1024L,
+            swapFreeMb = { com.nuvio.tv.core.player.thumbnail.MemoryGovernor.readMeminfo()?.swapFreeMb ?: -1L },
         ).also { it.attach() }
     }
 }

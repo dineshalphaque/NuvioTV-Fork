@@ -17,6 +17,9 @@ interface BufferBudgetControl {
     /** Negative removes the cap. */
     fun setPressureCapBytes(bytes: Long)
 
+    /** Budget added above the size the player was built with, once the box has room again; 0 removes it. */
+    fun setGrowthBytes(bytes: Long)
+
     /** The allocator target the load control would set now. */
     fun allocatorTargetBytes(): Int
 

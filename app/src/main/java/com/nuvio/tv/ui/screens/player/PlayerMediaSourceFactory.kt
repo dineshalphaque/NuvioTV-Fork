@@ -545,6 +545,8 @@ internal class PlayerMediaSourceFactory(
         HostSpeeds.attach(context.applicationContext.getSharedPreferences("auto_speedup_hosts", Context.MODE_PRIVATE))
         AutoSpeedup.begin(url, NuvioExoPlayerPerformanceHelper.getDevicePhysicalRamBytes(context))
         val limits = AutoSpeedup.limits
+        AutoSpeedup.lazyMemory = AutoSpeedup.lazyMemoryFor(limits)
+        val heldLimit: (() -> Long)? = if (AutoSpeedup.lazyMemory) AutoSpeedup::heldLimitBytes else null
         // The few long downloads keep the playback receive window, unlike the many piece sockets of Custom network.
         val client = PlayerPlaybackNetworking.createHttpClient(headers).newBuilder()
             .cookieJar(NuvioApplication.extensionCookieJar)
@@ -571,7 +573,9 @@ internal class PlayerMediaSourceFactory(
                 onPiece = AutoSpeedup::onPiece,
                 requestMeter = AutoSpeedup.requests,
                 dropStaleConnections = { client.connectionPool.evictAll() },
-                onRateLimited = { uri, inFlight -> AutoSpeedup.onRateLimited(uri?.toString(), inFlight) }
+                onRateLimited = { uri, inFlight -> AutoSpeedup.onRateLimited(uri?.toString(), inFlight) },
+                onExtraRefused = { uri, running -> AutoSpeedup.onExtraDownloadRefused(uri?.toString(), running) },
+                heldLimit = heldLimit
             )
         }
         val pieces = object : AutoSpeedupDataSource.PieceSwitch {

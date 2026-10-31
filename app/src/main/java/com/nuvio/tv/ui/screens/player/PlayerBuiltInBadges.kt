@@ -27,7 +27,7 @@ internal fun builtInPlayerBadges(info: PlayerMediaInfo, releaseText: String, aud
     }
     val audioRelease = if (audioFromRelease) release else ""
     val codec = info.audioCodec.orEmpty().uppercase()
-    val profile = info.audioProfile.orEmpty().uppercase()
+    val profile = info.audioProfiles.joinToString(" ").uppercase()
     val audio = when {
         codec == "TRUEHD" -> R.drawable.badge_truehd
         codec.startsWith("DTS") && (profile.contains("MA") || releaseSaysDtsHdMa(codec, audioRelease)) ->

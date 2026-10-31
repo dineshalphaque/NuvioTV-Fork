@@ -6,6 +6,7 @@ import com.nuvio.tv.core.player.thumbnail.SeekThumbnailPreferences
 import com.nuvio.tv.core.player.thumbnail.ThumbSource
 import com.nuvio.tv.R
 import com.nuvio.tv.core.network.NetworkResult
+import com.nuvio.tv.core.player.PlayerSessionTracker
 import com.nuvio.tv.core.player.thumbnail.isThumbnailSource
 import com.nuvio.tv.data.local.AutoSkipSegmentType
 import com.nuvio.tv.data.repository.SkipInterval
@@ -125,6 +126,7 @@ private suspend fun PlayerRuntimeController.enrichDescriptionFromTmdb(id: String
     val requestedVideoId = currentVideoId
     val season = currentSeason
     val episode = currentEpisode
+    PlayerSessionTracker.settled.first { it }
     val settings = tmdbSettingsDataStore.settings.first()
     if (!settings.enabled || !settings.useBasicInfo) return
 

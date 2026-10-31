@@ -157,7 +157,7 @@ class PlaybackMatchTextTest {
         val exo = PlayerMediaInfo(audioCodec = "DTS-HD", audioChannels = 8)
         assertEquals(listOf("DTS-HD MA", "DTS-X"), filenameNames(exo, release = "Film.BluRay.DTS-HD.MA.7.1.DTS-X-GRP"))
         assertEquals(emptyList<String>(), filenameNames(exo))
-        val mpv = PlayerMediaInfo(audioCodec = "DTS", audioProfile = "DTS-HD MA + DTS:X", audioChannels = 8)
+        val mpv = PlayerMediaInfo(audioCodec = "DTS", audioProfiles = listOf("DTS-HD MA + DTS:X"), audioChannels = 8)
         assertEquals(listOf("DTS-HD MA", "DTS-X"), filenameNames(mpv))
     }
 
@@ -326,24 +326,37 @@ class PlaybackMatchTextTest {
     }
 
     @Test
-    fun `refine adds Atmos from filename when decoder has EAC3`() {
-        val decoder = "DD+ DDP EAC3 5.1"
-        val refined = refinePlaybackText(decoder, listOf("Movie.2160p.DDP5.1.Atmos.mkv"))
-        assertTrue("Atmos should be added", refined.contains("Atmos"))
+    fun `hdr10+ comes from the file name only while hdr10 plays`() {
+        val hdr10 = PlayerMediaInfo(videoWidth = 3840, videoHeight = 2160, hdr = listOf("HDR10"), hdrKnown = true)
+        val file = "Movie.2160p.HDR10+.HEVC.mkv"
+        assertTrue("HDR10+" in playerBadgePlayingText(hdr10, emptyList(), file, file, audioFromRelease = true).split(" "))
+        val sdr = hdr10.copy(hdr = emptyList())
+        assertFalse("HDR10+" in playerBadgePlayingText(sdr, emptyList(), file, file, audioFromRelease = true).split(" "))
     }
 
     @Test
-    fun `refine adds DTS-X from filename when decoder has DTS-HD`() {
-        val decoder = "DTS DTS-HD 7.1"
-        val refined = refinePlaybackText(decoder, listOf("Movie.2160p.DTS-X.mkv"))
-        assertTrue("DTS:X should be added", refined.contains("DTS:X"))
-    }
-
-    @Test
-    fun `refine does not add Atmos without matching base codec`() {
-        val decoder = "AAC 2.0"
-        val refined = refinePlaybackText(decoder, listOf("Movie.Atmos.mkv"))
-        assertFalse("Atmos should NOT be added without EAC3/TrueHD", refined.contains("Atmos"))
+    fun `a multi-language file name shows only the playing language`() {
+        val filters = StreamBadgeMatcher.compile(
+            StreamBadgeRules(
+                imports = listOf(
+                    StreamBadgeImport(
+                        sourceUrl = "https://example.com/badges.json",
+                        filters = listOf(
+                            StreamBadgeFilter(name = "English", pattern = "(?i)\\benglish\\b", imageURL = "eng.png", groupId = "Language"),
+                            StreamBadgeFilter(name = "German", pattern = "(?i)\\bgerman\\b", imageURL = "ger.png", groupId = "Language"),
+                            StreamBadgeFilter(name = "Remux", pattern = "(?i)\\bremux\\b", imageURL = "remux.png", groupId = "Source")
+                        )
+                    )
+                )
+            )
+        )
+        val info = PlayerMediaInfo(audioCodec = "E-AC-3", audioChannels = 6)
+        val file = "Movie.2160p.German.English.Remux.mkv"
+        val languages = playbackLanguageTokens("en")
+        val playing = playerBadgePlayingText(info, languages, file, file, audioFromRelease = true)
+        val text = playerBadgeMatchText(info, languages, file, file, audioFromRelease = true)
+        val badges = StreamBadgeMatcher.matchedPlayerBadges(playing, listOf(text), filters).map { it.name }
+        assertEquals(listOf("English", "Remux"), badges)
     }
 
     @Test

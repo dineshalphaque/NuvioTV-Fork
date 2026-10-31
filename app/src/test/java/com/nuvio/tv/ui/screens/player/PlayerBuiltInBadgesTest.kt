@@ -39,7 +39,7 @@ class PlayerBuiltInBadgesTest {
 
     @Test
     fun `dts profiles from mpv`() {
-        val ma = PlayerMediaInfo(audioCodec = "DTS", audioProfile = "DTS-HD MA", audioChannels = 6)
+        val ma = PlayerMediaInfo(audioCodec = "DTS", audioProfiles = listOf("DTS-HD MA"), audioChannels = 6)
         assertEquals(listOf(R.drawable.badge_dts_hd_ma, R.drawable.badge_ch_5_1), builtInPlayerBadges(ma, ""))
         val core = PlayerMediaInfo(audioCodec = "DTS", audioChannels = 6)
         assertEquals(listOf(R.drawable.badge_dts, R.drawable.badge_ch_5_1), builtInPlayerBadges(core, ""))
@@ -112,7 +112,7 @@ class PlayerBuiltInBadgesTest {
 
     @Test
     fun `atmos from the mpv audio profile`() {
-        val info = PlayerMediaInfo(audioCodec = "TrueHD", audioProfile = "Dolby TrueHD + Dolby Atmos")
+        val info = PlayerMediaInfo(audioCodec = "TrueHD", audioProfiles = listOf("Dolby TrueHD + Dolby Atmos"))
         assertEquals(true, R.drawable.badge_atmos in builtInPlayerBadges(info, ""))
     }
 }

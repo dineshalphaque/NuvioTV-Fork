@@ -56,6 +56,24 @@ internal object PlayerChapters {
         return null
     }
 
+    /** Every chapter of the file with its name, segments included, or null when it has none. */
+    @OptIn(UnstableApi::class)
+    fun namedFileChapters(tracks: Tracks, locale: Locale = Locale.getDefault()): List<PlayerChapter>? {
+        for (group in tracks.groups) {
+            for (i in 0 until group.length) {
+                val chapters = group.getTrackFormat(i).metadata?.chapters() ?: continue
+                return chapters.chapters.take(MAX_CHAPTERS).mapIndexed { index, chapter ->
+                    PlayerChapter(
+                        index + 1,
+                        chapter.startUs / 1000,
+                        chosenName(chapter.names.map { name -> name.text to name.language }, locale)
+                    )
+                }
+            }
+        }
+        return null
+    }
+
     /**
      * A media server's chapters, same rules as the file's. Unnamed chapters at a fixed interval are the server's
      * own filler (a mark every few minutes), not chapters of the film, and are left out.

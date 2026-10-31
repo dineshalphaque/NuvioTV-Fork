@@ -438,11 +438,14 @@ internal fun PlayerRuntimeController.maybeAdjustLibassPipelineForTracks(tracks: 
                 group.getTrackFormat(i).sampleMimeType == MimeTypes.VIDEO_DOLBY_VISION
             }
     }
+    if (hasDvVideoTrack) hasDetectedDolbyVisionForCurrentStream = true
     val needsVideoEffectRebuild = tracks.hasSelectedAssSsaTextTrack() &&
         activeAssVideoEffect == null &&
         activePlayerUsesLibass &&
-        _uiState.value.libassRenderMode == com.nuvio.tv.data.local.LibassRenderMode.VIDEO_EFFECT &&
-        !hasDvVideoTrack
+        requestedLibassRenderMode == com.nuvio.tv.data.local.LibassRenderMode.VIDEO_EFFECT &&
+        !hasDetectedDolbyVisionForCurrentStream &&
+        !isTunnelingActiveForCurrentPlayback &&
+        !isNativeFelActiveForCurrentPlayback
 
     // Don't rebuild just to drop libass, except when it's holding the MKV extractor on a DV
     // file and blocking conversion; then drop it so the DV extractor runs.

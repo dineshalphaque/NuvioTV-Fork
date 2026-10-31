@@ -92,23 +92,36 @@ internal fun PlayerRuntimeController.selectAudioTrack(trackIndex: Int) {
 }
 
 /**
- * Tunnelled-playback guard for mid-stream audio track switches. The in-place
- * switch recreates the AudioTrack inside a live tunnel, and on some vendor
- * HALs the tunnel comes back with bad frame pacing until the player is
- * rebuilt. This rebuilds the player at the current position instead.
+ * A switch inside a live tunnel only recreates the AudioTrack when the sound format changes; a track of the same
+ * format and layout is switched in place. Tunnelling asked for but not running never needs a rebuild.
+ */
+internal fun tunneledAudioSwitchNeedsRebuild(tunnelingRunning: Boolean, current: TrackInfo?, target: TrackInfo): Boolean {
+    if (!tunnelingRunning) return false
+    if (current == null || current.codec == null || target.codec == null) return true
+    return !current.codec.equals(target.codec, ignoreCase = true) ||
+        current.channelCount != target.channelCount ||
+        current.sampleRate != target.sampleRate
+}
+
+/**
+ * Tunnelled-playback guard for mid-stream audio track switches. Recreating the
+ * AudioTrack inside a live tunnel leaves bad frame pacing on some vendor HALs
+ * until the player is rebuilt, so a switch to another sound format rebuilds the
+ * player at the current position instead.
  *
  * Must be called after rememberAudioSelection(): the rebuild restores the
  * target audio and subtitle preference from rememberedTrackPreference.
  *
  * Returns true when the rebuild path was taken (caller must skip the in-place
- * switch). Always false with tunneling off.
+ * switch).
  */
 internal fun PlayerRuntimeController.maybeRebuildForTunneledAudioSwitch(trackIndex: Int): Boolean {
     if (isUsingMpvEngine()) return false
-    if (!_uiState.value.tunnelingEnabled) return false
     val player = _exoPlayer ?: return false
-    val track = _uiState.value.audioTracks.getOrNull(trackIndex) ?: return false
+    val tracks = _uiState.value.audioTracks
+    val track = tracks.getOrNull(trackIndex) ?: return false
     if (track.isSelected) return false
+    if (!tunneledAudioSwitchNeedsRebuild(player.isTunnelingEnabled, tracks.firstOrNull { it.isSelected }, track)) return false
     // Seeded by rememberAudioSelection() immediately before this call; if the
     // preference is somehow absent, fall back to the in-place path rather than
     // rebuild without a restorable pick.
