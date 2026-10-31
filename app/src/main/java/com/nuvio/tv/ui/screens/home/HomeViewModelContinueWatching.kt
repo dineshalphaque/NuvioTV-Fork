@@ -2495,13 +2495,14 @@ private suspend fun HomeViewModel.resolveMetaForProgress(
         if (progress.contentId.startsWith("tmdb:")) add(progress.contentId.substringAfter(':'))
     }.distinct()
 
-    val typeCandidates = listOf(progress.contentType, "series", "tv").distinct()
+    val typeCandidates = cwMetaTypeCandidates(progress.contentType)
     val useAllAddons = externalMetaPrefetchEnabled
     val resolved = withContext(MetaCaller("cw")) {
         var summary: CwMetaSummary? = null
         var attempts = 0
         for (type in typeCandidates) {
             for (candidateId in idCandidates) {
+                PlayerSessionTracker.isSessionOpen.first { open -> !open }
                 attempts += 1
                 val attemptStartedAtMs = SystemClock.elapsedRealtime()
                 val result = withTimeoutOrNull(6_000L) {
@@ -2655,11 +2656,12 @@ private suspend fun HomeViewModel.resolveBadgeEpisodes(
         add(contentId)
         if (contentId.startsWith("tmdb:")) add(contentId.substringAfter(':'))
     }.distinct()
-    val typeCandidates = listOf(contentType, "series", "tv").distinct()
+    val typeCandidates = cwMetaTypeCandidates(contentType)
     val useAllAddons = externalMetaPrefetchEnabled
 
     for (type in typeCandidates) {
         for (candidateId in idCandidates) {
+            PlayerSessionTracker.isSessionOpen.first { open -> !open }
             val result = withTimeoutOrNull(2_500L) {
                 withContext(MetaCaller("cw-badges")) {
                     if (useAllAddons) {
@@ -2684,6 +2686,11 @@ private suspend fun HomeViewModel.resolveBadgeEpisodes(
     synchronized(cwBadgeEpisodeCache) { cwBadgeEpisodeCache[cacheKey] = null }
     return null
 }
+
+/** Films are looked up only as films; series and unknown types also try the series types. */
+internal fun cwMetaTypeCandidates(contentType: String): List<String> =
+    if (contentType.equals("movie", ignoreCase = true)) listOf(contentType)
+    else listOf(contentType, "series", "tv").distinct()
 
 private fun buildLightweightEpisodeVideoId(
     contentId: String,

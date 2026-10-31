@@ -24,14 +24,35 @@ fun sizedHomeArtworkUrl(data: String, width: Int?): String {
     return data.replace("/t/p/original/", "/t/p/$bucket/")
 }
 
-/** Serializes identical requests without retaining completed keys or sharing a cancelled result. */
+/** A request waiting for a download or decode lane. */
+internal interface PosterWaiter {
+    fun rank(): Int
+    /** Prefetch and idle warming, as opposed to a poster on screen. */
+    val background: Boolean
+}
+
+/**
+ * Serializes identical requests without retaining completed keys or sharing a cancelled result. Whoever goes first
+ * queues with the most urgent rank of everyone waiting for the same poster, so a card on screen never waits at the
+ * rank of a prefetch that got there first.
+ */
 internal class PosterRequestLocks {
-    private class Entry(val mutex: Mutex = Mutex(), var users: Int = 0)
+    private class Entry(val mutex: Mutex = Mutex(), var users: Int = 0) {
+        val waiters = mutableListOf<PosterWaiter>()
+        val group = object : PosterWaiter {
+            override fun rank(): Int = synchronized(waiters) { waiters.minOfOrNull { it.rank() } } ?: Int.MAX_VALUE
+            override val background: Boolean get() = synchronized(waiters) { waiters.all { it.background } }
+        }
+    }
     private val entries = mutableMapOf<String, Entry>()
-    suspend fun <T> run(key: String, block: suspend () -> T): T {
+    suspend fun <T> run(key: String, waiter: PosterWaiter? = null, block: suspend (PosterWaiter) -> T): T {
         val entry = synchronized(entries) { entries.getOrPut(key) { Entry() }.also { it.users++ } }
-        try { return entry.mutex.withLock { block() } }
-        finally { synchronized(entries) { if (--entry.users == 0) entries.remove(key) } }
+        if (waiter != null) synchronized(entry.waiters) { entry.waiters += waiter }
+        try { return entry.mutex.withLock { block(entry.group) } }
+        finally {
+            if (waiter != null) synchronized(entry.waiters) { entry.waiters.remove(waiter) }
+            synchronized(entries) { if (--entry.users == 0) entries.remove(key) }
+        }
     }
 }
 
@@ -52,8 +73,10 @@ class HomePosterViewport {
         }
 }
 
-data class HomePosterPriority(val viewport: HomePosterViewport, val row: Int, val prefetch: Boolean = false, val progressive: Boolean = false) {
-    fun rank(): Int {
+data class HomePosterPriority(val viewport: HomePosterViewport, val row: Int, val prefetch: Boolean = false, val progressive: Boolean = false) : PosterWaiter {
+    override val background: Boolean get() = prefetch || progressive
+
+    override fun rank(): Int {
         val first = viewport.firstRow
         val last = viewport.lastRow
         return when {
@@ -88,6 +111,10 @@ const val HOME_POSTER_RETRY_DELAY_MS = 2_000L
 fun homePosterRetryAfterError(attempt: Int): Boolean = attempt < 1
 
 const val HOME_POSTER_BITMAP_PARALLELISM = 4
+
+/** Posters on screen download this many at a time; prefetch and idle warming hold at most [HOME_POSTER_BACKGROUND_DOWNLOADS] of them. */
+const val HOME_POSTER_DOWNLOADS = 8
+const val HOME_POSTER_BACKGROUND_DOWNLOADS = 2
 private const val MIB = 1024L * 1024
 private const val STRONG_BOX_TOTAL_BYTES = 2_560L * MIB
 private const val SMALL_BOX_TOTAL_BYTES = 1_536L * MIB
@@ -136,16 +163,22 @@ internal fun homePosterPrefetchRows(first: Int, last: Int, previousFirst: Int, a
     return (forward + if (up) last + 1 else first - 1).filter { it >= 0 }
 }
 
-/** Bounded priority queue; cancellation releases a slot even when granted just before await. */
-internal class ImagePriorityQueue(private val concurrency: Int) {
-    private class Ticket(val rank: () -> Int, val ready: CompletableDeferred<Unit> = CompletableDeferred())
+/**
+ * Bounded priority queue; cancellation releases a slot even when granted just before await. Background work holds at
+ * most [backgroundConcurrency] slots, so the rest stay free for what is on screen.
+ */
+internal class ImagePriorityQueue(private val concurrency: Int, private val backgroundConcurrency: Int = concurrency) {
+    private class Ticket(val rank: () -> Int, val background: () -> Boolean, val ready: CompletableDeferred<Unit> = CompletableDeferred()) {
+        var countedAsBackground = false
+    }
     private val waiting = mutableListOf<Ticket>()
     private var active = 0
+    private var activeBackground = 0
 
-    init { require(concurrency > 0) }
+    init { require(concurrency > 0 && backgroundConcurrency > 0) }
 
-    suspend fun <T> run(rank: () -> Int, block: suspend () -> T): T {
-        val ticket = Ticket(rank)
+    suspend fun <T> run(rank: () -> Int, background: () -> Boolean = { false }, block: suspend () -> T): T {
+        val ticket = Ticket(rank, background)
         synchronized(waiting) {
             waiting += ticket
             drain()
@@ -155,17 +188,25 @@ internal class ImagePriorityQueue(private val concurrency: Int) {
             return block()
         } finally {
             synchronized(waiting) {
-                if (!waiting.remove(ticket)) active--
+                if (!waiting.remove(ticket)) {
+                    active--
+                    if (ticket.countedAsBackground) activeBackground--
+                }
                 drain()
             }
         }
     }
 
     private fun drain() {
-        while (active < concurrency && waiting.isNotEmpty()) {
-            val next = waiting.minBy { it.rank() }
+        while (active < concurrency) {
+            val backgroundRoom = activeBackground < backgroundConcurrency
+            val next = waiting.filter { backgroundRoom || !it.background() }.minByOrNull { it.rank() } ?: return
             waiting.remove(next)
             active++
+            if (next.background()) {
+                next.countedAsBackground = true
+                activeBackground++
+            }
             next.ready.complete(Unit)
         }
     }
@@ -173,8 +214,10 @@ internal class ImagePriorityQueue(private val concurrency: Int) {
 
 /** Only Home artwork opts in. Cached images never wait behind network/decode work. */
 class HomePosterLoadingInterceptor(diskDecodeSlots: Int = 2) : Interceptor {
-    private val downloads = ImagePriorityQueue(concurrency = 4)
-    private val cached = ImagePriorityQueue(concurrency = diskDecodeSlots.coerceIn(1, HOME_POSTER_BITMAP_PARALLELISM))
+    private val downloads = ImagePriorityQueue(HOME_POSTER_DOWNLOADS, HOME_POSTER_BACKGROUND_DOWNLOADS)
+    private val cached = diskDecodeSlots.coerceIn(1, HOME_POSTER_BITMAP_PARALLELISM).let { slots ->
+        ImagePriorityQueue(slots, (slots - 1).coerceAtLeast(1))
+    }
     private val locks = PosterRequestLocks()
     override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
         val priority = chain.request.extras[HomePosterPriorityKey] ?: return chain.proceed()
@@ -187,8 +230,8 @@ class HomePosterLoadingInterceptor(diskDecodeSlots: Int = 2) : Interceptor {
     private suspend fun interceptPrioritized(chain: Interceptor.Chain, priority: HomePosterPriority): ImageResult {
         val request = chain.request
         val loader = request.context.imageLoader
-        val key = request.memoryCacheKey ?: return downloads.run(priority::rank) { chain.proceed() }
-        return locks.run(key) {
+        val key = request.memoryCacheKey ?: return downloads.run(priority::rank, { priority.background }) { chain.proceed() }
+        return locks.run(key, priority) { shared ->
             // Recheck after a concurrent prefetch/card request has completed.
             val memoryKey = MemoryCache.Key(key, request.memoryCacheKeyExtras)
             val start = android.os.SystemClock.elapsedRealtime()
@@ -198,15 +241,12 @@ class HomePosterLoadingInterceptor(diskDecodeSlots: Int = 2) : Interceptor {
                 val diskKey = request.diskCacheKey ?: (request.data as? String)?.let {
                     sizedHomeArtworkUrl(it, (chain.size.width as? coil3.size.Dimension.Pixels)?.px)
                 }
+                // Any saved copy is shown straight from disk; an older one is checked online afterwards.
                 val onDisk = request.diskCachePolicy.readEnabled && diskKey != null && withContext(Dispatchers.IO) {
-                    loader.diskCache?.let { cache ->
-                        cache.openSnapshot(diskKey)?.use {
-                            savedImageIsFresh(it, cache.fileSystem, diskKey, coil3.request.Options(request.context))
-                        }
-                    } ?: false
+                    loader.diskCache?.openSnapshot(diskKey)?.use { true } ?: false
                 }
-                // Local files get independent slots; absent images and online checks cannot hold up their decode.
-                (if (onDisk) cached else downloads).run(priority::rank) { chain.proceed() }
+                // Local files get independent slots; absent images cannot hold up their decode.
+                (if (onDisk) cached else downloads).run(shared::rank, { shared.background }) { chain.proceed() }
             }
             if (com.nuvio.tv.BuildConfig.DEBUG || android.util.Log.isLoggable("HomePosterCache", android.util.Log.VERBOSE)) {
                 val source = (result as? coil3.request.SuccessResult)?.dataSource?.name ?: "ERROR"

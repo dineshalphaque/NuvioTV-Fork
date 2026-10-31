@@ -14,13 +14,16 @@ import okio.FileSystem
 
 const val IMAGE_FRESHNESS_FLOOR_MS = 7L * 24 * 60 * 60 * 1000
 
-/** How long a picture from a host that sends no caching rule is shown without asking the server again. */
+/** How long a picture from a host that sends no caching rule goes before it is checked online again. */
 const val UNDATED_IMAGE_FRESHNESS_MS = 12L * 60 * 60 * 1000
 
-/** Shortest time a saved picture is shown without asking the server, whatever the server's own rule says. */
+/** Shortest time between online checks of a saved picture, whatever the server's own rule says. */
 const val MIN_IMAGE_FRESHNESS_MS = 6L * 60 * 60 * 1000
 
-/** Artwork hosts trusted for a week without online checks. Subdomains count too. */
+/**
+ * Artwork hosts whose pictures never change, checked online at most once a week. Subdomains count too. Pictures from
+ * every other host are shown from disk as well; only their online check comes sooner.
+ */
 internal val IMMUTABLE_ARTWORK_HOSTS = listOf(
     "image.tmdb.org",
     "metahub.space",

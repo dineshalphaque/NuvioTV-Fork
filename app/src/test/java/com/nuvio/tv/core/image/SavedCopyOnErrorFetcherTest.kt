@@ -79,9 +79,9 @@ class SavedCopyOnErrorFetcherTest {
     @Test fun permanentAnswersAndCancellationAreNotHidden() = runTest {
         var opened = false
         val open: () -> FetchResult? = { opened = true; saved }
-        expectThrows(SavedCopyOnErrorFetcher(failing(HttpException(NetworkResponse(code = 404))), open), HttpException::class.java)
-        expectThrows(SavedCopyOnErrorFetcher(failing(IllegalStateException()), open), IllegalStateException::class.java)
-        expectThrows(SavedCopyOnErrorFetcher(failing(CancellationException()), open), CancellationException::class.java)
+        expectThrows(SavedCopyOnErrorFetcher(failing(HttpException(NetworkResponse(code = 404))), openSavedCopy = open), HttpException::class.java)
+        expectThrows(SavedCopyOnErrorFetcher(failing(IllegalStateException()), openSavedCopy = open), IllegalStateException::class.java)
+        expectThrows(SavedCopyOnErrorFetcher(failing(CancellationException()), openSavedCopy = open), CancellationException::class.java)
         assertFalse(opened)
     }
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.nuvio.tv.ui.theme.NuvioSpacing
 import com.nuvio.tv.domain.model.CatalogRow
 import com.nuvio.tv.domain.model.Collection
 import com.nuvio.tv.domain.model.CollectionFolder
@@ -44,6 +45,9 @@ internal fun modernRowsViewportHeight(screenHeight: Dp, fraction: Float, tallest
     val needed = MODERN_ROW_HEADER_FOCUS_INSET + tallestCardHeight + MODERN_ROW_CARD_BOTTOM_ROOM
     return maxOf(base, minOf(needed, screenHeight * MODERN_ROWS_VIEWPORT_MAX_FRACTION))
 }
+/** Height the hero text block may take: the space above the rows, less a thin margin at the screen edge. */
+internal fun modernHeroTextMaxHeight(screenHeight: Dp, rowsViewportHeight: Dp): Dp =
+    (screenHeight - rowsViewportHeight - NuvioSpacing.tokens.lg - NuvioSpacing.tokens.xs).coerceAtLeast(0.dp)
 internal const val MODERN_CONTINUE_WATCHING_ROW_KEY = "continue_watching"
 internal const val MODERN_UPCOMING_ROW_KEY = "upcoming_section"
 internal val MODERN_LANDSCAPE_LOGO_GRADIENT = Brush.verticalGradient(
