@@ -1,0 +1,58 @@
+name: Test APK (side by side)
+
+on:
+  push:
+    branches: ["ci/test-apk-**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-apk:
+    name: Build side-by-side test APK
+    runs-on: ubuntu-latest
+    env:
+      CI_USE_DEBUG_SIGNING: "true"
+      NUVIO_SUPABASE_URL: ${{ secrets.NUVIO_SUPABASE_URL }}
+      NUVIO_SUPABASE_ANON_KEY: ${{ secrets.NUVIO_SUPABASE_ANON_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Prepare local properties
+        run: |
+          umask 077
+          : > local.properties
+          : > local.dev.properties
+          [ -n "$NUVIO_SUPABASE_URL" ] && printf 'NUVIO_SUPABASE_URL=%s\n' "$NUVIO_SUPABASE_URL" >> local.properties
+          [ -n "$NUVIO_SUPABASE_ANON_KEY" ] && printf 'NUVIO_SUPABASE_ANON_KEY=%s\n' "$NUVIO_SUPABASE_ANON_KEY" >> local.properties
+          true
+
+      - name: Build full release APK (test package, debug-signed)
+        run: >
+          ./gradlew :app:assembleFullRelease --stacktrace
+          -PnuvioAppIdSuffix=.buffertest
+          -ParcVersionCode=1668
+          -ParcVersionName=1.2.0-arc.3-buffertest
+
+      - name: Remove local properties
+        if: always()
+        run: rm -f local.properties local.dev.properties
+
+      - name: Upload armeabi-v7a APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuvio-arc-buffertest-armeabi-v7a
+          path: app/build/outputs/apk/full/release/app-full-armeabi-v7a-release.apk
+          if-no-files-found: error
+          retention-days: 7
